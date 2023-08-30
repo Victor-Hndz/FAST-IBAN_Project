@@ -51,10 +51,11 @@ void print_u_lims_data(struct u_lims_data u_data) {
 //Identify regions of +- u values in a time and level.
 int identify_regions(float val, int time, int lvl, float *lats, float *lons, short(*u)[NLVL][NLAT][NLON], double offset, double scale_factor) {
     double u_scaled, longitude, latitude;
-    int extend = 5;
+    int extend = 10, extra_y = 100;
 
     struct u_lims_data** u_lims_arr = (struct u_lims_data**)malloc(NLAT * sizeof(struct u_lims_data*));
     struct u_lims_data** u_lims_arr_extended = (struct u_lims_data**)malloc(NLAT * sizeof(struct u_lims_data*));
+
     if (u_lims_arr == NULL || u_lims_arr_extended == NULL) { 
 		printf("Error: Couldn't allocate memory for data.\n");
 		return 2;
@@ -92,26 +93,25 @@ int identify_regions(float val, int time, int lvl, float *lats, float *lons, sho
             }
         }
         memcpy(u_lims_arr_extended[i], u_lims_arr[i], NLON * sizeof(struct u_lims_data));
-
     }
 
     for (int i = 0; i < NLAT; i++) 
-        for (int j = 0; j < NLON; j++) 
+        for (int j = 0; j < NLON; j++)       
             if (u_lims_arr[i][j].u != NULL_VALUE) 
                 for (int x = i - extend; x < i + extend; x++) {
-                    latitude = -180 * (x / 721.0) + 90.0;
-                    for (int y = j - extend; y < j + extend; y++) {
-                        if (j <= 720)
-                            longitude = 180.0 * (j / 720.0);
+                    latitude = -180.0 * (x / 721.0) + 90.0;
+                    for (int y = j - extend - extra_y; y < j + extend + extra_y; y++) {
+                        if (y <= 720)
+                            longitude = 180.0 * (y / 720.0);
                         else
-                            longitude = -180.0 * ((1440 - y) / 720.0);
+                            longitude = -180.0 * ((1440.0 - y) / 720.0);
 
                         if (u_lims_arr_extended[x][y].u == NULL_VALUE) {
                             u_lims_arr_extended[x][y].time = time;
                             u_lims_arr_extended[x][y].level = lvl;
                             u_lims_arr_extended[x][y].latitude = latitude;
                             u_lims_arr_extended[x][y].longitude = longitude;
-                            u_lims_arr_extended[x][y].u = 0;
+                            u_lims_arr_extended[x][y].u = (u[time][lvl][x][y] * scale_factor) + offset;
                         }
                     }
                 }
