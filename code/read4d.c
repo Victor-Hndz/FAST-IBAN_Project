@@ -29,6 +29,8 @@
 #define FILE_OUT "out/data4d_u.json"
 
 #define NULL_VALUE -9999
+#define CONV_FACTOR 0.25
+#define MIN_LAT 90.0
 
 
 struct u_lims_data {
@@ -43,8 +45,8 @@ struct u_lims_data {
 void print_u_lims_data(struct u_lims_data u_data) {
 	printf("Time: %d\n", u_data.time);
 	printf("Level: %d\n", u_data.level);
-    printf("Latitude: %d\n", u_data.latitude);
-    printf("Longitude: %d\n", u_data.longitude);
+    printf("Latitude: %.2f\n", MIN_LAT - (u_data.latitude*CONV_FACTOR));
+    printf("Longitude: %.2f\n", (u_data.longitude*CONV_FACTOR));
 	printf("U: %.1f\n", u_data.u);
 }
 

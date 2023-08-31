@@ -5,7 +5,7 @@ import cartopy as cartopy
 import os
 
 # Lee el archivo CSV
-data = pd.read_csv('regions_extended.csv')
+data = pd.read_csv('../code/out/regions_extended.csv')
 
 # Extrae los datos de latitud, longitud y variable
 latitudes = data['latitude']
