@@ -27,6 +27,8 @@
 #define LONG_NAME "long_name"
 
 #define FILE_OUT "out/data4d_u.json"
+#define DIR_NAME "out"
+#define DIR_PERMS 0777
 
 #define NULL_VALUE -9999
 #define CONV_FACTOR 0.25
@@ -36,8 +38,8 @@
 struct u_lims_data {
     int time;
     int level;
-	int latitude;
-    int longitude;
+	double latitude;
+    double longitude;
     double u;
 };
 
@@ -53,13 +55,13 @@ void print_u_lims_data(struct u_lims_data u_data) {
 //Identify regions of +- u values in a time and level.
 int identify_regions(float val, int time, int lvl, float *lats, float *lons, short(*u)[NLVL][NLAT][NLON], double offset, double scale_factor) {
     double u_scaled, longitude, latitude;
-    int extend = 10, extra_y = 100;
+    int extend = 15, extra_y = 100;
 
     struct u_lims_data** u_lims_arr = (struct u_lims_data**)malloc(NLAT * sizeof(struct u_lims_data*));
     struct u_lims_data** u_lims_arr_extended = (struct u_lims_data**)malloc(NLAT * sizeof(struct u_lims_data*));
 
     if (u_lims_arr == NULL || u_lims_arr_extended == NULL) { 
-		printf("Error: Couldn't allocate memory for data.\n");
+		perror("Error: Couldn't allocate memory for data.\n");
 		return 2;
 	}
  
@@ -67,16 +69,15 @@ int identify_regions(float val, int time, int lvl, float *lats, float *lons, sho
         u_lims_arr[i] = (struct u_lims_data*)malloc(NLON * sizeof(struct u_lims_data));
         u_lims_arr_extended[i] = (struct u_lims_data*)malloc(NLON * sizeof(struct u_lims_data));
         if (u_lims_arr[i] == NULL || u_lims_arr_extended[i] == NULL) {
-            printf("Error: Couldn't allocate memory for data.\n");
+            perror("Error: Couldn't allocate memory for data.\n");
             return 2;
         }
-        latitude = -180 * (i / 721.0) + 90.0;
+        latitude = MIN_LAT - (i*CONV_FACTOR);
+        
         for (int j = 0; j < NLON; j++) {
-            if (j <= 720) 
-                longitude = 180.0 * (j / 720.0);
-            else 
-                longitude = -180.0 * ((1440 - j) / 720.0);
-
+            longitude = (j*CONV_FACTOR);
+            if(longitude > 180) 
+                longitude = longitude - 360;
             u_scaled = (u[time][lvl][i][j] * scale_factor) + offset;
 
             if (u_scaled > val || u_scaled < -val) {
@@ -101,13 +102,12 @@ int identify_regions(float val, int time, int lvl, float *lats, float *lons, sho
         for (int j = 0; j < NLON; j++)       
             if (u_lims_arr[i][j].u != NULL_VALUE) 
                 for (int x = i - extend; x < i + extend; x++) {
-                    latitude = -180.0 * (x / 721.0) + 90.0;
-                    for (int y = j - extend - extra_y; y < j + extend + extra_y; y++) {
-                        if (y <= 720)
-                            longitude = 180.0 * (y / 720.0);
-                        else
-                            longitude = -180.0 * ((1440.0 - y) / 720.0);
+                    latitude = MIN_LAT - (x*CONV_FACTOR);
 
+                    for (int y = j - extend; y < j + extend; y++) {
+                        longitude = (y*CONV_FACTOR);
+                        if(longitude > 180) 
+                            longitude = longitude - 360;
                         if (u_lims_arr_extended[x][y].u == NULL_VALUE) {
                             u_lims_arr_extended[x][y].time = time;
                             u_lims_arr_extended[x][y].level = lvl;
@@ -119,7 +119,7 @@ int identify_regions(float val, int time, int lvl, float *lats, float *lons, sho
                 }
 
     FILE* f;
-    f = fopen("out/regions.csv", "w");
+    f = fopen("out/regions_all.csv", "w");
     if (f == NULL) {
 		perror("Error al abrir el archivo");
 		return 1;
@@ -127,17 +127,28 @@ int identify_regions(float val, int time, int lvl, float *lats, float *lons, sho
 
     fprintf(f, "time,lvl,latitude,longitude,u\n");
     for (int i = 0; i < NLAT; i++) {
-        latitude = -180 * (i / 721.0) + 90.0;
+        latitude = MIN_LAT - (i*CONV_FACTOR);
         for (int j = 0; j < NLON; j++) {
-            if (j <= 720)
-                longitude = 180.0 * (j / 720.0);
-            else
-                longitude = -180.0 * ((1440 - j) / 720.0);
-
-            if (u_lims_arr[i][j].u != NULL_VALUE)
-                fprintf(f, "%d,%d,%.1f,%.1f,%.1f\n", u_lims_arr[i][j].time, u_lims_arr[i][j].level, latitude, longitude, u_lims_arr[i][j].u);
+            longitude = j*CONV_FACTOR;
+            if(longitude > 180) 
+                longitude = longitude - 360;
+            fprintf(f, "%d,%d,%.2f,%.2f,%.1f\n", time, lvl, latitude, longitude,  (u[time][lvl][i][j] * scale_factor) + offset);
         }
-    }       
+    }
+    fclose(f);
+
+    f = fopen("out/regions.csv", "w");
+    if (f == NULL) {
+		perror("Error al abrir el archivo");
+		return 1;
+	}
+
+    fprintf(f, "time,lvl,latitude,longitude,u\n");
+    for (int i = 0; i < NLAT; i++) 
+        for (int j = 0; j < NLON; j++) 
+            if (u_lims_arr[i][j].u != NULL_VALUE)
+                fprintf(f, "%d,%d,%.2f,%.2f,%.1f\n", u_lims_arr[i][j].time, u_lims_arr[i][j].level, u_lims_arr[i][j].latitude, u_lims_arr[i][j].longitude, u_lims_arr[i][j].u);
+        
     fclose(f);
 
     f = fopen("out/regions_extended.csv", "w");
@@ -148,17 +159,14 @@ int identify_regions(float val, int time, int lvl, float *lats, float *lons, sho
 
     fprintf(f, "time,lvl,latitude,longitude,u\n");
     for (int i = 0; i < NLAT; i++) {
-        latitude = -180 * (i / 721.0) + 90.0;
-        for (int j = 0; j < NLON; j++) {
-            if (j <= 720)
-                longitude = 180.0 * (j / 720.0);
-            else
-                longitude = -180.0 * ((1440 - j) / 720.0);
-
+        latitude = MIN_LAT - (i*CONV_FACTOR);
+        for (int j = 0; j < NLON; j++){ 
+            longitude = j*CONV_FACTOR;
+            if(longitude > 180) 
+                longitude = longitude - 360;
             if (u_lims_arr_extended[i][j].u != NULL_VALUE)
-                fprintf(f, "%d,%d,%.1f,%.1f,%.1f\n", u_lims_arr_extended[i][j].time, u_lims_arr_extended[i][j].level, latitude, longitude, u_lims_arr_extended[i][j].u);
+                fprintf(f, "%d,%d,%.2f,%.2f,%.1f\n", u_lims_arr_extended[i][j].time, u_lims_arr_extended[i][j].level, latitude, longitude, u_lims_arr_extended[i][j].u);
         }
-    
     }
     fclose(f);
 
@@ -190,56 +198,53 @@ int identify_regions(float val, int time, int lvl, float *lats, float *lons, sho
 }
 
 int main(char* filename) {
-    int ncid, u_varid, lat_varid, lon_varid, i=0;
+    int ncid, u_varid, lat_varid, lon_varid, retval, i=0;
     double scale_factor, offset;
+    float lats[NLAT], lons[NLON];
     char long_name[NC_MAX_NAME+1] = "";
     struct u_lims_data u_data_max, u_data_min;
-    u_data_max.u = -9999;
-    u_data_min.u = 9999;
+    FILE *f, *f2;
 
-    const char *nombre_carpeta = "out";
+    u_data_max.u = NULL_VALUE;
+    u_data_min.u = NULL_VALUE;
 
-    if (mkdir(nombre_carpeta, 0777) == 0) {
+    // Create the directory for the output file.
+    if (!mkdir(DIR_NAME, DIR_PERMS)) {
         printf("Carpeta creada con éxito.\n");
     } else {
-        perror("Error al crear la carpeta");
+        perror("Error al crear la carpeta\n");
     }
 
-    /* Program variables to hold the data we will read. We will only need enough space to hold one timestep of data; one record. */
+    // Program variable to hold the data we will read.
     short (*u_in)[NLVL][NLAT][NLON] = calloc(NTIME, sizeof(*u_in));
     if(u_in == NULL) {
-		printf("Error: Couldn't allocate memory for data.\n");
+		perror("Error: Couldn't allocate memory for data.\n");
 		return 2;
 	}
 
-    /* These program variables hold the latitudes and longitudes. */
-    float lats[NLAT], lons[NLON];
-
-    /* Error handling. */
-    int retval;
-
-    /* Open the file. */
+    // Open the file. 
     if ((retval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
         ERR(retval);
 
-    /* Get the varids of the latitude and longitude coordinate
-     * variables. */
+    // Get the varids of the latitude and longitude coordinate variables.
     if ((retval = nc_inq_varid(ncid, LAT_NAME, &lat_varid)))
         ERR(retval);
     if ((retval = nc_inq_varid(ncid, LON_NAME, &lon_varid)))
         ERR(retval);
 
-    /* Read the coordinate variable data. */
+    // Get the varid of u
+    if ((retval = nc_inq_varid(ncid, U_NAME, &u_varid)))
+        ERR(retval);
+
+
+    // Read the coordinates variables data.
     if ((retval = nc_get_var_float(ncid, lat_varid, &lats[0])))
         ERR(retval);
     if ((retval = nc_get_var_float(ncid, lon_varid, &lons[0])))
         ERR(retval);
 
-    /* Get the varid of u*/
-    if ((retval = nc_inq_varid(ncid, U_NAME, &u_varid)))
-        ERR(retval);
 
-    /* Read and check one record at a time. */
+    // Read the data, scale factor, offset and long_name of u.
     if ((retval = nc_get_var_short(ncid, u_varid, &u_in[0][0][0][0])))
         ERR(retval);
 
@@ -252,14 +257,15 @@ int main(char* filename) {
     if (retval = nc_get_att_text(ncid, u_varid, LONG_NAME, long_name))
         ERR(retval);
 
-    /* Close the file. */
+
+    // Close the file.
     if ((retval = nc_close(ncid)))
         ERR(retval);
 
-    FILE* f;
+
     f = fopen(FILE_OUT, "w");
     if (f == NULL) {
-        perror("Error al abrir el archivo");
+        perror("Error al abrir el archivo\n");
         return 1;
     }
     fprintf(f, "{\n  \"%s\": [\n", long_name);
@@ -317,7 +323,6 @@ int main(char* filename) {
     printf("--------------------\nMIN U\n");
     print_u_lims_data(u_data_min);
 
-    FILE* f2;
     int lim = 5;
     f2 = fopen("out/u_lims_max.txt", "w");
     if(f2 == NULL) {
