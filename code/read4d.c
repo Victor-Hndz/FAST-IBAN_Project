@@ -43,6 +43,7 @@ struct u_lims_data {
     double u;
 };
 
+
 // Function for printing all the data of the struct.
 void print_u_lims_data(struct u_lims_data u_data) {
 	printf("Time: %d\n", u_data.time);
@@ -197,6 +198,62 @@ int identify_regions(float val, int time, int lvl, float *lats, float *lons, sho
     return 0;
 }
 
+void save_json(FILE* f, char* long_name, short(*u_in)[NLVL][NLAT][NLON], double offset, double scale_factor, struct u_lims_data* u_data_max, struct u_lims_data* u_data_min) {
+    f = fopen(FILE_OUT, "w");
+    if (f == NULL) {
+        perror("Error al abrir el archivo\n");
+    }
+    fprintf(f, "{\n  \"%s\": [\n", long_name);
+    for (int time = 0; time < NTIME; time++) {
+        fprintf(f, "    [\n");
+        for (int lvl = 0; lvl < NLVL; lvl++) {
+            fprintf(f, "      [\n");
+            for (int lat = 0; lat < NLAT; lat++) {
+                fprintf(f, "        [\n");
+                for (int lon = 0; lon < NLON; lon++) {
+                    if ((u_in[time][lvl][lat][lon] * scale_factor + offset) > u_data_max->u) {
+                        u_data_max->u = u_in[time][lvl][lat][lon] * scale_factor + offset;
+                        u_data_max->time = time;
+                        u_data_max->level = lvl;
+                        u_data_max->latitude = lat;
+                        u_data_max->longitude = lon;
+                    }
+                    if ((u_in[time][lvl][lat][lon] * scale_factor + offset) < u_data_min->u) {
+                        u_data_min->u = u_in[time][lvl][lat][lon] * scale_factor + offset;
+                        u_data_min->time = time;
+                        u_data_min->level = lvl;
+                        u_data_min->latitude = lat;
+                        u_data_min->longitude = lon;
+                    }
+                    fprintf(f, "          %.1f", (u_in[time][lvl][lat][lon] * scale_factor + offset));
+                    if (lon < NLON - 1) {
+                        fprintf(f, ",");
+                    }
+                    fprintf(f, "\n");
+                }
+                fprintf(f, "        ]");
+                if (lat < NLAT - 1) {
+                    fprintf(f, ",");
+                }
+                fprintf(f, "\n");
+            }
+            fprintf(f, "      ]");
+            if (lvl < NLVL - 1) {
+                fprintf(f, ",");
+            }
+            fprintf(f, "\n");
+        }
+        fprintf(f, "    ]");
+        if (time < NTIME - 1) {
+            fprintf(f, ",");
+        }
+        fprintf(f, "\n");
+    }
+    fprintf(f, "  ]\n}\n");
+ 
+    fclose(f);
+}
+
 int main(char* filename) {
     int ncid, u_varid, lat_varid, lon_varid, retval, i=0;
     double scale_factor, offset;
@@ -206,7 +263,7 @@ int main(char* filename) {
     FILE *f, *f2;
 
     u_data_max.u = NULL_VALUE;
-    u_data_min.u = NULL_VALUE;
+    u_data_min.u = -NULL_VALUE;
 
     // Create the directory for the output file.
     if (!mkdir(DIR_NAME, DIR_PERMS)) {
@@ -262,61 +319,8 @@ int main(char* filename) {
     if ((retval = nc_close(ncid)))
         ERR(retval);
 
-
-    f = fopen(FILE_OUT, "w");
-    if (f == NULL) {
-        perror("Error al abrir el archivo\n");
-        return 1;
-    }
-    fprintf(f, "{\n  \"%s\": [\n", long_name);
-    for (int time = 0; time < NTIME; time++) {
-        fprintf(f, "    [\n");
-        for (int lvl = 0; lvl < NLVL; lvl++) {
-            fprintf(f, "      [\n");
-            for (int lat = 0; lat < NLAT; lat++) {
-                fprintf(f, "        [\n");
-                for (int lon = 0; lon < NLON; lon++) {
-                    if ((u_in[time][lvl][lat][lon] * scale_factor + offset) > u_data_max.u) {
-                        u_data_max.u = u_in[time][lvl][lat][lon] * scale_factor + offset;
-                        u_data_max.time = time;
-                        u_data_max.level = lvl;
-                        u_data_max.latitude = lat;
-                        u_data_max.longitude = lon;
-                    }
-                    if ((u_in[time][lvl][lat][lon] * scale_factor + offset) < u_data_min.u) {
-                        u_data_min.u = u_in[time][lvl][lat][lon] * scale_factor + offset;
-                        u_data_min.time = time;
-                        u_data_min.level = lvl;
-                        u_data_min.latitude = lat;
-                        u_data_min.longitude = lon;
-                    }
-                    fprintf(f, "          %.1f", (u_in[time][lvl][lat][lon] * scale_factor + offset));
-                    if (lon < NLON - 1) {
-                        fprintf(f, ",");
-                    }
-                    fprintf(f, "\n");
-                }
-                fprintf(f, "        ]");
-                if (lat < NLAT - 1) {
-                    fprintf(f, ",");
-                }
-                fprintf(f, "\n");
-            }
-            fprintf(f, "      ]");
-            if (lvl < NLVL - 1) {
-                fprintf(f, ",");
-            }
-            fprintf(f, "\n");
-        }
-        fprintf(f, "    ]");
-        if (time < NTIME - 1) {
-            fprintf(f, ",");
-        }
-        fprintf(f, "\n");
-    }
-    fprintf(f, "  ]\n}\n");
- 
-    fclose(f);
+    // Save the data in a JSON file.
+    save_json(f, long_name, u_in, offset, scale_factor, &u_data_max, &u_data_min);
     
     printf("RESULTS: \n\nMAX U\n");
     print_u_lims_data(u_data_max);
