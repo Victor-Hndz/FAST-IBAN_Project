@@ -4,8 +4,10 @@
 #include <sys/stat.h>
 #include <netcdf.h>
 
-/* Handle errors by printing an error message and exiting with a
- * non-zero status. */
+
+/*DEFINES*/
+
+// Handle errors by printing an error message and exiting with a non-zero status.
 #define ERR(e) {printf("Error: %s\n", nc_strerror(e)); return 2;}
 
 #define FILE_NAME "u_925-700hPa_2022-03-14_00-06-12-18UTC.nc"
@@ -34,6 +36,9 @@
 #define MIN_LAT 90.0
 
 
+/*STRUCTS*/
+
+// Struct to hold the data we will read for the max and min values.
 struct u_lims_data {
     int time;
     int level;
@@ -43,7 +48,7 @@ struct u_lims_data {
 };
 
 
-//Function prototypes
+/*FUNCTION PROTOTYPES*/
 
 void print_u_lims_data(struct u_lims_data u_data);
 
