@@ -1,5 +1,6 @@
-comando para compilar read4d.c --> gcc -o read4d read4d.c -lnetcdf
+comando para compilar read4d.c --> gcc read4d.c functs.c functs.h -o read4d -lnetcdf
 comando para ejecutar read4d.c --> ./read4d
+comando todo en uno --> gcc read4d.c functs.c functs.h -o read4d -lnetcdf && "./"read4d
 
 Usa un archivo de entrada u_925-700hPa_2022-03-14_00-06-12-18UTC.nc
 Genera una carpeta out (si no existe) y dentro mete todos los ficheros de salida:
