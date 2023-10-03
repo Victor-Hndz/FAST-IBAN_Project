@@ -28,7 +28,11 @@
 #define DIR_NAME "out"
 #define DIR_PERMS 0777
 
-#define G 9.80665
+#define g_0 9.80665
+
+#define LAT_INI 90
+#define LON_INI 0
+#define RES 0.25
 
 
 /*STRUCTS*/
@@ -43,12 +47,17 @@ typedef struct z_data {
 } z_local_lim;
 
 // Struct to make a linked list of local max and min values.
-typedef struct {
+typedef struct z_lims {
     int numVars;
     z_local_lim *first;
+    struct z_lims *prev, *next;
 } z_local_lims;
 
-//HACER NUEVA STRUCT CON UN ARRAY DE LIMS
+//Array holder of lists.
+typedef struct {
+    int numVars;
+    z_local_lims *first;
+} z_local_lims_array;
 
 /*FUNCTIONS*/
 
@@ -63,6 +72,30 @@ void add_list(z_local_lims *z_data_array, z_local_lim *z_data) {
         z_data_array->first = z_data;
         z_data_array->numVars++;
     }
+}
+
+// Function to add a list to the array of lists.
+void add_list_array(z_local_lims_array *z_lists_arr, z_local_lims *z_data_array) {
+    if (z_lists_arr->numVars == 0) {
+        z_lists_arr->first = z_data_array;
+        z_lists_arr->numVars++;
+    } else {
+        z_lists_arr->first->prev = z_data_array;
+        z_data_array->next = z_lists_arr->first;
+        z_lists_arr->first = z_data_array;
+        z_lists_arr->numVars++;
+    }
+}
+
+// Function to create a new list.
+z_local_lims *create_lims(void) {
+    z_local_lims *z_data_array = malloc(sizeof(z_local_lims));
+    z_data_array->numVars = 0;
+    z_data_array->first = NULL;
+    z_data_array->prev = NULL;
+    z_data_array->next = NULL;
+
+    return z_data_array;
 }
 
 // Function to create a new local max or min value.
@@ -83,7 +116,7 @@ void print_z_lims_data(z_local_lim *z_data, double offset, double scale_factor) 
     printf("Time: %d\n", z_data->time);
     printf("Latitude: %f\n", z_data->latitude);
     printf("Longitude: %f\n", z_data->longitude);
-    printf("Z: %f\n", ((z_data->z * scale_factor) + offset)/G);
+    printf("Z: %f\n", ((z_data->z * scale_factor) + offset)/g_0);
 }
 
 // Function to print the list of local max or min values.
@@ -106,12 +139,54 @@ void free_list(z_local_lims *z_data_array) {
     free(z_data_array);
 }
 
+// Function to export the data of the local max or min values to a csv file.
+void export_to_csv(z_local_lims_array z_data_array, char *long_name, double offset, double scale_factor, int control) {
+    FILE *fp;
+    char *filename = malloc(sizeof(char)*100);
+    z_local_lims *aux = z_data_array.first;
+    z_local_lim *aux2;
+    double lat=0, lon=0;
+    int i=0;
+
+    if (control == 1) {
+        sprintf(filename, "%s/%s_max.csv", DIR_NAME, long_name);
+    } else {
+        sprintf(filename, "%s/%s_min.csv", DIR_NAME, long_name);
+    }
+
+    fp = fopen(filename, "w");
+    fprintf(fp, "time,latitude,longitude,z\n");
+    while (aux != NULL) {
+        aux2 = aux->first;
+        while (aux2 != NULL) {
+            lat = LAT_INI + (aux2->latitude * RES);
+            lon = LON_INI + (aux2->longitude * RES);
+            fprintf(fp, "%d,%f,%f,%f\n", aux2->time, lat, lon, ((aux2->z * scale_factor) + offset)/g_0);
+            aux2 = aux2->next;
+        }
+        aux = aux->next;
+    }
+    fclose(fp);
+}
+
 
 int main(void) {
     int ncid, z_varid, lat_varid, lon_varid, retval, i=0, j=0, cont, cont2;
     double scale_factor, offset, z_aux, z_aux_2;
     float lats[NLAT], lons[NLON];
     char long_name[NC_MAX_NAME+1] = "";
+    z_local_lims_array z_lists_arr_maxs, z_lists_arr_mins;
+    z_local_lims *z_data_array_maxs, *z_data_array_mins; 
+
+    z_lists_arr_maxs.numVars = 0;
+    z_lists_arr_maxs.first = NULL;
+    z_lists_arr_mins.numVars = 0;
+    z_lists_arr_mins.first = NULL;
+
+    for(i=0; i<NTIME; i++) {
+        add_list_array(&z_lists_arr_maxs, create_lims());
+        add_list_array(&z_lists_arr_mins, create_lims());
+    }
 
 
     // Create the directory for the output file.
@@ -125,14 +200,6 @@ int main(void) {
     // Program variable to hold the data we will read.
     short (*z_in)[NLAT][NLON] = calloc(NTIME, sizeof(*z_in));
     if (z_in == NULL) {
-        perror("Error: Couldn't allocate memory for data. ");
-        return 2;
-    }
-
-    // Program variable to hold the local max and min values.
-    z_local_lims *z_data_array_mins = malloc(NTIME*sizeof(z_local_lims));
-    z_local_lims *z_data_array_maxs = malloc(NTIME*sizeof(z_local_lims));
-    if (z_data_array_maxs == NULL || z_data_array_mins == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
@@ -179,24 +246,19 @@ int main(void) {
     if ((retval = nc_close(ncid)))
         ERR(retval);
 
-    
+    z_data_array_maxs = z_lists_arr_maxs.first;
+    z_data_array_mins = z_lists_arr_mins.first; 
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
-    for (int time=0; time<NTIME; time++) {
-        z_data_array_maxs[time].numVars = 0;
-        z_data_array_maxs[time].first = NULL;
-
-        z_data_array_mins[time].numVars = 0;
-        z_data_array_mins[time].first = NULL;
-
+    for (int time=0; time<NTIME; time++) {  
         for (int lat=0; lat<NLAT; lat++) {
             for (int lon=0; lon<NLON;lon++) {
                 if (lat>1 && lon>1 && lat<NLAT-2 && lon<NLON-2) {
-                    z_aux = ((z_in[time][lat][lon] * scale_factor) + offset)/G;
+                    z_aux = ((z_in[time][lat][lon] * scale_factor) + offset)/g_0;
                     cont = 0;
                     cont2 = 0;
                     for(i=lat-1; i<=lat+1; i++) {
                         for(j=lon-1; j<=lon+1; j++) {
-                            z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/G;
+                            z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/g_0;
 
                             if (z_aux > z_aux_2) 
                                 cont++;
@@ -206,26 +268,36 @@ int main(void) {
                     }
 
                 if(cont==8) {
-                    add_list(&z_data_array_maxs[time], create_lim(time, lats[lat], lons[lon], z_aux));
+                    add_list(z_data_array_maxs, create_lim(time, lats[lat], lons[lon], z_aux));
                 } else if (cont2==8) {
-                    add_list(&z_data_array_mins[time], create_lim(time, lats[lat], lons[lon], z_aux));
+                    add_list(z_data_array_mins, create_lim(time, lats[lat], lons[lon], z_aux));
                 }
                 }
             }
         }
+        z_data_array_maxs = z_data_array_maxs->next;
+        z_data_array_mins = z_data_array_mins->next;
     }
+    export_to_csv(z_lists_arr_maxs, long_name, offset, scale_factor, 1);
+    export_to_csv(z_lists_arr_mins, long_name, offset, scale_factor, -1);
 
-    printf("\n\n***RESULTS***\n\n");
+    z_data_array_maxs = z_lists_arr_maxs.first;
+    z_data_array_mins = z_lists_arr_mins.first; 
+    //printf("\n\n***RESULTS***\n\n");
     for(i=0;i<NTIME;i++) {
-        printf("\n***MAXS***\n");
+        //printf("\n***MAXS***\n");
         //print_list(&z_data_array_maxs[i], offset, scale_factor);
 
-        printf("\n***MINS***\n");
+        //printf("\n***MINS***\n");
         //print_list(&z_data_array_mins[i], offset, scale_factor);
 
-        free_list(&z_data_array_maxs[i]);
-        free_list(&z_data_array_mins[i]);
+        free_list(z_data_array_maxs);
+        free_list(z_data_array_mins);
+
+        z_data_array_maxs = z_data_array_maxs->next;
+        z_data_array_mins = z_data_array_mins->next;
     }
+    free(z_in);
 
     printf("\n\n*** SUCCESS reading the file %s! ***\n", FILE_NAME);
     return 0;
