@@ -42,7 +42,7 @@ typedef struct z_data {
     int time;
 	double latitude;
     double longitude;
-    short z;
+    double z;
     struct z_data *prev, *next;
 } z_local_lim;
 
@@ -116,7 +116,7 @@ void print_z_lims_data(z_local_lim *z_data, double offset, double scale_factor) 
     printf("Time: %d\n", z_data->time);
     printf("Latitude: %f\n", z_data->latitude);
     printf("Longitude: %f\n", z_data->longitude);
-    printf("Z: %f\n", ((z_data->z * scale_factor) + offset)/g_0);
+    printf("Z: %f\n", z_data->z);
 }
 
 // Function to print the list of local max or min values.
@@ -149,7 +149,7 @@ void export_to_csv(z_local_lims_array z_data_array, char *long_name, double offs
     int i=0;
 
     if (control == 1) {
-        sprintf(filename, "%s/%s_max.csv", DIR_NAME, long_name);
+        sprintf(filename, "%s/%s_max_test.csv", DIR_NAME, long_name);
     } else {
         sprintf(filename, "%s/%s_min.csv", DIR_NAME, long_name);
     }
@@ -159,9 +159,9 @@ void export_to_csv(z_local_lims_array z_data_array, char *long_name, double offs
     while (aux != NULL) {
         aux2 = aux->first;
         while (aux2 != NULL) {
-            lat = LAT_INI + (aux2->latitude * RES);
-            lon = LON_INI + (aux2->longitude * RES);
-            fprintf(fp, "%d,%f,%f,%f\n", aux2->time, lat, lon, ((aux2->z * scale_factor) + offset)/g_0);
+            lat = 90 - (aux2->latitude * RES);
+            lon = 359.75 - (aux2->longitude * RES);
+            fprintf(fp, "%d,%f,%f,%f\n", aux2->time, lat, lon, aux2->z);
             aux2 = aux2->next;
         }
         aux = aux->next;
@@ -252,34 +252,35 @@ int main(void) {
     for (int time=0; time<NTIME; time++) {  
         for (int lat=0; lat<NLAT; lat++) {
             for (int lon=0; lon<NLON;lon++) {
-                if (lat>1 && lon>1 && lat<NLAT-2 && lon<NLON-2) {
-                    z_aux = ((z_in[time][lat][lon] * scale_factor) + offset)/g_0;
-                    cont = 0;
-                    cont2 = 0;
-                    for(i=lat-1; i<=lat+1; i++) {
-                        for(j=lon-1; j<=lon+1; j++) {
-                            z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/g_0;
+                add_list(z_data_array_maxs, create_lim(time, lat, lon, z_in[time][lat][lon]));
+                // if (lat>1 && lon>1 && lat<NLAT-2 && lon<NLON-2) {
+                //     z_aux = ((z_in[time][lat][lon] * scale_factor) + offset)/g_0;
+                //     cont = 0;
+                //     cont2 = 0;
+                //     for(i=lat-1; i<=lat+1; i++) {
+                //         for(j=lon-1; j<=lon+1; j++) {
+                //             z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/g_0;
 
-                            if (z_aux > z_aux_2) 
-                                cont++;
-                            if (z_aux < z_aux_2) 
-                                cont2++;
-                        }
-                    }
+                //             if (z_aux > z_aux_2) 
+                //                 cont++;
+                //             if (z_aux < z_aux_2) 
+                //                 cont2++;
+                //         }
+                //     }
 
-                if(cont==8) {
-                    add_list(z_data_array_maxs, create_lim(time, lats[lat], lons[lon], z_aux));
-                } else if (cont2==8) {
-                    add_list(z_data_array_mins, create_lim(time, lats[lat], lons[lon], z_aux));
-                }
-                }
+                //     if(cont==8) {
+                //         add_list(z_data_array_maxs, create_lim(time, lats[lat], lons[lon], z_aux));
+                //     } else if (cont2==8) {
+                //         add_list(z_data_array_mins, create_lim(time, lats[lat], lons[lon], z_aux));
+                //     }
+                // }
             }
         }
         z_data_array_maxs = z_data_array_maxs->next;
         z_data_array_mins = z_data_array_mins->next;
     }
     export_to_csv(z_lists_arr_maxs, long_name, offset, scale_factor, 1);
-    export_to_csv(z_lists_arr_mins, long_name, offset, scale_factor, -1);
+    //export_to_csv(z_lists_arr_mins, long_name, offset, scale_factor, -1);
 
     z_data_array_maxs = z_lists_arr_maxs.first;
     z_data_array_mins = z_lists_arr_mins.first; 
