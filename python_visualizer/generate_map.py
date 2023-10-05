@@ -5,7 +5,7 @@ import cartopy as cartopy
 import os 
  
 # Lee el archivo CSV 
-data = pd.read_csv('../code/out/Geopotential_max_test.csv') 
+data = pd.read_csv('../code/out/Geopotential_min.csv') 
  
 # Extrae los datos de latitud, longitud y variable
 latitudes = data['latitude'].copy()
@@ -21,8 +21,8 @@ fig = plt.figure(figsize=(10, 6))
 ax = plt.axes(projection=ccrs.PlateCarree()) 
 
 # Establece límites manuales para cubrir todo el mundo
-# ax.set_xlim(-180, 180)
-# ax.set_ylim(-90, 90)
+ax.set_xlim(-180, 180)
+ax.set_ylim(-90, 90)
  
 # Agrega detalles geográficos al mapa 
 ax.coastlines() 

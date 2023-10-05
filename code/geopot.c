@@ -149,7 +149,7 @@ void export_to_csv(z_local_lims_array z_data_array, char *long_name, double offs
     int i=0;
 
     if (control == 1) {
-        sprintf(filename, "%s/%s_max_test.csv", DIR_NAME, long_name);
+        sprintf(filename, "%s/%s_max.csv", DIR_NAME, long_name);
     } else {
         sprintf(filename, "%s/%s_min.csv", DIR_NAME, long_name);
     }
@@ -248,39 +248,70 @@ int main(void) {
 
     z_data_array_maxs = z_lists_arr_maxs.first;
     z_data_array_mins = z_lists_arr_mins.first; 
+    int max_it=0;
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
     for (int time=0; time<NTIME; time++) {  
         for (int lat=0; lat<NLAT; lat++) {
             for (int lon=0; lon<NLON;lon++) {
-                add_list(z_data_array_maxs, create_lim(time, lat, lon, z_in[time][lat][lon]));
-                // if (lat>1 && lon>1 && lat<NLAT-2 && lon<NLON-2) {
-                //     z_aux = ((z_in[time][lat][lon] * scale_factor) + offset)/g_0;
-                //     cont = 0;
-                //     cont2 = 0;
-                //     for(i=lat-1; i<=lat+1; i++) {
-                //         for(j=lon-1; j<=lon+1; j++) {
-                //             z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/g_0;
+                z_aux = ((z_in[time][lat][lon] * scale_factor) + offset)/g_0;
+                cont = 0;
+                cont2 = 0;
 
-                //             if (z_aux > z_aux_2) 
-                //                 cont++;
-                //             if (z_aux < z_aux_2) 
-                //                 cont2++;
-                //         }
-                //     }
+                if (lat>0 && lon>0 && lat<NLAT-1 && lon<NLON-1) {
+                    for(i=lat-1; i<=lat+1; i++) {
+                        for(j=lon-1; j<=lon+1; j++) {
+                            z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/g_0;
 
-                //     if(cont==8) {
-                //         add_list(z_data_array_maxs, create_lim(time, lats[lat], lons[lon], z_aux));
-                //     } else if (cont2==8) {
-                //         add_list(z_data_array_mins, create_lim(time, lats[lat], lons[lon], z_aux));
-                //     }
-                // }
+                            if (z_aux > z_aux_2) 
+                                cont++;
+                            if (z_aux < z_aux_2) 
+                                cont2++;
+                        }
+                    }
+
+                    if(cont==8) 
+                        add_list(z_data_array_maxs, create_lim(time, lat, lon, z_aux));
+                    else if (cont2==8) 
+                        add_list(z_data_array_mins, create_lim(time, lat, lon, z_aux));
+                    
+                } else {
+                    max_it=0;
+
+                    for(i=lat-1; i<=lat+1; i++) {
+                        for(j=lon-1; j<=lon+1; j++) {
+                            if(i<0 || i>NLAT-1)
+                                break;
+
+                            if(j>NLAT-1)
+                                break;
+                            
+                            if(j<0) 
+                                j++;
+
+                            
+                            
+                            max_it++;
+                            z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/g_0;
+
+                            if (z_aux > z_aux_2) 
+                                cont++;
+                            if (z_aux < z_aux_2) 
+                                cont2++;
+                            
+                        }
+                    }
+                    if(cont == max_it)
+                        add_list(z_data_array_maxs, create_lim(time, lat, lon, z_aux));
+                    else if (cont2 == max_it)
+                        add_list(z_data_array_mins, create_lim(time, lat, lon, z_aux));
+                }
             }
         }
         z_data_array_maxs = z_data_array_maxs->next;
         z_data_array_mins = z_data_array_mins->next;
     }
     export_to_csv(z_lists_arr_maxs, long_name, offset, scale_factor, 1);
-    //export_to_csv(z_lists_arr_mins, long_name, offset, scale_factor, -1);
+    export_to_csv(z_lists_arr_mins, long_name, offset, scale_factor, -1);
 
     z_data_array_maxs = z_lists_arr_maxs.first;
     z_data_array_mins = z_lists_arr_mins.first; 
