@@ -257,54 +257,25 @@ int main(void) {
                 cont = 0;
                 cont2 = 0;
 
-                if (lat>0 && lon>0 && lat<NLAT-1 && lon<NLON-1) {
-                    for(i=lat-1; i<=lat+1; i++) {
-                        for(j=lon-1; j<=lon+1; j++) {
-                            z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/g_0;
-
-                            if (z_aux > z_aux_2) 
-                                cont++;
-                            if (z_aux < z_aux_2) 
-                                cont2++;
+                for(i=lat-1; i<=lat+1; i++) {
+                    for(j=lon-1; j<=lon+1; j++) {
+                        if (i<0 || j<0 || i>NLAT-1 || j>NLON-1) {
+                            continue;
                         }
+                        z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/g_0;
+
+                        if (z_aux > z_aux_2) 
+                            cont++;
+                        if (z_aux < z_aux_2) 
+                            cont2++;
                     }
-
-                    if(cont==8) 
-                        add_list(z_data_array_maxs, create_lim(time, lat, lon, z_aux));
-                    else if (cont2==8) 
-                        add_list(z_data_array_mins, create_lim(time, lat, lon, z_aux));
-                    
-                } else {
-                    max_it=0;
-
-                    for(i=lat-1; i<=lat+1; i++) {
-                        for(j=lon-1; j<=lon+1; j++) {
-                            if(i<0 || i>NLAT-1)
-                                break;
-
-                            if(j>NLAT-1)
-                                break;
-                            
-                            if(j<0) 
-                                j++;
-
-                            
-                            
-                            max_it++;
-                            z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/g_0;
-
-                            if (z_aux > z_aux_2) 
-                                cont++;
-                            if (z_aux < z_aux_2) 
-                                cont2++;
-                            
-                        }
-                    }
-                    if(cont == max_it)
-                        add_list(z_data_array_maxs, create_lim(time, lat, lon, z_aux));
-                    else if (cont2 == max_it)
-                        add_list(z_data_array_mins, create_lim(time, lat, lon, z_aux));
                 }
+
+                if(cont==8) 
+                    add_list(z_data_array_maxs, create_lim(time, lat, lon, z_aux));
+                else if (cont2==8) 
+                    add_list(z_data_array_mins, create_lim(time, lat, lon, z_aux));
+                    
             }
         }
         z_data_array_maxs = z_data_array_maxs->next;
