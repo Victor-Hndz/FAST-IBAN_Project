@@ -140,7 +140,7 @@ void free_list(z_local_lims *z_data_array) {
 }
 
 // Function to export the data of the local max or min values to a csv file.
-void export_to_csv(z_local_lims_array z_data_array, char *long_name, double offset, double scale_factor, int control) {
+void export_to_csv(z_local_lims_array z_data_array, char *long_name, int control) {
     FILE *fp;
     char *filename = malloc(sizeof(char)*100);
     z_local_lims *aux = z_data_array.first;
@@ -150,9 +150,10 @@ void export_to_csv(z_local_lims_array z_data_array, char *long_name, double offs
 
     if (control == 1) {
         sprintf(filename, "%s/%s_max.csv", DIR_NAME, long_name);
-    } else {
+    } else if(control == -1) {
         sprintf(filename, "%s/%s_min.csv", DIR_NAME, long_name);
-    }
+    } else {
+        sprintf(filename, "%s/%s_all.csv", DIR_NAME, long_name);}
 
     fp = fopen(filename, "w");
     fprintf(fp, "time,latitude,longitude,z\n");
@@ -175,17 +176,20 @@ int main(void) {
     double scale_factor, offset, z_aux, z_aux_2;
     float lats[NLAT], lons[NLON];
     char long_name[NC_MAX_NAME+1] = "";
-    z_local_lims_array z_lists_arr_maxs, z_lists_arr_mins;
-    z_local_lims *z_data_array_maxs, *z_data_array_mins; 
+    z_local_lims_array z_lists_arr_maxs, z_lists_arr_mins, z_lists_arr_all;
+    z_local_lims *z_data_array_maxs, *z_data_array_mins, *z_data_array_all; 
 
     z_lists_arr_maxs.numVars = 0;
     z_lists_arr_maxs.first = NULL;
     z_lists_arr_mins.numVars = 0;
     z_lists_arr_mins.first = NULL;
+    z_lists_arr_all.numVars = 0;
+    z_lists_arr_all.first = NULL;
 
     for(i=0; i<NTIME; i++) {
         add_list_array(&z_lists_arr_maxs, create_lims());
         add_list_array(&z_lists_arr_mins, create_lims());
+        add_list_array(&z_lists_arr_all, create_lims());
     }
 
 
@@ -248,6 +252,8 @@ int main(void) {
 
     z_data_array_maxs = z_lists_arr_maxs.first;
     z_data_array_mins = z_lists_arr_mins.first; 
+    z_data_array_all = z_lists_arr_all.first;
+
     int max_it=0;
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
     for (int time=0; time<NTIME; time++) {  
@@ -256,6 +262,8 @@ int main(void) {
                 z_aux = ((z_in[time][lat][lon] * scale_factor) + offset)/g_0;
                 cont = 0;
                 cont2 = 0;
+
+                add_list(z_data_array_all, create_lim(time, lat, lon, z_aux));
 
                 for(i=lat-1; i<=lat+1; i++) {
                     for(j=lon-1; j<=lon+1; j++) {
@@ -280,25 +288,25 @@ int main(void) {
         }
         z_data_array_maxs = z_data_array_maxs->next;
         z_data_array_mins = z_data_array_mins->next;
+        z_data_array_all = z_data_array_all->next;
     }
-    export_to_csv(z_lists_arr_maxs, long_name, offset, scale_factor, 1);
-    export_to_csv(z_lists_arr_mins, long_name, offset, scale_factor, -1);
+    export_to_csv(z_lists_arr_maxs, long_name, 1);
+    export_to_csv(z_lists_arr_mins, long_name, -1);
+    export_to_csv(z_lists_arr_all, long_name, 0);
+
 
     z_data_array_maxs = z_lists_arr_maxs.first;
     z_data_array_mins = z_lists_arr_mins.first; 
-    //printf("\n\n***RESULTS***\n\n");
+    z_data_array_all = z_lists_arr_all.first;
+
     for(i=0;i<NTIME;i++) {
-        //printf("\n***MAXS***\n");
-        //print_list(&z_data_array_maxs[i], offset, scale_factor);
-
-        //printf("\n***MINS***\n");
-        //print_list(&z_data_array_mins[i], offset, scale_factor);
-
         free_list(z_data_array_maxs);
         free_list(z_data_array_mins);
+        free_list(z_data_array_all);
 
         z_data_array_maxs = z_data_array_maxs->next;
         z_data_array_mins = z_data_array_mins->next;
+        z_data_array_all = z_data_array_all->next;
     }
     free(z_in);
 

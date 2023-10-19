@@ -30,10 +30,10 @@ ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
 ax.add_feature(cartopy.feature.LAND, edgecolor='black') 
  
 # Plotea los puntos en el mapa 
-sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree()) 
+contours = plt.tricontourf(longitudes, latitudes, variable, cmap='jet', transform=ccrs.PlateCarree())
  
 # Agrega una barra de colores 
-cbar = plt.colorbar(sc, ax=ax, orientation='vertical') 
+cbar = plt.colorbar(contours, ax=ax, orientation='vertical') 
 cbar.set_label('Geopotencial (m)') 
  
 # Añade títulos y etiquetas 
