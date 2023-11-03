@@ -269,6 +269,7 @@ int main(void) {
                     for(j=lon-1; j<=lon+1; j++) {
                         if (i<0 || j<0 || i>NLAT-1 || j>NLON-1) {
                             continue;
+                            //ES UN MAPA, EL CONTIGUO AL PRIMERO ES EL ÚLTIMO :)
                         }
                         z_aux_2 = ((z_in[time][i][j] * scale_factor) + offset)/g_0;
 

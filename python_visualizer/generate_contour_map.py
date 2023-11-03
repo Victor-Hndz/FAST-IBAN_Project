@@ -1,56 +1,89 @@
-import pandas as pd
+import netCDF4 as nc
 import numpy as np
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy
+import cartopy.crs as ccrs 
+import cartopy as cartopy 
+import os
 
-import matplotlib.tri as tri
+g_0 = 9.80665 # m/s^2
+niveles = 15
 
-# Lee el archivo CSV
-data = pd.read_csv('../code/out/Geopotential_all.csv')
+# Abrir el archivo NetCDF
+archivo_nc = nc.Dataset('../code/geopot_500hPa_2022-03-14_00-06-12-18UTC.nc', 'r')
 
-# Extrae los datos de latitud, longitud y variable
-latitudes = data['latitude'].copy()
-longitudes = data['longitude'].copy()
-variable = data['z'].copy()
+# Obtener los datos de tiempo, latitud, longitud y la variable z
+time = archivo_nc.variables['time'][:]
+lat = archivo_nc.variables['latitude'][:]
+lon = archivo_nc.variables['longitude'][:]
+z = archivo_nc.variables['z'][:]
 
-# Invertir las longitudes y convertirlas de 0-360 a -180 a 180
-longitudes = (longitudes - 360) * -1
+# Obtener los atributos de escala y desplazamiento
+offset = archivo_nc.variables['z'].getncattr('add_offset')
+scale = archivo_nc.variables['z'].getncattr('scale_factor')
 
-# Crea una cuadrícula regular de latitudes y longitudes
-latitudes_grid = np.linspace(-90, 90, 200)
-longitudes_grid = np.linspace(-180, 180, 400)
+# Cerrar el archivo NetCDF
+archivo_nc.close()
 
-triang = tri.Triangulation(longitudes, latitudes)
-interpolator = tri.LinearTriInterpolator(triang, variable)
-Lat_grid, Lon_Grid = np.meshgrid(latitudes_grid, longitudes_grid)
-variable_grid = interpolator(Lon_Grid, Lat_grid)
+# Aplicar la escala y el desplazamiento a los datos de z
+z = (z * scale + offset) / g_0
 
-# Crear el primer mapa con contornos interpolados
-fig, ax1 = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()}, figsize=(10, 6))
-contours = ax1.contour(latitudes_grid, longitudes_grid, variable_grid, 20, transform=ccrs.PlateCarree())
-cntr1 = ax1.contourf(latitudes_grid, longitudes_grid, variable_grid, 20, transform=ccrs.PlateCarree())
-fig.colorbar(cntr1, ax=ax1)
-ax1.plot(latitudes, longitudes, 'ko', ms=3, transform=ccrs.PlateCarree())
-ax1.coastlines()
-ax1.set_title('Curvas de Contorno Interpoladas - Geopotencial máximo en 500 hPa')
+z = z[0]
 
-# Crear el segundo mapa con las curvas de contorno sobre los datos originales
-fig2 = plt.figure(figsize=(10, 6))
-ax2 = plt.axes(projection=ccrs.PlateCarree())
-ax2.coastlines()
-ax2.add_feature(cartopy.feature.BORDERS, linestyle=':')
-ax2.add_feature(cartopy.feature.LAND, edgecolor='black')
-contour = ax2.contour(longitudes, latitudes, variable, 20, colors='black', transform=ccrs.PlateCarree())
-ax2.clabel(contour, inline=1, fontsize=10)
-ax2.set_title('Curvas de Contorno sobre Datos Originales - Geopotencial máximo en 500 hPa')
+# lon = (lon - 360) * -1
 
-# Mostrar ambos mapas
-plt.show()
+# Crear una figura para un mapa del mundo
+fig = plt.figure(figsize=(10, 6))
+ax = plt.axes(projection=ccrs.PlateCarree())
 
-# Opcional: Guardar los mapas como imágenes
-nombre_base = "contornos_interpolados_geopotencial"
-extension = ".png"
-nombre_archivo = f"{nombre_base}{extension}"
-plt.savefig(nombre_archivo)
-print(f"Imagen de curvas de contorno interpoladas guardada como: {nombre_archivo}")
+# Establecer límites manuales para cubrir todo el mundo
+ax.set_xlim(-180, 180)
+ax.set_ylim(-90, 90)
+
+# Agregar detalles geográficos al mapa
+ax.coastlines()
+ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
+
+# Plotea los puntos en el mapa
+sc = ax.contour(lon, lat, z, levels=niveles, cmap='jet', transform=ccrs.PlateCarree())
+
+#valores de contorno
+plt.clabel(sc, inline=True, fontsize=8)
+
+# Agrega una barra de colores
+cbar = plt.colorbar(sc, ax=ax, orientation='vertical')
+cbar.set_label('Geopotencial (m)')
+
+# Añade títulos y etiquetas
+plt.title('Geopotencial máximo en 500 hPa con %i niveles' % niveles )
+plt.xlabel('Longitud')
+plt.ylabel('Latitud')
+
+# Muestra la figura
+# plt.show()
+
+# La barra de progreso llegará al 100% cuando termine de generar el mapa.
+print("Mapa generado. Guardando mapa...")
+
+# Definir el nombre base del archivo y la extensión 
+nombre_base = "mapa_geopotencial_contornos_%il" % niveles
+extension = ".png" 
+ 
+# Inicializar el contador para los números incrementales 
+contador = 0 
+ 
+# Generar un nombre de archivo único 
+while True: 
+    if contador == 0: 
+        nombre_archivo = f"{nombre_base}{extension}" 
+    else: 
+        nombre_archivo = f"{nombre_base}({contador}){extension}" 
+    if not os.path.exists(nombre_archivo): 
+        break 
+    contador += 1 
+ 
+# Guardar la figura como imagen en la ubicación especificada 
+plt.savefig(nombre_archivo) 
+ 
+# Informa que la imagen ha sido guardada 
+print(f"Imagen guardada como: {nombre_archivo}") 
+
