@@ -3,9 +3,15 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <netcdf.h>
+#include <math.h>
 
 
 /*DEFINES*/
+
+#ifndef M_PI
+#    define M_PI 3.14159265358979323846
+#endif
+
 
 // Handle errors by printing an error message and exiting with a non-zero status.
 #define ERR(e) {printf("Error: %s\n", nc_strerror(e)); return 2;}
@@ -34,6 +40,8 @@
 #define LON_INI 0
 #define RES 0.25
 
+#define R 6371 // Earth's radius in km
+
 
 /*STRUCTS*/
 
@@ -58,6 +66,12 @@ typedef struct {
     int numVars;
     z_local_lims *first;
 } z_local_lims_array;
+
+//Struct that holds a point (lat, lon).
+typedef struct {
+    double lat;
+    double lon;
+} coord_point;
 
 /*FUNCTIONS*/
 
@@ -170,6 +184,24 @@ void export_to_csv(z_local_lims_array z_data_array, char *long_name, int control
     fclose(fp);
 }
 
+coord_point coord_from_point_distance(coord_point initial, double dist, double bearing) {
+    coord_point final = {0, 0};
+
+    // Convert to radians
+    initial.lat = initial.lat * M_PI / 180;
+    initial.lon = initial.lon * M_PI / 180;
+    bearing = bearing * M_PI / 180;
+
+    // Calculate the latitude and longitude of the second point
+    final.lat = initial.lat + dist / R;
+    final.lon = initial.lon + dist / (R * cos(initial.lat));
+
+    // Convert back to degrees
+    final.lat = final.lat * 180 / M_PI;
+    final.lon = final.lon * 180 / M_PI;
+
+    return final;
+}
 
 int main(void) {
     int ncid, z_varid, lat_varid, lon_varid, retval, i=0, j=0, cont, cont2;
