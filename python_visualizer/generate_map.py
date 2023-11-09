@@ -13,9 +13,8 @@ longitudes = data['longitude'].copy()
 variable = data['z'].copy()
 
 # Invertir las longitudes y convertirlas de 0-360 a -180 a 180
-longitudes = (longitudes - 360) * -1
+longitudes = 360 - longitudes
 
- 
 # Crea una figura y ejes usando cartopy 
 fig = plt.figure(figsize=(10, 6)) 
 ax = plt.axes(projection=ccrs.PlateCarree()) 

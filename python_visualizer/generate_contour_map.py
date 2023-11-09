@@ -7,6 +7,7 @@ import os
 
 g_0 = 9.80665 # m/s^2
 niveles = 15
+tiempo = 1
 
 # Abrir el archivo NetCDF
 archivo_nc = nc.Dataset('../code/geopot_500hPa_2022-03-14_00-06-12-18UTC.nc', 'r')
@@ -27,7 +28,7 @@ archivo_nc.close()
 # Aplicar la escala y el desplazamiento a los datos de z
 z = (z * scale + offset) / g_0
 
-z = z[0]
+z = z[tiempo]
 
 # lon = (lon - 360) * -1
 
@@ -65,7 +66,7 @@ plt.ylabel('Latitud')
 print("Mapa generado. Guardando mapa...")
 
 # Definir el nombre base del archivo y la extensión 
-nombre_base = "mapa_geopotencial_contornos_%il" % niveles
+nombre_base = "mapa_geopotencial_contornos_%il_t%i" % (niveles, tiempo)
 extension = ".png" 
  
 # Inicializar el contador para los números incrementales 

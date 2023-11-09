@@ -262,7 +262,7 @@ int main(void) {
 
     if ((retval = nc_get_var_float(ncid, lon_varid, &lons[0])))
         ERR(retval);
-    
+
 
     // Read the data, scale factor, offset and long_name of z.
     if ((retval = nc_get_var_short(ncid, z_varid, &z_in[0][0][0])))
