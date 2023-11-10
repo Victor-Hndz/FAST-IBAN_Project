@@ -183,8 +183,9 @@ void export_to_csv(z_local_lims_array z_data_array, char *long_name, int control
     fclose(fp);
 }
 
-coord_point coord_from_point_distance(coord_point initial, double dist, double bearing) {
+coord_point coord_from_great_circle(coord_point initial, double dist, double bearing) {
     coord_point final = {0, 0};
+    double Ad = dist / R;
 
     // Convert to radians
     initial.lat = initial.lat * M_PI / 180;
@@ -192,8 +193,8 @@ coord_point coord_from_point_distance(coord_point initial, double dist, double b
     bearing = bearing * M_PI / 180;
 
     // Calculate the latitude and longitude of the second point
-    final.lat = initial.lat + dist / R;
-    final.lon = initial.lon + dist / (R * cos(initial.lat));
+    final.lat = asin(sin(initial.lat) * cos(Ad) + cos(initial.lat) * sin(Ad) * cos(bearing));
+    final.lon = initial.lon + atan2(sin(bearing) * sin(Ad) * cos(initial.lat), cos(Ad) - sin(initial.lat) * sin(final.lat));
 
     // Convert back to degrees
     final.lat = final.lat * 180 / M_PI;
