@@ -121,6 +121,25 @@ z_local_lim *create_lim(int time, coord_point point, short z) {
     return z_data;
 }
 
+// Function to find a z_local_lim struct in the linked list searching by the coord_point and time.
+z_local_lim *find_lim(z_local_lims_array *z_data_array, coord_point point, int time) {
+    z_local_lims *aux = z_data_array->first;
+    if(time != 0)
+        for(int i=0; i<time; i++)
+            aux = aux->next;
+    
+    z_local_lim *aux2 = aux->first;
+
+    while (aux2 != NULL) {
+        if (aux2->coord.lat == point.lat && aux2->coord.lon == point.lon) {
+            return aux2;
+        }
+        aux2 = aux2->next;
+    }
+    
+    return NULL;
+}
+
 // Function to create a coord_point struct from a latitude and longitude.
 coord_point create_point(double lat, double lon) {
     coord_point point = {lat, lon};
@@ -202,6 +221,34 @@ coord_point coord_from_great_circle(coord_point initial, double dist, double bea
 
     return final;
 }
+
+double bilinear_interpolation(coord_point p, z_local_lims_array *z_lists_arr, int time) {
+    double z = -1, z1 = -1, z2 = -1, z3 = -1, z4 = -1;
+    
+    //Calculate the 4 points of the square.
+    coord_point p1 = {floor(p.lat/RES)*RES, floor(p.lon/RES)*RES};
+    coord_point p2 = {floor(p.lat/RES)*RES, ceil(p.lon/RES)*RES};
+    coord_point p3 = {ceil(p.lat/RES)*RES, floor(p.lon/RES)*RES};
+    coord_point p4 = {ceil(p.lat/RES)*RES, ceil(p.lon/RES)*RES};
+
+    //get the 4 values of the square.
+    z1 = find_lim(z_lists_arr, p1, time)->z;
+    z2 = find_lim(z_lists_arr, p2, time)->z;
+    z3 = find_lim(z_lists_arr, p3, time)->z;
+    z4 = find_lim(z_lists_arr, p4, time)->z;
+
+    if(z1 == -1 || z2 == -1 || z3 == -1 || z4 == -1) {
+        printf("Error: No se ha encontrado el punto en la lista.\n");
+        exit(1);
+    }
+
+    //Calculate the interpolation.
+    return z = (z1*(p4.lat-p.lat)*(p4.lon-p.lon) + z2*(p.lat-p3.lat)*(p4.lon-p.lon) + 
+    z3*(p4.lat-p.lat)*(p.lon-p3.lon) + z4*(p.lat-p3.lat)*(p.lon-p3.lon)) / 
+    ((p4.lat-p1.lat)*(p4.lon-p1.lon) + (p2.lat-p3.lat)*(p4.lon-p1.lon) + 
+    (p4.lat-p1.lat)*(p2.lon-p3.lon) + (p2.lat-p3.lat)*(p2.lon-p3.lon));
+}
+
 
 int main(void) {
     int ncid, z_varid, lat_varid, lon_varid, retval, i=0, j=0, cont, cont2;
