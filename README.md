@@ -20,3 +20,21 @@ Comando de ejecución del script de python --> python generate_map.py
 
 
 Todo está WIP y en fase de pruebas.
+
+Para compilar y hacer pruebas usando cmake:
+
+para usar cmake, haces:
+- mkdir build
+- cd build
+- cmake -G "MinGW Makefiles" .. (Windows)
+- cmake --build .
+
+y luego para correr tests, dentro de build:
+- ctest
+- ctest -V para ver errores y mierdas si falla
+
+para añadir tests: 
+- en la carpeta tests un .c con el test
+- en el CMakeLists.c de la carpeta tests: 
+    - añadir en add_executable al final el nombre del archivo .c
+    - añadir al final un add_test con la misma forma que el que ya hay, en el NAME el nombre que quieras y lo otro lo dejas igual
