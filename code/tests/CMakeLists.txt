@@ -1,13 +1,11 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.8...3.27)
 
-project(tests)
+project(TESTS)
 
-include_directories(.)
-# link_directories(.)
+add_executable(TESTS test_coordpoint.c)
 
-# add_executable(test_tokenizar test_tokenizar.c)
+target_link_libraries(TESTS CALC)
+target_link_libraries(TESTS UTILS)
+target_link_libraries(TESTS LIB)
 
-# target_link_libraries(TEST NAME)
-
-
-# add_test(NAME test_tokenizar COMMAND test_tokenizar)
+add_test(NAME test_coordpoint COMMAND TESTS)
