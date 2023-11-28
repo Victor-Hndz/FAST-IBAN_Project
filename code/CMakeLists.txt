@@ -9,7 +9,7 @@ project(FAST-IBAN
     DESCRIPTION "Project for detecting atmospheric blocks in the North Atlantic" 
     LANGUAGES C)
 
-# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 enable_testing()
 
 
