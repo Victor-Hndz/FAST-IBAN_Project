@@ -15,8 +15,8 @@ Usa un archivo de entrada .nc
 Genera una carpeta out (si no existe) y dentro mete todos los ficheros de salida que son .csv con diferentes datos de interés.
 
 En python visualizer, a partir de un fichero csv  se ejecuta el script y genera una imagen que es un mapa representando los valores del csv.
-Comando de ejecución del script de python --> python generate_map.py
-Para mapa de contornos --> python generate_contour_map.py
+- Comando de ejecución del script de python para mapas de dispersión --> python generate_map.py
+- Comando de ejecución para mapa de contornos --> python generate_contour_map.py
 
 En el fichero "Diagrama de estrcuturas FAST-IBAN" está explicado el funcionamiento de las listas.
 
