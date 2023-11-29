@@ -94,7 +94,7 @@ int main(void) {
                 cont = 0;
                 cont2 = 0;
 
-                add_list(z_data_array_all, create_lim(time, create_point(lats[lat], lons[lon]), z_aux));
+                //add_list(z_data_array_all, create_lim(time, create_point(lats[lat], lons[lon]), z_aux));
 
                 for(i=lat-1; i<=lat+1; i++) {
                     for(j=lon-1; j<=lon+1; j++) {
@@ -122,6 +122,11 @@ int main(void) {
         z_data_array_mins = z_data_array_mins->next;
         z_data_array_all = z_data_array_all->next;
     }
+
+    for(i=-N_BEARINGS; i<N_BEARINGS;i++) {
+        printf("Bearing: %d\n", i);
+    }
+
     export_z_to_csv(z_lists_arr_maxs, long_name, 1);
     export_z_to_csv(z_lists_arr_mins, long_name, -1);
     export_z_to_csv(z_lists_arr_all, long_name, 0);

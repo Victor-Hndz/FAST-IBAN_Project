@@ -123,6 +123,5 @@ void free_list_array(z_local_lims_array *z_data_array) {
             free(aux);
             aux = z_data_array->first;
         }
-        free(z_data_array);
     }
 }

@@ -17,7 +17,7 @@
 // Handle errors by printing an error message and exiting with a non-zero status.
 #define ERR(e) {printf("Error: %s\n", nc_strerror(e)); return 2;}
 
-#define FILE_NAME "geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
+#define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
 
 #define NDIMS 3
 #define NTIME 4
@@ -39,7 +39,7 @@
 
 #define g_0 9.80665 // Standard gravity in m/s^2
 #define R 6371 // Earth's radius in km
-
+#define N_BEARINGS 8 // Number of bearings to use in the great circle method
 
 /*STRUCTS*/
 

@@ -30,5 +30,10 @@ target_link_libraries(FAST-IBAN PRIVATE CALC)
 target_link_libraries(FAST-IBAN PRIVATE UTILS)
 target_link_libraries(FAST-IBAN PRIVATE LIB)
 
+add_custom_command(TARGET FAST-IBAN POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/data
+        ${CMAKE_CURRENT_BINARY_DIR}/data)
+
 
 target_include_directories(FAST-IBAN PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
