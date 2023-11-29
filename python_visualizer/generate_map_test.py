@@ -5,7 +5,7 @@ import cartopy as cartopy
 import os
 
 # Lee el archivo CSV
-data = pd.read_csv('../code/out/Geopotential_min.csv')
+data = pd.read_csv('data/Geopotential_selected.csv')
 
 # Extrae los datos de tiempo, latitud, longitud y variable
 tiempos = data['time'].unique()  # Obtén los valores únicos de tiempo

@@ -5,7 +5,7 @@ import cartopy as cartopy
 import os 
  
 # Lee el archivo CSV 
-data = pd.read_csv('../code/out/Geopotential_all.csv') 
+data = pd.read_csv('data/Geopotential_max.csv') 
  
 # Extrae los datos de latitud, longitud y variable
 latitudes = data['latitude'].copy()
