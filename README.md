@@ -1,4 +1,4 @@
-# PROYECTO FAST-IBA^3N (FAST Identificación de Bloqueos Atmosféricos Automático en el Atlántico Norte)
+# PROYECTO FAST-IBA<sup>3N</sup> (FAST Identificación de Bloqueos Atmosféricos Automático en el Atlántico Norte)
 
 ## OBSOLETO
 comando para compilar read4d.c --> gcc read4d.c functs.c functs.h -o read4d -lnetcdf
