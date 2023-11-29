@@ -8,8 +8,9 @@ int main(void) {
     double scale_factor, offset, z_aux, z_aux_2;
     float lats[NLAT], lons[NLON];
     char long_name[NC_MAX_NAME+1] = "";
-    z_local_lims_array z_lists_arr_maxs, z_lists_arr_mins, z_lists_arr_all;
-    z_local_lims *z_data_array_maxs, *z_data_array_mins, *z_data_array_all; 
+    z_local_lims_array z_lists_arr_maxs, z_lists_arr_mins, z_lists_arr_all, z_lists_arr_selected;
+    z_local_lims *z_data_array_maxs, *z_data_array_mins, *z_data_array_all, *z_data_array_selected; 
+    z_local_lim *aux;
 
     z_lists_arr_maxs.numVars = 0;
     z_lists_arr_maxs.first = NULL;
@@ -17,11 +18,14 @@ int main(void) {
     z_lists_arr_mins.first = NULL;
     z_lists_arr_all.numVars = 0;
     z_lists_arr_all.first = NULL;
+    z_lists_arr_selected.numVars = 0;
+    z_lists_arr_selected.first = NULL;
 
     for(i=0; i<NTIME; i++) {
         add_list_array(&z_lists_arr_maxs, create_lims());
         add_list_array(&z_lists_arr_mins, create_lims());
         add_list_array(&z_lists_arr_all, create_lims());
+        add_list_array(&z_lists_arr_selected, create_lims());
     }
 
 
@@ -87,14 +91,14 @@ int main(void) {
 
 
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
-    for (int time=NTIME-1; time>=0; time--) {  
+    for (int time=NTIME-1; time>=0; time--) { 
         for (int lat=NLAT-1; lat>=0; lat--) {
             for (int lon=NLON-1; lon>=0;lon--) {
                 z_aux = ((z_in[time][lat][lon] * scale_factor) + offset)/g_0;
                 cont = 0;
                 cont2 = 0;
 
-                //add_list(z_data_array_all, create_lim(time, create_point(lats[lat], lons[lon]), z_aux));
+                add_list(z_data_array_all, create_lim(time, create_point(lats[lat], lons[lon]), z_aux));
 
                 for(i=lat-1; i<=lat+1; i++) {
                     for(j=lon-1; j<=lon+1; j++) {
@@ -115,7 +119,6 @@ int main(void) {
                     add_list(z_data_array_maxs, create_lim(time, create_point(lats[lat], lons[lon]), z_aux));
                 else if (cont2==8) 
                     add_list(z_data_array_mins, create_lim(time, create_point(lats[lat], lons[lon]), z_aux));
-                    
             }
         }
         z_data_array_maxs = z_data_array_maxs->next;
@@ -123,17 +126,41 @@ int main(void) {
         z_data_array_all = z_data_array_all->next;
     }
 
-    for(i=-N_BEARINGS; i<N_BEARINGS;i++) {
-        printf("Bearing: %d\n", i);
+    //for every single point in the list, iterate
+    z_data_array_maxs = z_lists_arr_maxs.first;
+    z_data_array_mins = z_lists_arr_mins.first;
+    z_data_array_selected = z_lists_arr_selected.first;
+    
+    while(z_data_array_maxs != NULL) {
+        aux = z_data_array_maxs->first;
+
+        while(aux != NULL) {
+            for(i=0; i<N_BEARINGS*2;i++) {
+                //printf("Bearing: %f\n", (BEARING_START + i*BEARING_STEP));
+                double z = bilinear_interpolation(coord_from_great_circle(aux->coord, DIST, BEARING_START + i*BEARING_STEP), &z_lists_arr_all, aux->time);
+                if(z != -1 && abs_value_double(z-aux->z) < 4) {
+                    add_list(z_data_array_selected, create_lim(aux->time, create_point(aux->coord.lat, aux->coord.lon), aux->z));
+                    break;
+                }
+            }
+
+            aux = aux->next;
+        }
+
+        z_data_array_maxs = z_data_array_maxs->next;
+        z_data_array_selected = z_data_array_selected->next;
     }
+
 
     export_z_to_csv(z_lists_arr_maxs, long_name, 1);
     export_z_to_csv(z_lists_arr_mins, long_name, -1);
     export_z_to_csv(z_lists_arr_all, long_name, 0);
+    export_z_to_csv(z_lists_arr_selected, long_name, 2);
 
     free_list_array(&z_lists_arr_maxs);
     free_list_array(&z_lists_arr_mins);
     free_list_array(&z_lists_arr_all);
+    free_list_array(&z_lists_arr_selected);
     free(z_in);
 
     printf("\n\n*** SUCCESS reading the file %s! ***\n", FILE_NAME);

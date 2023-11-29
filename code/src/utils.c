@@ -12,8 +12,11 @@ void export_z_to_csv(z_local_lims_array z_data_array, char *long_name, int contr
         sprintf(filename, "%s/%s_max.csv", DIR_NAME, long_name);
     } else if(control == -1) {
         sprintf(filename, "%s/%s_min.csv", DIR_NAME, long_name);
+    } else if(control == 2) {
+        sprintf(filename, "%s/%s_selected.csv", DIR_NAME, long_name);
     } else {
-        sprintf(filename, "%s/%s_all.csv", DIR_NAME, long_name);}
+        sprintf(filename, "%s/%s_all.csv", DIR_NAME, long_name);
+    }
 
     fp = fopen(filename, "w");
     fprintf(fp, "time,latitude,longitude,z\n");
@@ -26,4 +29,10 @@ void export_z_to_csv(z_local_lims_array z_data_array, char *long_name, int contr
         aux = aux->next;
     }
     fclose(fp);
+}
+
+// Function to free the memory of the linked list.
+double abs_value_double(double value) {
+    if(value < 0) return -value;
+    return value;
 }

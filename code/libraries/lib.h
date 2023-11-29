@@ -40,6 +40,9 @@
 #define g_0 9.80665 // Standard gravity in m/s^2
 #define R 6371 // Earth's radius in km
 #define N_BEARINGS 8 // Number of bearings to use in the great circle method
+#define DIST 1000 // Distance in km to use in the great circle method
+#define BEARING_STEP 22.5 // Bearing step in degrees to use in the great circle method
+#define BEARING_START -180 // Bearing start in degrees to use in the great circle method
 
 /*STRUCTS*/
 
@@ -61,6 +64,7 @@ typedef struct z_data {
 typedef struct z_lims {
     int numVars;
     z_local_lim *first;
+    z_local_lim *last;
     struct z_lims *prev, *next;
 } z_local_lims;
 

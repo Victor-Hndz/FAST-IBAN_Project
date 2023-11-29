@@ -17,9 +17,8 @@ Genera una carpeta out (si no existe) y dentro mete todos los ficheros de salida
 En python visualizer, a partir de un fichero csv (regions_extended.csv) se ejecuta el script y genera una imagen que es un mapa representando los valores del csv.
 Comando de ejecución del script de python --> python generate_map.py
 
+En el fichero "Diagrama de estrcuturas FAST-IBAN" está explicado el funcionamiento de las listas.
 
-
-Todo está WIP y en fase de pruebas.
 
 Para compilar y hacer pruebas usando cmake:
 
@@ -38,3 +37,5 @@ para añadir tests:
 - en el CMakeLists.c de la carpeta tests: 
     - añadir en add_executable al final el nombre del archivo .c
     - añadir al final un add_test con la misma forma que el que ya hay, en el NAME el nombre que quieras y lo otro lo dejas igual
+
+Todo está WIP y en fase de pruebas.

@@ -12,6 +12,7 @@ z_local_lims *create_lims(void) {
     z_local_lims *z_data_array = malloc(sizeof(z_local_lims));
     z_data_array->numVars = 0;
     z_data_array->first = NULL;
+    z_data_array->last = NULL;
     z_data_array->prev = NULL;
     z_data_array->next = NULL;
 
@@ -35,16 +36,12 @@ z_local_lim *create_lim(int time, coord_point point, short z) {
 void add_list(z_local_lims *z_data_array, z_local_lim *z_data) {
     if (z_data_array->numVars == 0) {
         z_data_array->first = z_data;
+        z_data_array->last = z_data;
         z_data_array->numVars++;
     } else {
-        z_local_lim *aux = z_data_array->first;
-        
-        while (aux->next != NULL) {
-            aux = aux->next;
-        }
-
-        aux->next = z_data;
-        z_data->prev = aux;
+        z_data_array->last->next = z_data;
+        z_data->prev = z_data_array->last;
+        z_data_array->last = z_data;
         z_data_array->numVars++;
     }
 }
