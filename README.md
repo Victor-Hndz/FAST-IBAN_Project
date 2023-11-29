@@ -19,6 +19,7 @@ En python visualizer, a partir de un fichero csv  se ejecuta el script y genera 
 - Comando de ejecución para mapa de contornos --> python generate_contour_map.py
 
 En el fichero "Diagrama de estrcuturas FAST-IBAN" está explicado el funcionamiento de las listas.
+![Ejenmplo de listas](Diagrama de estructuras FAST-IBAN.jpeg)
 
 Para compilar y hacer pruebas usando cmake:
 
