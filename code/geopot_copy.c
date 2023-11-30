@@ -130,27 +130,26 @@ int main(void) {
     z_data_array_maxs = z_lists_arr_maxs.first;
     z_data_array_mins = z_lists_arr_mins.first;
     z_data_array_selected = z_lists_arr_selected.first;
-    
+    double z;
+
     while(z_data_array_maxs != NULL) {
         aux = z_data_array_maxs->first;
 
         while(aux != NULL) {
             for(i=0; i<N_BEARINGS*2;i++) {
-                //printf("Bearing: %f\n", (BEARING_START + i*BEARING_STEP));
-                double z = bilinear_interpolation(coord_from_great_circle(aux->coord, DIST, BEARING_START + i*BEARING_STEP), &z_lists_arr_all, aux->time);
-                if(z != -1 && abs_value_double(z-aux->z) < 4) {
+                z = bilinear_interpolation(coord_from_great_circle(aux->coord, DIST, BEARING_START + i*BEARING_STEP), &z_lists_arr_all, aux->time);
+
+                if(z != -1 && (aux->z-40 > z)) {
                     add_list(z_data_array_selected, create_lim(aux->time, create_point(aux->coord.lat, aux->coord.lon), aux->z));
                     break;
                 }
             }
-
             aux = aux->next;
         }
 
         z_data_array_maxs = z_data_array_maxs->next;
         z_data_array_selected = z_data_array_selected->next;
     }
-
 
     export_z_to_csv(z_lists_arr_maxs, long_name, 1);
     export_z_to_csv(z_lists_arr_mins, long_name, -1);
