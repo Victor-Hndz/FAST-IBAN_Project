@@ -1,68 +1,50 @@
-import pandas as pd 
-import matplotlib.pyplot as plt 
-import cartopy.crs as ccrs 
-import cartopy as cartopy 
-import os 
- 
-# Lee el archivo CSV 
-data = pd.read_csv('data/Geopotential_selected.csv') 
- 
-# Extrae los datos de latitud, longitud y variable
-latitudes = data['latitude'].copy()
-longitudes = data['longitude'].copy()
-variable = data['z'].copy()
+import pandas as pd
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 
-# Invertir las longitudes y convertirlas de 0-360 a -180 a 180
-longitudes = 360 - longitudes
+def generar_grafico(data, es_max=True):
+    latitudes = data['latitude'].copy()
+    longitudes = data['longitude'].copy()
+    variable = data['z'].copy()
 
-# Crea una figura y ejes usando cartopy 
-fig = plt.figure(figsize=(10, 6)) 
-ax = plt.axes(projection=ccrs.PlateCarree()) 
+    longitudes = 360 - longitudes
 
-# Establece límites manuales para cubrir todo el mundo
-ax.set_xlim(-180, 180)
-ax.set_ylim(-90, 90)
- 
-# Agrega detalles geográficos al mapa 
-ax.coastlines() 
-ax.add_feature(cartopy.feature.BORDERS, linestyle=':') 
-ax.add_feature(cartopy.feature.LAND, edgecolor='black') 
- 
-# Plotea los puntos en el mapa 
-sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree()) 
- 
-# Agrega una barra de colores 
-cbar = plt.colorbar(sc, ax=ax, orientation='vertical') 
-cbar.set_label('Geopotencial (m)') 
- 
-# Añade títulos y etiquetas 
-plt.title('Geopotencial máximo en 500 hPa') 
-plt.xlabel('Longitud') 
-plt.ylabel('Latitud') 
- 
-# Muestra la figura 
-# plt.show() 
- 
- 
-# Definir el nombre base del archivo y la extensión 
-nombre_base = "imagen" 
-extension = ".png" 
- 
-# Inicializar el contador para los números incrementales 
-contador = 0 
- 
-# Generar un nombre de archivo único 
-while True: 
-    if contador == 0: 
-        nombre_archivo = f"{nombre_base}{extension}" 
-    else: 
-        nombre_archivo = f"{nombre_base}({contador}){extension}" 
-    if not os.path.exists(nombre_archivo): 
-        break 
-    contador += 1 
- 
-# Guardar la figura como imagen en la ubicación especificada 
-plt.savefig(nombre_archivo) 
- 
-# Informa que la imagen ha sido guardada 
-print(f"Imagen guardada como: {nombre_archivo}") 
+    fig = plt.figure(figsize=(10, 6))
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    ax.set_xlim(-180, 180)
+    ax.set_ylim(-90, 90)
+    
+    ax.coastlines()
+    ax.add_feature(cfeature.BORDERS, linestyle=':')
+    ax.add_feature(cfeature.LAND, edgecolor='black')
+
+    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree())
+    
+    cbar = plt.colorbar(sc, ax=ax, orientation='vertical')
+    cbar.set_label('Geopotencial (m)')
+
+    tipo = 'max' if es_max else 'min'
+    plt.title(f'Geopotencial {tipo} en 500 hPa')
+    plt.xlabel('Longitud')
+    plt.ylabel('Latitud')
+    
+    # Guardar con el nombre original
+    nombre_base = "geopot_500hPa"
+    extension = ".png"
+
+    plt.savefig(f'{nombre_base}_{tipo}{extension}')
+    plt.close()
+    
+    print(f"Gráfico {tipo} generado exitosamente.")
+
+
+# Lee el archivo CSV y genera el gráfico
+data = pd.read_csv('data/Geopotential_selected_max.csv')
+generar_grafico(data, es_max=True)
+
+# Lee el archivo CSV y genera el gráfico
+data = pd.read_csv('data/Geopotential_selected_min.csv')
+generar_grafico(data, es_max=False)
+
+print("Imágenes guardadas exitosamente.")

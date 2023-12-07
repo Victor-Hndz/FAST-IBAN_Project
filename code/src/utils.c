@@ -36,3 +36,11 @@ double abs_value_double(double value) {
     if(value < 0) return -value;
     return value;
 }
+
+// Function to find an index in an array.
+int findIndex(double *arr, int n, double target) {
+    for (int i = 0; i < n; i++)
+        if (arr[i] == target)
+            return i;
+    return -1;
+}
