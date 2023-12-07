@@ -8,6 +8,9 @@ comando para ejecutar read4d.c --> ./read4d
 comando todo en uno --> gcc read4d.c functs.c functs.h -o read4d -lnetcdf && "./"read4d
 
 ## NUEVO
+USAR build_v2 y geopot_v2. El CMakeLists.txt está preparado para usar la versión 2.
+Tests aún sin implementar para versión 2
+
 para compilar --> usar cmake (explicado abajo)
 
 Usa un archivo de entrada .nc
@@ -18,13 +21,14 @@ En python visualizer, a partir de un fichero csv  se ejecuta el script y genera 
 - Comando de ejecución del script de python para mapas de dispersión --> python generate_map.py
 - Comando de ejecución para mapa de contornos --> python generate_contour_map.py
 
+## OBSOLETO
 En el fichero "Diagrama de estrcuturas FAST-IBAN" está explicado el funcionamiento de las listas.
 
 Para compilar y hacer pruebas usando cmake:
 
 para usar cmake, haces:
-- mkdir build
-- cd build
+- mkdir build2
+- cd build2
 - cmake -G "MinGW Makefiles" .. (Windows)
 - cmake .. (linux)
 - cmake --build .
@@ -41,6 +45,6 @@ para añadir tests:
 
 para debug:
 - descomentar en cmakelists: set(CMAKE_BUILD_TYPE Debug) y enable_testing()
-- gdb ./FAST-IBAN o ./fichero_que_sea
+- gdb ./FAST-IBAN_v2 o ./fichero_que_sea
 
 Todo está WIP y en fase de pruebas.
