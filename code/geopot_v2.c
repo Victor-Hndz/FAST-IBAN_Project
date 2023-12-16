@@ -100,7 +100,6 @@ int main(void) {
                             cont2++;
                     }
                 }
-
                 if(cont==8) 
                     z_lists_arr_maxs[time][lat][lon] = z_in[time][lat][lon];
                 else if (cont2==8) 
@@ -115,13 +114,14 @@ int main(void) {
             for(int lon=NLON-1; lon>=0; lon--) {
                 if(z_lists_arr_maxs[time][lat][lon] == 0) 
                     continue;
-                //printf("\nTime: %d, Lat: %d, Lon: %d", time, lat, lon);
+
                 for(i=0; i<N_BEARINGS*2;i++) {
                     coord_point p = {lats[lat], lons[lon]};
                     z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_lists_arr_all[time], time, lats, lons);
-                    if(z_aux_selected == -1) {
+                    
+                    if(z_aux_selected == -1) 
                         continue;
-                    }
+
                     z_calculated1 = ((z_lists_arr_maxs[time][lat][lon] * scale_factor) + offset)/g_0;
                     z_calculated2 = ((z_aux_selected * scale_factor) + offset)/g_0;
 
@@ -138,13 +138,14 @@ int main(void) {
             for(int lon=NLON-1; lon>=0; lon--) {
                 if(z_lists_arr_mins[time][lat][lon] == 0) 
                     continue;
-                //printf("\nTime: %d, Lat: %d, Lon: %d", time, lat, lon);
+
                 for(i=0; i<N_BEARINGS*2;i++) {
                     coord_point p = {lats[lat], lons[lon]};
                     z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_lists_arr_all[time], time, lats, lons);
-                    if(z_aux_selected == -1) {
+                    
+                    if(z_aux_selected == -1) 
                         continue;
-                    }
+                    
                     z_calculated1 = ((z_lists_arr_mins[time][lat][lon] * scale_factor) + offset)/g_0;
                     z_calculated2 = ((z_aux_selected * scale_factor) + offset)/g_0;
 
