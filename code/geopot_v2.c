@@ -21,11 +21,12 @@ int main(void) {
     // Program variable to hold the data we will read.
     short (*z_lists_arr_maxs)[NLAT][NLON] = calloc(NTIME, sizeof(*z_lists_arr_maxs));
     short (*z_lists_arr_mins)[NLAT][NLON] = calloc(NTIME, sizeof(*z_lists_arr_mins));
+    short (*z_lists_arr_selected_max)[NLAT][NLON] = calloc(NTIME, sizeof(*z_lists_arr_selected_max));
+    short (*z_lists_arr_selected_min)[NLAT][NLON] = calloc(NTIME, sizeof(*z_lists_arr_selected_min));
     short (*z_lists_arr_all)[NLAT][NLON] = calloc(NTIME, sizeof(*z_lists_arr_all));
-    short (*z_lists_arr_selected)[NLAT][NLON] = calloc(NTIME, sizeof(*z_lists_arr_selected));
     short (*z_in)[NLAT][NLON] = calloc(NTIME, sizeof(*z_in));
     
-    if (z_in == NULL || z_lists_arr_maxs == NULL || z_lists_arr_mins == NULL || z_lists_arr_all == NULL || z_lists_arr_selected == NULL) {
+    if (z_in == NULL || z_lists_arr_maxs == NULL || z_lists_arr_mins == NULL || z_lists_arr_all == NULL || z_lists_arr_selected_max == NULL || z_lists_arr_selected_min == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
@@ -93,9 +94,9 @@ int main(void) {
                         else
                             z_aux = z_in[time][i][j];
 
-                        if (z_in[time][lat][lon] < z_aux)
-                            cont++;
                         if (z_in[time][lat][lon] > z_aux)
+                            cont++;
+                        if (z_in[time][lat][lon] < z_aux)
                             cont2++;
                     }
                 }
@@ -125,12 +126,12 @@ int main(void) {
                     z_calculated2 = ((z_aux_selected * scale_factor) + offset)/g_0;
 
                     if(z_calculated1-40 > z_calculated2) 
-                        z_lists_arr_selected[time][lat][lon] = z_lists_arr_maxs[time][lat][lon];
+                        z_lists_arr_selected_max[time][lat][lon] = z_lists_arr_maxs[time][lat][lon];
                 }
             }
         }
     }
-    export_z_to_csv(z_lists_arr_selected, long_name, 2, lats, lons, offset, scale_factor);
+    export_z_to_csv(z_lists_arr_selected_max, long_name, 2, lats, lons, offset, scale_factor);
 
     for(int time=NTIME-1; time>=0; time--) {
         for(int lat=FILT_LAT-1; lat>=0; lat--) {
@@ -148,12 +149,12 @@ int main(void) {
                     z_calculated2 = ((z_aux_selected * scale_factor) + offset)/g_0;
 
                     if(z_calculated1-40 < z_calculated2) 
-                        z_lists_arr_selected[time][lat][lon] = z_lists_arr_mins[time][lat][lon];
+                        z_lists_arr_selected_min[time][lat][lon] = z_lists_arr_mins[time][lat][lon];
                 }
             }
         }  
     }
-    export_z_to_csv(z_lists_arr_selected, long_name, -2, lats, lons, offset, scale_factor);
+    export_z_to_csv(z_lists_arr_selected_min, long_name, -2, lats, lons, offset, scale_factor);
 
     export_z_to_csv(z_lists_arr_maxs, long_name, 1, lats, lons, offset, scale_factor);
     export_z_to_csv(z_lists_arr_mins, long_name, -1, lats, lons, offset, scale_factor);
@@ -163,7 +164,8 @@ int main(void) {
     free(z_lists_arr_maxs);
     free(z_lists_arr_mins);
     free(z_lists_arr_all);
-    free(z_lists_arr_selected);
+    free(z_lists_arr_selected_max);
+    free(z_lists_arr_selected_min);
     free(z_in);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, DIR_NAME);
