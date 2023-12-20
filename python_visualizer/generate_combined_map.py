@@ -1,17 +1,16 @@
-import netCDF4 as nc
+import netCDF4 as Nc
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import cartopy.crs as ccrs 
 import cartopy as cartopy 
 import os
 
-g_0 = 9.80665 # m/s^2
+# m/s^2
+g_0 = 9.80665
 
 
 def generar_grafico(data, es_max, niveles, tiempo):    
-    #obtener solo los datos del tiempo seleccionado
+    # obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == tiempo]
     
     latitudes = data['latitude'].copy()
@@ -19,7 +18,7 @@ def generar_grafico(data, es_max, niveles, tiempo):
     variable = data['z'].copy()
     
     # Abrir el archivo NetCDF
-    archivo_nc = nc.Dataset('data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc', 'r')
+    archivo_nc = Nc.Dataset('data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc', 'r')
     
     # Obtener los datos de tiempo, latitud, longitud y la variable z
     lat = archivo_nc.variables['latitude'][:]
@@ -43,22 +42,19 @@ def generar_grafico(data, es_max, niveles, tiempo):
     # Agregar detalles geográficos al mapa
     ax.coastlines()
     ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
-    
-    
-    #agregar puntos de dispersión
+
+    # Agregar puntos de dispersión
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=10)
 
-    
     # Plotea los puntos en el mapa
-    co = ax.contour(lon, lat, z, levels=niveles, cmap='jet', transform=ccrs.PlateCarree(), linewidths=0.5, vmax=variable.max(), vmin=variable.min())
+    co = ax.contour(lon, lat, z, levels=niveles, cmap='jet',
+                    transform=ccrs.PlateCarree(), linewidths=0.5, vmax=variable.max(), vmin=variable.min())
     
-    #valores de contorno
+    # valores de contorno
     plt.clabel(co, inline=True, fontsize=8)
-    
 
     cbar = plt.colorbar(sc, ax=ax, orientation='vertical', pad=0.02, aspect=16, shrink=0.8)
     cbar.set_label('Geopotencial (m)')
-  
 
     tipo = 'max' if es_max else 'min'
     
@@ -97,12 +93,12 @@ def generar_grafico(data, es_max, niveles, tiempo):
     print(f"Imagen guardada como: {nombre_archivo}") 
 
 
-niveles = 30
-tiempo = 0
-data = pd.read_csv('data/Geopotential_selected_max.csv')
-generar_grafico(data=data, es_max=True, niveles=niveles, tiempo=tiempo)
+levels = 30
+time = 0
+data_csv = pd.read_csv('data/Geopotential_selected_max.csv')
+generar_grafico(data=data_csv, es_max=True, niveles=levels, tiempo=time)
 
-niveles = 30
-tiempo = 0
-data = pd.read_csv('data/Geopotential_selected_min.csv')
-generar_grafico(data=data, es_max=False, niveles=niveles, tiempo=tiempo)
+levels = 30
+time = 0
+data_csv = pd.read_csv('data/Geopotential_selected_min.csv')
+generar_grafico(data=data_csv, es_max=False, niveles=levels, tiempo=time)
