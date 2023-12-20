@@ -4,7 +4,7 @@
 
 
 int main(void) {
-    int ncid, z_varid, lat_varid, lon_varid, retval, i=0, j=0, cont, cont2;
+    int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2;
     double scale_factor, offset, z_calculated1, z_calculated2;
     short z_aux, z_aux_selected;
     float lats[NLAT], lons[NLON];
@@ -58,20 +58,19 @@ int main(void) {
     if ((retval = nc_get_var_short(ncid, z_varid, &z_in[0][0][0])))
         ERR(retval);
 
-    if (retval = nc_get_att_double(ncid, z_varid, SCALE_FACTOR, &scale_factor))
+    if ((retval = nc_get_att_double(ncid, z_varid, SCALE_FACTOR, &scale_factor)))
         ERR(retval);
 
-    if (retval = nc_get_att_double(ncid, z_varid, OFFSET, &offset))
+    if ((retval = nc_get_att_double(ncid, z_varid, OFFSET, &offset)))
         ERR(retval);
     
-    if (retval = nc_get_att_text(ncid, z_varid, LONG_NAME, long_name))
+    if ((retval = nc_get_att_text(ncid, z_varid, LONG_NAME, long_name)))
         ERR(retval);
     
 
     // Close the file.
     if ((retval = nc_close(ncid)))
         ERR(retval);
-
 
 
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
