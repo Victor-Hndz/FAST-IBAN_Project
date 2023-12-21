@@ -8,6 +8,8 @@ import cartopy as cartopy
 import os
 
 g_0 = 9.80665 # m/s^2
+dist = 1000 # km
+lat_km = 111.32 # km/deg
 
 
 def generar_grafico(data, es_max, niveles, tiempo):    
@@ -51,12 +53,11 @@ def generar_grafico(data, es_max, niveles, tiempo):
     # Agregar círculos alrededor de cada punto
     for i in range(len(latitudes)):
         # Convertir la distancia en kilómetros a grados de longitud (aproximado)
-        delta_lon = 1000 / (111.32 * np.cos(np.radians(latitudes.iloc[i])))
+        delta_lon = dist / (lat_km * np.cos(np.radians(latitudes.iloc[i])))
     
-   
+
         circle = plt.Circle((longitudes.iloc[i], latitudes.iloc[i]), radius=delta_lon, color='red', fill=False, linestyle='dashed')
         ax.add_patch(circle)
-
 
     
     # Plotea los puntos en el mapa
