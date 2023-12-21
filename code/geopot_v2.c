@@ -33,44 +33,44 @@ int main(void) {
 
     // Open the file.
     if ((retval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
-        ERR(retval);
+        ERR(retval)
 
     // Get the varids of the latitude and longitude coordinate variables.
     if ((retval = nc_inq_varid(ncid, LAT_NAME, &lat_varid)))
-        ERR(retval);
+        ERR(retval)
 
     if ((retval = nc_inq_varid(ncid, LON_NAME, &lon_varid)))
-        ERR(retval);
+        ERR(retval)
     
     // Get the varid of z
     if ((retval = nc_inq_varid(ncid, Z_NAME, &z_varid)))
-        ERR(retval);
+        ERR(retval)
 
 
     // Read the coordinates variables data.
     if ((retval = nc_get_var_float(ncid, lat_varid, &lats[0])))
-        ERR(retval);
+        ERR(retval)
 
     if ((retval = nc_get_var_float(ncid, lon_varid, &lons[0])))
-        ERR(retval);
+        ERR(retval)
     
     // Read the data, scale factor, offset and long_name of z.
     if ((retval = nc_get_var_short(ncid, z_varid, &z_in[0][0][0])))
-        ERR(retval);
+        ERR(retval)
 
     if ((retval = nc_get_att_double(ncid, z_varid, SCALE_FACTOR, &scale_factor)))
-        ERR(retval);
+        ERR(retval)
 
     if ((retval = nc_get_att_double(ncid, z_varid, OFFSET, &offset)))
-        ERR(retval);
+        ERR(retval)
     
     if ((retval = nc_get_att_text(ncid, z_varid, LONG_NAME, long_name)))
-        ERR(retval);
+        ERR(retval)
     
 
     // Close the file.
     if ((retval = nc_close(ncid)))
-        ERR(retval);
+        ERR(retval)
 
 
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
