@@ -93,12 +93,12 @@ def generar_grafico(data, es_max, niveles, tiempo):
     print(f"Imagen guardada como: {nombre_archivo}") 
 
 
-levels = 30
+levels = 70
 time = 0
 data_csv = pd.read_csv('data/Geopotential_selected_max.csv')
 generar_grafico(data=data_csv, es_max=True, niveles=levels, tiempo=time)
 
-levels = 30
+levels = 70
 time = 0
 data_csv = pd.read_csv('data/Geopotential_selected_min.csv')
 generar_grafico(data=data_csv, es_max=False, niveles=levels, tiempo=time)
