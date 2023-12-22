@@ -19,10 +19,13 @@
 
 #define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
 
+#define RES 0.25 // Resolution of the map in degrees
+
 #define NDIMS 3
 #define NTIME 4
 #define NLAT 361
-#define FILT_LAT 250
+#define FILT_LAT(g) (360-(g) / RES)
+#define LAT_LIM 25
 #define NLON 1440
 #define REC_NAME "time"
 #define LAT_NAME "latitude"
@@ -36,7 +39,6 @@
 #define DIR_NAME "out2"
 #define DIR_PERMS 0777
 
-#define RES 0.25 // Resolution of the map in degrees
 
 #define g_0 9.80665 // Standard gravity in m/s^2
 #define R 6371 // Earth's radius in km

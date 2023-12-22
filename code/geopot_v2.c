@@ -4,7 +4,7 @@
 
 
 int main(void) {
-    int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2;
+    int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2, is_equal;
     double scale_factor, offset, z_calculated1, z_calculated2;
     short z_aux, z_aux_selected;
     float lats[NLAT], lons[NLON];
@@ -75,15 +75,19 @@ int main(void) {
 
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
     for (int time=NTIME-1; time>=0; time--) { 
-        for (int lat=FILT_LAT-1; lat>=0; lat--) {
+        for (int lat=FILT_LAT(LAT_LIM)-1; lat>=0; lat--) {
             for (int lon=NLON-1; lon>=0;lon--) {
                 cont = 0;
                 cont2 = 0;
+                is_equal = 0;
 
                 z_lists_arr_all[time][lat][lon] = z_in[time][lat][lon];
 
                 for(i=lat-1; i<=lat+1; i++) {
                     for(j=lon-1; j<=lon+1; j++) {
+                        if(i == lat && j == lon) 
+                            continue;
+
                         if (i<0) 
                             continue;
                         else if (j<0)
@@ -97,9 +101,14 @@ int main(void) {
                             cont++;
                         if (z_in[time][lat][lon] < z_aux)
                             cont2++;
+                        if (z_in[time][lat][lon] == z_aux) 
+                            is_equal = 1;
                     }
                 }
-                if(cont==8) 
+                cont += is_equal;
+                cont2 += is_equal;
+
+                if(cont==8)
                     z_lists_arr_maxs[time][lat][lon] = z_in[time][lat][lon];
                 else if (cont2==8) 
                     z_lists_arr_mins[time][lat][lon] = z_in[time][lat][lon];
@@ -109,7 +118,7 @@ int main(void) {
     
     //Select the points.
     for(int time=NTIME-1; time>=0; time--) {
-        for(int lat=FILT_LAT-1; lat>=0; lat--) {
+        for(int lat=FILT_LAT(LAT_LIM)-1; lat>=0; lat--) {
             for(int lon=NLON-1; lon>=0; lon--) {
                 if(z_lists_arr_maxs[time][lat][lon] == 0) 
                     continue;
@@ -133,7 +142,7 @@ int main(void) {
     export_z_to_csv(z_lists_arr_selected_max, long_name, 2, lats, lons, offset, scale_factor);
 
     for(int time=NTIME-1; time>=0; time--) {
-        for(int lat=FILT_LAT-1; lat>=0; lat--) {
+        for(int lat=FILT_LAT(LAT_LIM)-1; lat>=0; lat--) {
             for(int lon=NLON-1; lon>=0; lon--) {
                 if(z_lists_arr_mins[time][lat][lon] == 0) 
                     continue;
@@ -148,7 +157,7 @@ int main(void) {
                     z_calculated1 = ((z_lists_arr_mins[time][lat][lon] * scale_factor) + offset)/g_0;
                     z_calculated2 = ((z_aux_selected * scale_factor) + offset)/g_0;
 
-                    if(z_calculated1-40 < z_calculated2) 
+                    if(z_calculated1+40 < z_calculated2) 
                         z_lists_arr_selected_min[time][lat][lon] = z_lists_arr_mins[time][lat][lon];
                 }
             }
