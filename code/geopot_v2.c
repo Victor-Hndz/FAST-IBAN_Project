@@ -4,11 +4,12 @@
 
 
 int main(void) {
-    int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2, is_equal;
+    int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2, is_equal, candidates_size=0;
     double scale_factor, offset, z_calculated1, z_calculated2;
     short z_aux, z_aux_selected;
     float lats[NLAT], lons[NLON];
     char long_name[NC_MAX_NAME+1] = "";
+    candidate *candidates = NULL;
 
 
     // Create the directory for the output file.
@@ -139,7 +140,6 @@ int main(void) {
             }
         }
     }
-    export_z_to_csv(z_lists_arr_selected_max, long_name, 2, lats, lons, offset, scale_factor);
 
     for(int time=NTIME-1; time>=0; time--) {
         for(int lat=FILT_LAT(LAT_LIM)-1; lat>=0; lat--) {
@@ -163,11 +163,17 @@ int main(void) {
             }
         }  
     }
-    export_z_to_csv(z_lists_arr_selected_min, long_name, -2, lats, lons, offset, scale_factor);
 
+    findCombinations(z_lists_arr_selected_max[0], z_lists_arr_selected_min[0], &candidates, &candidates_size, lats, lons);
+    printf("Candidates size: %d\n", candidates_size);
     export_z_to_csv(z_lists_arr_maxs, long_name, 1, lats, lons, offset, scale_factor);
     export_z_to_csv(z_lists_arr_mins, long_name, -1, lats, lons, offset, scale_factor);
     export_z_to_csv(z_lists_arr_all, long_name, 0, lats, lons, offset, scale_factor);
+
+    export_z_to_csv(z_lists_arr_selected_max, long_name, 2, lats, lons, offset, scale_factor);
+    export_z_to_csv(z_lists_arr_selected_min, long_name, -2, lats, lons, offset, scale_factor);
+
+    export_candidate_to_csv(candidates, candidates_size, long_name, lats, lons, offset, scale_factor);
 
 
     free(z_lists_arr_maxs);
@@ -176,6 +182,7 @@ int main(void) {
     free(z_lists_arr_selected_max);
     free(z_lists_arr_selected_min);
     free(z_in);
+    free(candidates);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, DIR_NAME);
     return 0;

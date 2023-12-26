@@ -28,6 +28,7 @@ target_link_libraries(FAST-IBAN_v2 PRIVATE netcdf)
 
 target_link_libraries(FAST-IBAN_v2 PRIVATE UTILS)
 target_link_libraries(FAST-IBAN_v2 PRIVATE CALC)
+target_link_libraries(FAST-IBAN_v2 PRIVATE LIB)
 
 
 add_custom_command(TARGET FAST-IBAN_v2 POST_BUILD

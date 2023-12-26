@@ -48,11 +48,27 @@
 #define BEARING_START -180 // Bearing start in degrees to use in the great circle method
 
 /*STRUCTS*/
+enum Tipo_form{OMEGA, REX};
 
 //Struct that holds a point (lat, lon).
 typedef struct {
     double lat;
     double lon;
 } coord_point;
+
+//Struct that holds a candidate.
+typedef struct candidate_list {
+    enum Tipo_form type;
+    coord_point min1;
+    coord_point min2;
+    coord_point max;
+    short z_min1;
+    short z_min2;
+    short z_max;
+} candidate;
+
+// Functions
+coord_point create_point(double lat, double lon);
+candidate create_candidate(enum Tipo_form type, coord_point min1, coord_point min2, coord_point max, short z_min1, short z_min2, short z_max);
 
 #endif // LIB_H2

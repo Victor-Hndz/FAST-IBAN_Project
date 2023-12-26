@@ -60,3 +60,83 @@ short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], int time, floa
 
     return z;
 }
+
+void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], candidate **candidatos, int *size, float* lats, float *lons) {
+    coord_point p_candidato, p_aux, p_max;
+    int is_candidate, found=0;
+    
+    //recorrer la matriz de minimos y máximos.
+    for(int i=0; i<FILT_LAT(LAT_LIM)-1; i++) {
+        for(int j=0; j<NLON; j++) {
+            if(selected_min[i][j] == 0) 
+                continue;
+            
+            p_candidato = (coord_point){lats[i], lons[j]};
+
+            for(int x=i; x<FILT_LAT(LAT_LIM)-1; x++) {
+                for(int y=j; y<NLON; y++) {
+                    if(selected_min[x][y] == 0) 
+                        continue;
+                
+                    p_aux = (coord_point){lats[x], lons[y]};
+
+                    if(p_candidato.lat == p_aux.lat && p_candidato.lon == p_aux.lon) 
+                        continue;
+
+                    is_candidate = 0;
+                    
+                    for(int a=0; a<FILT_LAT(LAT_LIM)-1; a++) {
+                        for(int b=0; b<NLON; b++) {
+                            if(selected_max[a][b] == 0) 
+                                continue;
+
+                            p_max = (coord_point){lats[a], lons[b]};
+                            found = 0;
+
+                            if(p_max.lon >= p_candidato.lon && p_max.lon <= p_aux.lon && p_max.lat > p_candidato.lat && p_max.lat > p_aux.lat) {                              
+                                for(int s=0; s<(*size); s++) {
+                                    if((*candidatos)[s].z_max == selected_max[a][b]) {
+                                        found = 1;
+                                        
+                                        if(abs_value_double((*candidatos)[s].min1.lon - (*candidatos)[s].min2.lon) > abs_value_double(p_candidato.lon - p_aux.lon))
+                                            (*candidatos)[s] = create_candidate(OMEGA, p_candidato, p_aux, p_max, selected_min[i][j], selected_min[x][y], selected_max[a][b]);
+                                    }
+                                }
+
+                                if(found == 0) {
+                                    (*size)++;
+                                    (*candidatos) = (candidate*) realloc((*candidatos), (*size)*sizeof(candidate));
+                                    if((*candidatos) == NULL) {
+                                        perror("Error: No se ha podido reservar memoria para el candidato.\n");
+                                        exit(EXIT_FAILURE);
+                                    }
+                                    (*candidatos)[(*size)-1] = create_candidate(OMEGA, p_candidato, p_aux, p_max, selected_min[i][j], selected_min[x][y], selected_max[a][b]);
+                                }
+                            } else if(p_max.lat > p_candidato.lat && p_max.lon > p_candidato.lon-10 && p_max.lon < p_candidato.lon+10) {
+                                for(int s=0; s<(*size); s++) {
+                                    if((*candidatos)[s].z_max == selected_max[a][b]) {
+                                        found = 1;
+                                        
+                                        if(abs_value_double((*candidatos)[s].min1.lon - (*candidatos)[s].max.lon) > abs_value_double(p_candidato.lon - p_max.lon))
+                                            (*candidatos)[s] = create_candidate(REX, p_candidato, (coord_point){-1,-1}, p_max, selected_min[i][j], -1, selected_max[a][b]);
+                                    }
+                                }
+
+                                if(found == 0) {
+                                    (*size)++;
+                                    (*candidatos) = (candidate*) realloc((*candidatos), (*size)*sizeof(candidate));
+                                    if((*candidatos) == NULL) {
+                                        perror("Error: No se ha podido reservar memoria para el candidato.\n");
+                                        exit(EXIT_FAILURE);
+                                    }
+                                    (*candidatos)[(*size)-1] = create_candidate(REX, p_candidato, (coord_point){-1,-1}, p_max, selected_min[i][j], -1, selected_max[a][b]);
+                                }
+                            } else
+                                continue;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
