@@ -9,7 +9,7 @@ import os
 g_0 = 9.80665
 
 
-def generar_grafico(data, es_max, niveles, tiempo):    
+def generar_grafico(data, es_max, niveles, tiempo, lat_range, lon_range):   
     # obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == tiempo]
     
@@ -32,12 +32,12 @@ def generar_grafico(data, es_max, niveles, tiempo):
     z = z / g_0
     
     # Crear una figura para un mapa del mundo
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(15, 9), dpi=250)
     ax = plt.axes(projection=ccrs.PlateCarree())
 
     # Establecer límites manuales para cubrir todo el mundo
-    ax.set_xlim(-180, 180)
-    ax.set_ylim(-90, 90)
+    ax.set_xlim(lon_range[0], lon_range[1])
+    ax.set_ylim(lat_range[0], lat_range[1])
 
     # Agregar detalles geográficos al mapa
     ax.coastlines()
@@ -60,9 +60,18 @@ def generar_grafico(data, es_max, niveles, tiempo):
     
     # Añade títulos y etiquetas
     plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles')
-    plt.xlabel('Longitud')
-    plt.ylabel('Latitud')
-
+    plt.xlabel('Longitud (deg)')
+    plt.ylabel('Latitud (deg)')
+    
+    # Agregar marcas de latitud en el borde izquierdo
+    ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
+    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)], fontsize=8)
+    
+    # Agregar marcas de longitud en el borde inferior
+    ax.set_xticks(range(lon_range[0], lon_range[1]+1, 20), crs=ccrs.PlateCarree())
+    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)], fontsize=8)
+    
+    
     # Muestra la figura
     # plt.show()
 
@@ -95,10 +104,14 @@ def generar_grafico(data, es_max, niveles, tiempo):
 
 levels = 70
 time = 0
+lat_range = (25, 90)
+lon_range = (-180, 180)
 data_csv = pd.read_csv('data/Geopotential_selected_max.csv')
-generar_grafico(data=data_csv, es_max=True, niveles=levels, tiempo=time)
+generar_grafico(data=data_csv, es_max=True, niveles=levels, tiempo=time, lat_range=lat_range, lon_range=lon_range)
 
 levels = 70
 time = 0
+lat_range = (25, 90)
+lon_range = (-180, 180)
 data_csv = pd.read_csv('data/Geopotential_selected_min.csv')
-generar_grafico(data=data_csv, es_max=False, niveles=levels, tiempo=time)
+generar_grafico(data=data_csv, es_max=False, niveles=levels, tiempo=time, lat_range=lat_range, lon_range=lon_range)
