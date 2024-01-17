@@ -1,7 +1,5 @@
 import configparser
 import yaml
-import os
-import pandas as pd
 
 # Tus opciones
 options_max = {
@@ -33,3 +31,4 @@ with open('../config.ini', 'w') as configfile:
 options = {'OPTIONS_MAX': options_max, 'OPTIONS_MIN': options_min}
 with open('../config.yaml', 'w') as outfile:
     yaml.dump(options, outfile, default_flow_style=False)
+    
