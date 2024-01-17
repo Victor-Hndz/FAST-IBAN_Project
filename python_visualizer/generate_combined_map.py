@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs 
 import cartopy as cartopy 
 import os
+import configparser
+import yaml
 
 # m/s^2
 g_0 = 9.80665
@@ -101,17 +103,25 @@ def generar_grafico(data, es_max, niveles, tiempo, lat_range, lon_range):
     # Informa que la imagen ha sido guardada 
     print(f"Imagen guardada como: {nombre_archivo}") 
 
+#Main function
+def main():
+    # Seleccionar archivo de configuración basado en el sistema operativo
+    if os.name == 'posix':  # Linux
+        with open('config.yaml', 'r') as infile:
+            options = yaml.safe_load(infile)
+    elif os.name == 'nt':  # Windows
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        options = {section: dict(config[section]) for section in config.sections()}
 
-levels = 70
-time = 0
-lat_range = (25, 90)
-lon_range = (-180, 180)
-data_csv = pd.read_csv('data/Geopotential_selected_max.csv')
-generar_grafico(data=data_csv, es_max=True, niveles=levels, tiempo=time, lat_range=lat_range, lon_range=lon_range)
+    # Elegir un conjunto de opciones
+    chosen_options = options['OPTIONS_MAX']
+    generar_grafico(data=pd.read_csv(chosen_options['data_csv']), es_max=chosen_options['es_max'], niveles=chosen_options['levels'], 
+                    tiempo=chosen_options['time'], lat_range=chosen_options['lat_range'], lon_range=chosen_options['lon_range'])
 
-levels = 70
-time = 0
-lat_range = (25, 90)
-lon_range = (-180, 180)
-data_csv = pd.read_csv('data/Geopotential_selected_min.csv')
-generar_grafico(data=data_csv, es_max=False, niveles=levels, tiempo=time, lat_range=lat_range, lon_range=lon_range)
+    chosen_options = options['OPTIONS_MIN']
+    generar_grafico(data=pd.read_csv(chosen_options['data_csv']), es_max=chosen_options['es_max'], niveles=chosen_options['levels'], 
+                    tiempo=chosen_options['time'], lat_range=chosen_options['lat_range'], lon_range=chosen_options['lon_range'])
+
+if __name__ == '__main__':
+    main()
