@@ -167,7 +167,7 @@ def generate_scatter_map(data, es_max, tiempo, lat_range, lon_range):
     print(f"Imagen guardada como: {nombre_archivo}") 
     
 
-def generate_scatter_map_selected(data, es_max, tipo, tiempo, lat_range, lon_range):
+def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
     #obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == tiempo]
 
