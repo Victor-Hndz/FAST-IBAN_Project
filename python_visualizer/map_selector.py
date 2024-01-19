@@ -1,7 +1,8 @@
 import os
 import configparser
 import yaml
-import generate_maps.generate_maps
+import pandas as pd
+from generate_maps import generate_maps as gm
 
 
 #Main function
@@ -14,16 +15,45 @@ def main():
         config = configparser.ConfigParser()
         config.read('config.ini')
         options = {section: dict(config[section]) for section in config.sections()}
+        
+    if not os.path.exists('out'):
+        os.makedirs('out')
 
-    # Elegir un conjunto de opciones
-    chosen_options = options['OPTIONS_MAX']
-    generar_grafico(data=pd.read_csv(chosen_options['data_csv']), es_max=chosen_options['es_max'], niveles=chosen_options['levels'], 
-                    tiempo=chosen_options['time'], lat_range=chosen_options['lat_range'], lon_range=chosen_options['lon_range'])
-
-    chosen_options = options['OPTIONS_MIN']
-    generar_grafico(data=pd.read_csv(chosen_options['data_csv']), es_max=chosen_options['es_max'], niveles=chosen_options['levels'], 
-                    tiempo=chosen_options['time'], lat_range=chosen_options['lat_range'], lon_range=chosen_options['lon_range'])
-
+    
+    for option in options:           
+        if options[option]['map'] == 'cont':
+            return
+        elif options[option]['map'] == 'disp':
+            return
+        elif options[option]['map'] == 'comb':
+            print('Generating combined map for both max and min values')
+            if options[option]['es_max'] == 'both':
+                gm.generate_combined_map(data=pd.read_csv('data/Geopotential_selected_max.csv'), nc_data=options[option]['nc_data'], 
+                                         es_max=True, niveles=options[option]['levels'], tiempo=options[option]['time'], 
+                                         lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                
+                gm.generate_combined_map(data=pd.read_csv('data/Geopotential_selected_min.csv'), nc_data=options[option]['nc_data'], 
+                                         es_max=False, niveles=options[option]['levels'], tiempo=options[option]['time'], 
+                                         lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+            else:
+                gm.generate_combined_map(data=pd.read_csv('data/Geopotential_selected_'+options[option]['es_max']+'.csv'), nc_data=options[option]['nc_data'], 
+                                         es_max=options[option]['es_max'], niveles=options[option]['levels'], tiempo=options[option]['time'], 
+                                         lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+        elif options[option]['map'] == 'comb_circ':
+            return
+        elif options[option]['map'] == 'select':
+            print('Generating selected map')
+            if options[option]['type'] == 'both':
+                gm.generate_scatter_map_selected(data=pd.read_csv('data/Geopotential_candidates.csv'), tipo='omega',
+                                             tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                
+                gm.generate_scatter_map_selected(data=pd.read_csv('data/Geopotential_candidates.csv'), tipo='rex',
+                                             tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+            else:
+                gm.generate_scatter_map_selected(data=pd.read_csv('data/Geopotential_candidates.csv'), tipo=options[option]['type'],
+                                             tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                
+                
 if __name__ == '__main__':
     main()
     

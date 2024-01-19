@@ -1,22 +1,23 @@
-OPTIONS_MAX:
-  data_csv: data/Geopotential_selected_max.csv
-  es_max: true
+OPTION1:
+  map: comb
+  nc_data: data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc
+  es_max: both
+  levels: 70
+  time: 0
   lat_range:
   - 25
   - 90
-  levels: 70
   lon_range:
   - -180
   - 180
+
+OPTION2:
+  map: select
+  type: both
   time: 0
-OPTIONS_MIN:
-  data_csv: data/Geopotential_selected_min.csv
-  es_max: false
   lat_range:
   - 25
   - 90
-  levels: 70
   lon_range:
   - -180
   - 180
-  time: 0

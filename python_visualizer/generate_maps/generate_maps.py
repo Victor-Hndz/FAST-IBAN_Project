@@ -11,9 +11,9 @@ dist = 1000 # km
 lat_km = 111.32 # km/deg
 
 
-def generate_contour_map(data, es_max, niveles, tiempo, lat_range, lon_range):
+def generate_contour_map(nc_data, es_max, niveles, tiempo, lat_range, lon_range):
     # Abrir el archivo NetCDF
-    archivo_nc = nc.Dataset(data, 'r')
+    archivo_nc = nc.Dataset(nc_data, 'r')
 
     # Obtener los datos de tiempo, latitud, longitud y la variable z
     lat = archivo_nc.variables['latitude'][:]
@@ -72,7 +72,7 @@ def generate_contour_map(data, es_max, niveles, tiempo, lat_range, lon_range):
     print("Mapa generado. Guardando mapa...")
 
     # Definir el nombre base del archivo y la extensión 
-    nombre_base = f"mapa_geopotencial_contornos_%il_t%i_{tipo}" % (niveles, tiempo)
+    nombre_base = f"out/mapa_geopotencial_contornos_%il_t%i_{tipo}" % (niveles, tiempo)
     extension = ".svg" 
     
     # Inicializar el contador para los números incrementales 
@@ -144,7 +144,7 @@ def generate_scatter_map(data, es_max, tiempo, lat_range, lon_range):
     print("Mapa generado. Guardando mapa...")
     
     # Guardar con el nombre original
-    nombre_base = f"mapa_geopotencial_puntos_t{tiempo}_{tipo}"
+    nombre_base = f"out/mapa_geopotencial_puntos_t{tiempo}_{tipo}"
     extension = ".svg"
 
     # Inicializar el contador para los números incrementales 
@@ -168,8 +168,8 @@ def generate_scatter_map(data, es_max, tiempo, lat_range, lon_range):
     
 
 def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
-    #obtener solo los datos del tiempo seleccionado
-    data = data[data['time'] == tiempo]
+    #obtener solo los datos del tiempo seleccionado @TO-DO
+    #data = data[data['time'] == tiempo]
 
     latitudes_min1 = data['min1_lat'].copy()
     latitudes_min2 = data['min2_lat'].copy()
@@ -240,7 +240,7 @@ def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
     print("Mapa generado. Guardando mapa...")
     
     # Guardar con el nombre original
-    nombre_base = f"mapa_geopotencial_puntos_selected_t{tiempo}_{tipo}"
+    nombre_base = f"out/mapa_geopotencial_puntos_selected_t{tiempo}_{tipo}"
     extension = ".svg"
 
     # Inicializar el contador para los números incrementales 
@@ -263,7 +263,7 @@ def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
     print(f"Imagen guardada como: {nombre_archivo}") 
 
 
-def generate_combined_map(data, es_max, niveles, tiempo, lat_range, lon_range):   
+def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon_range):   
     # obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == tiempo]
     
@@ -272,7 +272,7 @@ def generate_combined_map(data, es_max, niveles, tiempo, lat_range, lon_range):
     variable = data['z'].copy()
     
     # Abrir el archivo NetCDF
-    archivo_nc = nc.Dataset('data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc', 'r')
+    archivo_nc = nc.Dataset(nc_data, 'r')
     
     # Obtener los datos de tiempo, latitud, longitud y la variable z
     lat = archivo_nc.variables['latitude'][:]
@@ -333,7 +333,7 @@ def generate_combined_map(data, es_max, niveles, tiempo, lat_range, lon_range):
     print("Mapa generado. Guardando mapa...")
 
     # Definir el nombre base del archivo y la extensión 
-    nombre_base = f"mapa_geopotencial_contornos_puntos_%il_t%i_{tipo}" % (niveles, tiempo)
+    nombre_base = f"out/mapa_geopotencial_contornos_puntos_%il_t%i_{tipo}" % (niveles, tiempo)
     extension = ".svg" 
     
     # Inicializar el contador para los números incrementales 
@@ -356,7 +356,7 @@ def generate_combined_map(data, es_max, niveles, tiempo, lat_range, lon_range):
     print(f"Imagen guardada como: {nombre_archivo}") 
     
 
-def generate_combined_map_circle(data, es_max, niveles, tiempo, lat_range, lon_range):    
+def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_range, lon_range):    
     #obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == tiempo]
     
@@ -365,7 +365,7 @@ def generate_combined_map_circle(data, es_max, niveles, tiempo, lat_range, lon_r
     variable = data['z'].copy()
     
     # Abrir el archivo NetCDF
-    archivo_nc = nc.Dataset('data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc', 'r')
+    archivo_nc = nc.Dataset(nc_data, 'r')
     
     # Obtener los datos de tiempo, latitud, longitud y la variable z
     lat = archivo_nc.variables['latitude'][:]
@@ -437,7 +437,7 @@ def generate_combined_map_circle(data, es_max, niveles, tiempo, lat_range, lon_r
     print("Mapa generado. Guardando mapa...")
 
     # Definir el nombre base del archivo y la extensión 
-    nombre_base = f"mapa_geopotencial_contornos_puntos_circles_%il_t%i_{tipo}" % (niveles, tiempo)
+    nombre_base = f"out/mapa_geopotencial_contornos_puntos_circles_%il_t%i_{tipo}" % (niveles, tiempo)
     extension = ".svg" 
     
     # Inicializar el contador para los números incrementales 
