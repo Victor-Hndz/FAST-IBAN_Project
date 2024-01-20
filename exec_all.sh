@@ -8,11 +8,12 @@ nombre_ejecutable="FAST-IBAN_v2"
 
 # Ruta del script move_files.sh
 ruta_move_files="/home/jago/investigacion/FAST-IBAN_Project/python_visualizer/data"
-script="./move_files.sh"
+script_mv_files="./move_files.sh"
 
 # Ruta de la carpeta objetivo para el script de Python
 carpeta_objetivo_python="/home/jago/investigacion/FAST-IBAN_Project/python_visualizer"
-ruta_script_python="./generate_combined_map.py"
+script_python="./map_selector.py"
+script_clean_python_out="./clean_out.sh"
 
 # Ejecutar cmake --build en la carpeta indicada
 cd "$carpeta_cmake" && cmake --build .
@@ -21,9 +22,12 @@ cd "$carpeta_cmake" && cmake --build .
 ./"$nombre_ejecutable"
 
 # Ejecutar el script move_files.sh
-cd "$ruta_move_files" && bash "$script"
+cd "$ruta_move_files" && bash "$script_mv_files"
 
-# Cambiar a la carpeta objetivo para el script de Python y ejecutarlo
-cd "$carpeta_objetivo_python" && python "$ruta_script_python"
+# Cambiar a la carpeta objetivo para el script de Python y limpiar los archivos de salida
+cd "$carpeta_objetivo_python" && bash "$script_clean_python_out"
+
+# Ejecutar el script de Python
+python "$script_python"
 
 echo "Operación completada."
