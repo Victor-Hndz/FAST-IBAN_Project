@@ -4,6 +4,7 @@
 
 
 int main(void) {
+    extern int NLAT, NLON, NTIME;
     int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2, is_equal, candidates_size=0;
     double scale_factor, offset, z_calculated1, z_calculated2;
     short z_aux, z_aux_selected;
@@ -18,6 +19,13 @@ int main(void) {
     else 
         perror("Error al crear la carpeta");
 
+    // Open the file.
+    if ((retval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
+        ERR(retval)
+
+    extract_nc_data(ncid);
+    printf("NLAT: %d\nNLON: %d\nNTIME: %d\n", NLAT, NLON, NTIME);
+
 
     // Program variable to hold the data we will read.
     short (*z_lists_arr_maxs)[NLAT][NLON] = calloc(NTIME, sizeof(*z_lists_arr_maxs));
@@ -31,10 +39,6 @@ int main(void) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
-
-    // Open the file.
-    if ((retval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
-        ERR(retval)
 
     // Get the varids of the latitude and longitude coordinate variables.
     if ((retval = nc_inq_varid(ncid, LAT_NAME, &lat_varid)))

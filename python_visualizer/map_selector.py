@@ -22,11 +22,31 @@ def main():
     
     for option in options:           
         if options[option]['map'] == 'cont':
-            return
+            print('Generating contour map')
+            if options[option]['es_max'] == 'both':
+                gm.generate_contour_map(nc_data=options[option]['nc_data'], es_max=True, niveles=options[option]['levels'],
+                                        tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                
+                gm.generate_contour_map(nc_data=options[option]['nc_data'], es_max=False, niveles=options[option]['levels'],
+                                        tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+            else:
+                gm.generate_contour_map(nc_data=options[option]['nc_data'], es_max=options[option]['es_max'], niveles=options[option]['levels'],
+                                        tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+
         elif options[option]['map'] == 'disp':
-            return
+            print('Generating scatter map')
+            if options[option]['es_max'] == 'both':
+                gm.generate_scatter_map(data=pd.read_csv('data/Geopotential_selected_max.csv'), es_max=True, tiempo=options[option]['time'],
+                                        lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                
+                gm.generate_scatter_map(data=pd.read_csv('data/Geopotential_selected_min.csv'), es_max=False, tiempo=options[option]['time'],
+                                        lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+            else:
+                gm.generate_scatter_map(data=pd.read_csv('data/Geopotential_selected_'+options[option]['es_max']+'.csv'), es_max=options[option]['es_max'], tiempo=options[option]['time'],
+                                        lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                
         elif options[option]['map'] == 'comb':
-            print('Generating combined map for both max and min values')
+            print('Generating combined map')
             if options[option]['es_max'] == 'both':
                 gm.generate_combined_map(data=pd.read_csv('data/Geopotential_selected_max.csv'), nc_data=options[option]['nc_data'], 
                                          es_max=True, niveles=options[option]['levels'], tiempo=options[option]['time'], 
@@ -39,8 +59,22 @@ def main():
                 gm.generate_combined_map(data=pd.read_csv('data/Geopotential_selected_'+options[option]['es_max']+'.csv'), nc_data=options[option]['nc_data'], 
                                          es_max=options[option]['es_max'], niveles=options[option]['levels'], tiempo=options[option]['time'], 
                                          lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+        
         elif options[option]['map'] == 'comb_circ':
-            return
+            print('Generating combined map with circles')
+            if options[option]['es_max'] == 'both':
+                gm.generate_combined_map_circle(data=pd.read_csv('data/Geopotential_selected_max.csv'), nc_data=options[option]['nc_data'],
+                                                es_max=True, niveles=options[option]['levels'], tiempo=options[option]['time'],
+                                                lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                
+                gm.generate_combined_map_circle(data=pd.read_csv('data/Geopotential_selected_min.csv'), nc_data=options[option]['nc_data'],
+                                                es_max=False, niveles=options[option]['levels'], tiempo=options[option]['time'],
+                                                lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+            else:
+                gm.generate_combined_map_circle(data=pd.read_csv('data/Geopotential_selected_'+options[option]['es_max']+'.csv'), nc_data=options[option]['nc_data'],
+                                                es_max=options[option]['es_max'], niveles=options[option]['levels'], tiempo=options[option]['time'],
+                                                lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                
         elif options[option]['map'] == 'select':
             print('Generating selected map')
             if options[option]['type'] == 'both':

@@ -22,3 +22,42 @@ OPTION2:
   lon_range:
   - -180
   - 180
+
+OPTION3:
+  map: cont
+  # nc_data: data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc
+  nc_data: data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc
+  es_max: both
+  levels: 70
+  time: 0
+  lat_range:
+  - 25
+  - 90
+  lon_range:
+  - -180
+  - 180
+
+OPTION4:
+  map: disp
+  es_max: both
+  time: 0
+  lat_range:
+  - 25
+  - 90
+  lon_range:
+  - -180
+  - 180
+
+OPTION4:
+  map: comb_circ
+  # nc_data: data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc
+  nc_data: data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc
+  es_max: both
+  levels: 70
+  time: 0
+  lat_range:
+  - 25
+  - 90
+  lon_range:
+  - -180
+  - 180

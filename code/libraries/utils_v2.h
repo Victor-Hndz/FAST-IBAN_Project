@@ -7,5 +7,6 @@ void export_z_to_csv(short (*z_mat)[NLAT][NLON], char *long_name, int control, f
 void export_candidate_to_csv(candidate *candidatos, int size, char *long_name, float* lats, float* lons, double offset, double scale_factor);
 double abs_value_double(double value);
 int findIndex(float *arr, int n, double target);
+void extract_nc_data(int ncid);
 
 #endif // UTILS_H2

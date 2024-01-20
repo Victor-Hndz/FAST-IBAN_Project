@@ -22,12 +22,10 @@
 
 #define RES 0.25 // Resolution of the map in degrees
 
-#define NDIMS 3
-#define NTIME 4
-#define NLAT 361
-#define FILT_LAT(g) (360-(g) / RES)
+extern int NTIME, NLAT, NLON;
+
 #define LAT_LIM 25
-#define NLON 1440
+#define FILT_LAT(g) (360-(g) / RES)
 #define REC_NAME "time"
 #define LAT_NAME "latitude"
 #define LON_NAME "longitude"
