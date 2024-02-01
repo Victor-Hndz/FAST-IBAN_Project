@@ -4,11 +4,9 @@
 
 
 int main(void) {
-    extern int NLAT, NLON, NTIME;
     int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2, is_equal, candidates_size=0;
     double scale_factor, offset, z_calculated1, z_calculated2;
     short z_aux, z_aux_selected;
-    float lats[NLAT], lons[NLON];
     char long_name[NC_MAX_NAME+1] = "";
     candidate *candidates = NULL;
 
@@ -24,8 +22,7 @@ int main(void) {
         ERR(retval)
 
     extract_nc_data(ncid);
-    printf("NLAT: %d\nNLON: %d\nNTIME: %d\n", NLAT, NLON, NTIME);
-
+    float lats[NLAT], lons[NLON];
 
     // Program variable to hold the data we will read.
     short (*z_lists_arr_maxs)[NLAT][NLON] = calloc(NTIME, sizeof(*z_lists_arr_maxs));
@@ -46,11 +43,10 @@ int main(void) {
 
     if ((retval = nc_inq_varid(ncid, LON_NAME, &lon_varid)))
         ERR(retval)
-    
+
     // Get the varid of z
     if ((retval = nc_inq_varid(ncid, Z_NAME, &z_varid)))
         ERR(retval)
-
 
     // Read the coordinates variables data.
     if ((retval = nc_get_var_float(ncid, lat_varid, &lats[0])))
@@ -58,7 +54,7 @@ int main(void) {
 
     if ((retval = nc_get_var_float(ncid, lon_varid, &lons[0])))
         ERR(retval)
-    
+
     // Read the data, scale factor, offset and long_name of z.
     if ((retval = nc_get_var_short(ncid, z_varid, &z_in[0][0][0])))
         ERR(retval)
@@ -177,7 +173,7 @@ int main(void) {
     export_z_to_csv(z_lists_arr_selected_max, long_name, 2, lats, lons, offset, scale_factor);
     export_z_to_csv(z_lists_arr_selected_min, long_name, -2, lats, lons, offset, scale_factor);
 
-    export_candidate_to_csv(candidates, candidates_size, long_name, lats, lons, offset, scale_factor);
+    export_candidate_to_csv(candidates, candidates_size, long_name, offset, scale_factor);
 
 
     free(z_lists_arr_maxs);

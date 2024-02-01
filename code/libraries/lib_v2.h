@@ -15,7 +15,7 @@
 
 
 // Handle errors by printing an error message and exiting with a non-zero status.
-#define ERR(e) {printf("Error: %s\n", nc_strerror(e)); return 2;}
+#define ERR(e) {if (e != NC_NOERR) {fprintf(stderr, "Error: %s\n", nc_strerror(e)); exit(EXIT_FAILURE);}}
 
 // #define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
 #define FILE_NAME "data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc"
@@ -44,7 +44,7 @@ extern int NTIME, NLAT, NLON;
 #define N_BEARINGS 8 // Number of bearings to use in the great circle method
 #define DIST 1000 // Distance in km to use in the great circle method
 #define BEARING_STEP 22.5 // Bearing step in degrees to use in the great circle method
-#define BEARING_START -180 // Bearing start in degrees to use in the great circle method
+#define BEARING_START (-180) // Bearing start in degrees to use in the great circle method
 
 /*STRUCTS*/
 enum Tipo_form{OMEGA, REX};

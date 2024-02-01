@@ -30,7 +30,7 @@ void export_z_to_csv(short (*z_mat)[NLAT][NLON], char *long_name, int control, f
     fclose(fp);
 }
 
-void export_candidate_to_csv(candidate *candidatos, int size, char *long_name, float* lats, float* lons, double offset, double scale_factor) {
+void export_candidate_to_csv(candidate *candidatos, int size, char *long_name, double offset, double scale_factor) {
     FILE *fp;
     char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
     sprintf(filename, "%s/%s_candidates.csv", DIR_NAME, long_name);
@@ -107,6 +107,6 @@ void extract_nc_data(int ncid) {
         }
 
         // Imprimir información sobre la variable
-        //printf("Variable %d: Nombre=%s, Tipo=%d, Número de dimensiones=%d, Tamaño=%zu\n", varid, varname, vartype, ndims, var_size);
+        // printf("Variable %d: Nombre=%s, Tipo=%d, Número de dimensiones=%d, Tamaño=%zu\n", varid, varname, vartype, ndims, var_size);
     }
 }
