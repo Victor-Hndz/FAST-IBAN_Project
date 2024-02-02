@@ -20,14 +20,24 @@ coord_point coord_from_great_circle(coord_point initial, double dist, double bea
     return final;
 }
 
-short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], int time, float* lats, float* lons) {
-    double z = -1, z1 = -1, z2 = -1, z3 = -1, z4 = -1;
+short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, float* lons) {
+    double z, z1, z2, z3, z4;
     
     //Calculate the 4 points of the square.
     coord_point p11 = {floor(p.lat/RES)*RES, floor(p.lon/RES)*RES}; //p1
     coord_point p12 = {floor(p.lat/RES)*RES, ceil(p.lon/RES)*RES}; //p2
     coord_point p21 = {ceil(p.lat/RES)*RES, floor(p.lon/RES)*RES}; //p3
     coord_point p22 = {ceil(p.lat/RES)*RES, ceil(p.lon/RES)*RES}; //p4
+
+    if(fmod(p.lat, RES) == 0) {
+        p21.lat += RES;
+        p22.lat += RES;
+    }
+
+    if(fmod(p.lon, RES) == 0) {
+        p12.lon += RES;
+        p22.lon += RES;
+    }
 
     int i11 = findIndex(lats, NLAT, p11.lat);
     int j11 = findIndex(lons, NLON, p11.lon);
@@ -58,12 +68,12 @@ short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], int time, floa
         (((p22.lat-p.lat)*(p.lon-p11.lon))/((p22.lat-p11.lat)*(p22.lon-p11.lon)))*z3 + 
         (((p.lat-p11.lat)*(p.lon-p11.lon))/((p22.lat-p11.lat)*(p22.lon-p11.lon)))*z4;
 
-    return z;
+    return (short)round(z);
 }
 
 void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], candidate **candidatos, int *size, float* lats, float *lons) {
     coord_point p_candidato, p_aux, p_max;
-    int is_candidate, found=0;
+    int found;
     
     //recorrer la matriz de minimos y máximos.
     for(int i=0; i<FILT_LAT(LAT_LIM)-1; i++) {
@@ -82,8 +92,6 @@ void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], 
 
                     if(p_candidato.lat == p_aux.lat && p_candidato.lon == p_aux.lon) 
                         continue;
-
-                    is_candidate = 0;
                     
                     for(int a=0; a<FILT_LAT(LAT_LIM)-1; a++) {
                         for(int b=0; b<NLON; b++) {

@@ -45,6 +45,7 @@ extern int NTIME, NLAT, NLON;
 #define DIST 1000 // Distance in km to use in the great circle method
 #define BEARING_STEP 22.5 // Bearing step in degrees to use in the great circle method
 #define BEARING_START (-180) // Bearing start in degrees to use in the great circle method
+#define BEARING_LIMIT 40
 
 /*STRUCTS*/
 enum Tipo_form{OMEGA, REX};

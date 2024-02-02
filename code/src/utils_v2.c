@@ -97,9 +97,14 @@ void extract_nc_data(int ncid) {
             var_size *= dim_size;
         }
 
-        if(strcmp(varname, LON_NAME) == 0) NLON = var_size;
-        else if(strcmp(varname, LAT_NAME) == 0) NLAT = var_size;
-        else if(strcmp(varname, REC_NAME) == 0) NTIME = var_size;
+        if(var_size > INT_MAX) {
+            printf("ERROR: el tamaño de la variable %s con ID %d, supera el tamaño máximo de un entero.\n", varname, varid);
+            return;
+        }
+
+        if(strcmp(varname, LON_NAME) == 0) NLON = (int)var_size;
+        else if(strcmp(varname, LAT_NAME) == 0) NLAT = (int)var_size;
+        else if(strcmp(varname, REC_NAME) == 0) NTIME = (int)var_size;
         else if(strcmp(varname, Z_NAME) == 0) continue;        
         else {
             printf("Error: Variable %d: Nombre=%s, Tipo=%d, Número de dimensiones=%d, Tamaño=%zu\n", varid, varname, vartype, ndims, var_size);
