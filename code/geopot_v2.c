@@ -1,11 +1,12 @@
 #include "libraries/lib_v2.h"
 #include "libraries/utils_v2.h"
 #include "libraries/calc_v2.h"
+#include <omp.h>
 
 
 int main(void) {
     int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2, is_equal, candidates_size=0;
-    double scale_factor, offset, z_calculated1, z_calculated2;
+    double scale_factor, offset, z_calculated1, z_calculated2, t_ini, t_fin, t_total;
     short z_aux, z_aux_selected;
     char long_name[NC_MAX_NAME+1] = "";
     candidate *candidates = NULL;
@@ -16,6 +17,8 @@ int main(void) {
         printf("Carpeta creada con éxito.\n");
     else 
         perror("Error al crear la carpeta");
+
+    t_ini = omp_get_wtime();
 
     // Open the file.
     if ((retval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
@@ -73,6 +76,12 @@ int main(void) {
     if ((retval = nc_close(ncid)))
         ERR(retval)
 
+    t_fin = omp_get_wtime();
+    printf("\nDatos leídos con éxito.\n");
+    printf("#1. Lectura: %.6f s.\n", t_fin-t_ini);
+    t_total += (t_fin-t_ini);
+
+    t_ini = omp_get_wtime();
 
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
     for (int time=NTIME-1; time>=0; time--) { 
@@ -116,6 +125,12 @@ int main(void) {
             }
         }
     }
+
+    t_fin = omp_get_wtime();
+    printf("\nMáximos y mínimos locales encontrados con éxito.\n");
+    printf("#2. Max. y Min. locales: %.6f s.\n", t_fin-t_ini);
+    t_total += (t_fin-t_ini);
+    t_ini = omp_get_wtime();
     
     //Select the points.
     for(int time=NTIME-1; time>=0; time--) {
@@ -164,8 +179,20 @@ int main(void) {
         }  
     }
 
+    t_fin = omp_get_wtime();
+    
+    printf("\nMáximos y mínimos seleccionados con éxito.\n");
+    printf("#3. Max. y Min. Globales: %.6f s.\n", t_fin-t_ini);
+    t_total += (t_fin-t_ini);
+    
+    t_ini = omp_get_wtime();
     findCombinations(z_lists_arr_selected_max[0], z_lists_arr_selected_min[0], &candidates, &candidates_size, lats, lons);
-    printf("Candidates size: %d\n", candidates_size);
+    t_fin = omp_get_wtime();
+    printf("\nCandidatos seleccionados con éxito. Tamaño: %d\n", candidates_size);
+    printf("#4. Candidatos seleccionados: %.6f s.\n", t_fin-t_ini);
+    t_total += (t_fin-t_ini);
+   
+    t_ini = omp_get_wtime();
     export_z_to_csv(z_lists_arr_maxs, long_name, 1, lats, lons, offset, scale_factor);
     export_z_to_csv(z_lists_arr_mins, long_name, -1, lats, lons, offset, scale_factor);
     export_z_to_csv(z_lists_arr_all, long_name, 0, lats, lons, offset, scale_factor);
@@ -175,6 +202,9 @@ int main(void) {
 
     export_candidate_to_csv(candidates, candidates_size, long_name, offset, scale_factor);
 
+    t_fin = omp_get_wtime();
+    printf("#5. Escritura CSV: %.6f s.\n", t_fin-t_ini);
+    t_total += (t_fin-t_ini);
 
     free(z_lists_arr_maxs);
     free(z_lists_arr_mins);
@@ -185,5 +215,6 @@ int main(void) {
     free(candidates);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, DIR_NAME);
+    printf("\n## Tiempo total de la ejecución: %.6f s.\n", t_total);
     return 0;
 }

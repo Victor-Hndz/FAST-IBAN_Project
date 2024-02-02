@@ -71,6 +71,7 @@ short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, f
     return (short)round(z);
 }
 
+//Función para encontrar los candidatos.
 void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], candidate **candidatos, int *size, float* lats, float *lons) {
     coord_point p_candidato, p_aux, p_max;
     int found;

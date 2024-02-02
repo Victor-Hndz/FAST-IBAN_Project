@@ -9,6 +9,15 @@ project(FAST-IBAN_v2
     DESCRIPTION "Project for detecting atmospheric blocks in the North Atlantic" 
     LANGUAGES C)
 
+# Buscar OpenMP
+find_package(OpenMP REQUIRED)
+
+# Agregar los flags de OpenMP al compilador
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+
+# Agregar la ruta de las cabeceras de OpenMP (si es necesario)
+include_directories(${OpenMP_C_INCLUDE_DIRS})
+
 set(CMAKE_BUILD_TYPE Debug)
 enable_testing()
 
@@ -25,6 +34,7 @@ add_executable(FAST-IBAN_v2 geopot_v2.c)
 
 target_link_libraries(CALC PRIVATE m)
 target_link_libraries(FAST-IBAN_v2 PRIVATE netcdf)
+target_link_libraries(FAST-IBAN_v2 PRIVATE OpenMP::OpenMP_C)
 
 target_link_libraries(FAST-IBAN_v2 PRIVATE UTILS)
 target_link_libraries(FAST-IBAN_v2 PRIVATE CALC)
