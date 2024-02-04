@@ -2,6 +2,7 @@ import netCDF4 as nc
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs 
 import cartopy as cartopy 
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import os
 import re
@@ -42,8 +43,8 @@ def generate_contour_map(nc_data, es_max, niveles, tiempo, lat_range, lon_range)
         z = np.roll(z, shift=midpoint, axis=-1)
     
     # Crear una figura para un mapa del mundo
-    plt.figure(figsize=(15, 9), dpi=250)
-    ax = plt.axes(projection=ccrs.PlateCarree())
+    fig, ax = plt.subplots(figsize=(11, 5), dpi=250, subplot_kw=dict(projection=ccrs.PlateCarree()))
+    ax.set_global()
 
     # Establecer límites manuales para cubrir todo el mundo
     ax.set_xlim(lon_range[0], lon_range[1])
@@ -54,29 +55,33 @@ def generate_contour_map(nc_data, es_max, niveles, tiempo, lat_range, lon_range)
     ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
     
     # Plotea los puntos en el mapa
-    co = ax.contour(lon, lat, z, levels=niveles, cmap='jet', transform=ccrs.PlateCarree(), linewidths=0.5)
+    co = ax.contour(lon, lat, z, levels=niveles, cmap='jet', transform=ccrs.PlateCarree(), linewidths=0.3)
 
     #valores de contorno
-    plt.clabel(co, inline=True, fontsize=8)
-
-    cbar = plt.colorbar(co, ax=ax, orientation='vertical')
-    cbar.set_label('Geopotencial (m)')
-  
+    plt.clabel(co, inline=True, fontsize=6)
 
     tipo = 'max' if es_max else 'min'
     
     # Añade títulos y etiquetas
-    plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles')
+    plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles', loc='center')
     plt.xlabel('Longitud (deg)')
     plt.ylabel('Latitud (deg)')
+
+    cax = fig.add_axes([ax.get_position().x1+0.01,
+                    ax.get_position().y0,
+                    0.02,
+                    ax.get_position().height])
+    cbar = plt.colorbar(co, cax=cax, orientation='vertical')
+
+    cbar.set_label('Geopotencial (m)')
     
     # Agregar marcas de latitud en el borde izquierdo
     ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
-    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)], fontsize=8)
+    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)])
     
     # Agregar marcas de longitud en el borde inferior
     ax.set_xticks(range(lon_range[0], lon_range[1]+1, 20), crs=ccrs.PlateCarree())
-    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)], fontsize=8)
+    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)])
 
     # Muestra la figura
     # plt.show()
@@ -119,8 +124,8 @@ def generate_scatter_map(data, es_max, tiempo, lat_range, lon_range):
     variable = data['z'].copy()
 
     # Crear una figura para un mapa del mundo
-    plt.figure(figsize=(15, 9), dpi=250)
-    ax = plt.axes(projection=ccrs.PlateCarree())
+    fig, ax = plt.subplots(figsize=(11, 5), dpi=250, subplot_kw=dict(projection=ccrs.PlateCarree()))
+    ax.set_global()
     
     # Establecer límites manuales para cubrir todo el mundo
     ax.set_xlim(lon_range[0], lon_range[1])
@@ -131,26 +136,30 @@ def generate_scatter_map(data, es_max, tiempo, lat_range, lon_range):
     ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
 
     # Scatter plot
-    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree())
+    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=7)
     
-    cbar = plt.colorbar(sc, ax=ax, orientation='vertical')
-    cbar.set_label('Geopotencial (m)')
-
-
     tipo = 'max' if es_max else 'min'
-   
+    
     # Añade títulos y etiquetas
-    plt.title(f'Geopotencial {tipo} en 500 hPa')
+    plt.title(f'Geopotencial {tipo} en 500 hPa', loc='center')
     plt.xlabel('Longitud (deg)')
     plt.ylabel('Latitud (deg)')
+
+    cax = fig.add_axes([ax.get_position().x1+0.01,
+                    ax.get_position().y0,
+                    0.02,
+                    ax.get_position().height])
+    cbar = plt.colorbar(sc, cax=cax, orientation='vertical')
+
+    cbar.set_label('Geopotencial (m)')
     
     # Agregar marcas de latitud en el borde izquierdo
     ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
-    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)], fontsize=8)
+    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)])
     
     # Agregar marcas de longitud en el borde inferior
     ax.set_xticks(range(lon_range[0], lon_range[1]+1, 20), crs=ccrs.PlateCarree())
-    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)], fontsize=8)
+    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)])
     
     # Muestra la figura
     # plt.show()
@@ -205,8 +214,8 @@ def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
     
 
     # Crear una figura para un mapa del mundo
-    plt.figure(figsize=(15, 9), dpi=250)
-    ax = plt.axes(projection=ccrs.PlateCarree())
+    fig, ax = plt.subplots(figsize=(11, 5), dpi=250, subplot_kw=dict(projection=ccrs.PlateCarree()))
+    ax.set_global()
     
     # Establecer límites manuales para cubrir todo el mundo
     ax.set_xlim(lon_range[0], lon_range[1])
@@ -221,38 +230,44 @@ def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
         all_max = max(max(z_max), max(z_min1), max(z_min2))
         all_min = min(min(z_max), min(z_min1), min(z_min2))
     
-        sc1 = ax.scatter(longitudes_min1, latitudes_min1, c=z_min1, cmap='jet', transform=ccrs.PlateCarree(), vmax=all_max, vmin=all_min, s=10)
-        ax.scatter(longitudes_min2, latitudes_min2, c=z_min2, cmap='jet', transform=ccrs.PlateCarree(), vmax=all_max, vmin=all_min, s=10)
-        sc2 = ax.scatter(longitudes_max, latitudes_max, c=z_max, cmap='jet', transform=ccrs.PlateCarree(), vmax=all_max, vmin=all_min, s=30)
+        sc1 = ax.scatter(longitudes_min1, latitudes_min1, c=z_min1, cmap='jet', transform=ccrs.PlateCarree(), vmax=all_max, vmin=all_min, s=7)
+        ax.scatter(longitudes_min2, latitudes_min2, c=z_min2, cmap='jet', transform=ccrs.PlateCarree(), vmax=all_max, vmin=all_min, s=7)
+        sc2 = ax.scatter(longitudes_max, latitudes_max, c=z_max, cmap='jet', transform=ccrs.PlateCarree(), vmax=all_max, vmin=all_min, s=25)
         
-        ax.plot([longitudes_min1, longitudes_min2], [latitudes_min1, latitudes_min2], [z_min1, z_min2], c='purple', transform=ccrs.PlateCarree(), linewidth=1, linestyle='--')
-        ax.plot([longitudes_min1, longitudes_max], [latitudes_min1, latitudes_max], [z_min1, z_max], c='green', transform=ccrs.PlateCarree(), linewidth=1, linestyle='--')
-        ax.plot([longitudes_min2, longitudes_max], [latitudes_min2, latitudes_max], [z_min2, z_max], c='green', transform=ccrs.PlateCarree(), linewidth=1, linestyle='--')
+        ax.plot([longitudes_min1, longitudes_min2], [latitudes_min1, latitudes_min2], [z_min1, z_min2], c='purple', transform=ccrs.PlateCarree(), linewidth=0.75, linestyle='--')
+        ax.plot([longitudes_min1, longitudes_max], [latitudes_min1, latitudes_max], [z_min1, z_max], c='green', transform=ccrs.PlateCarree(), linewidth=0.75, linestyle='--')
+        ax.plot([longitudes_min2, longitudes_max], [latitudes_min2, latitudes_max], [z_min2, z_max], c='green', transform=ccrs.PlateCarree(), linewidth=0.75, linestyle='--')
         
     else:
         #maximo y minimo de los z
         all_max = max(max(z_max), max(z_min1))
         all_min = min(min(z_max), min(z_min1))
         
-        sc1 = ax.scatter(longitudes_min1, latitudes_min1, c=z_min1, cmap='jet', transform=ccrs.PlateCarree(), vmax=all_max, vmin=all_min, s=10)
-        sc2 = ax.scatter(longitudes_max, latitudes_max, c=z_max, cmap='jet', transform=ccrs.PlateCarree(), vmax=all_max, vmin=all_min, s=30)   
-        ax.plot([longitudes_min1, longitudes_max], [latitudes_min1, latitudes_max], [z_min1, z_max], c='green', transform=ccrs.PlateCarree(), linewidth=1, linestyle='--')   
+        sc1 = ax.scatter(longitudes_min1, latitudes_min1, c=z_min1, cmap='jet', transform=ccrs.PlateCarree(), vmax=all_max, vmin=all_min, s=7)
+        sc2 = ax.scatter(longitudes_max, latitudes_max, c=z_max, cmap='jet', transform=ccrs.PlateCarree(), vmax=all_max, vmin=all_min, s=25)   
+        ax.plot([longitudes_min1, longitudes_max], [latitudes_min1, latitudes_max], [z_min1, z_max], c='green', transform=ccrs.PlateCarree(), linewidth=0.75, linestyle='--')   
     
-    cbar = plt.colorbar(sc1, ax=ax, orientation='vertical')
-    cbar.set_label('Geopotencial (m)')
-
-    plt.title(f'Puntos seleccionados de tipo {tipo} en 500 hPa')
+    # Añade títulos y etiquetas
+    plt.title(f'Puntos seleccionados de tipo {tipo} en 500hPa', loc='center')
     plt.xlabel('Longitud (deg)')
     plt.ylabel('Latitud (deg)')
+
+    cax = fig.add_axes([ax.get_position().x1+0.01,
+                    ax.get_position().y0,
+                    0.02,
+                    ax.get_position().height])
+    cbar = plt.colorbar(sc1, cax=cax, orientation='vertical')
+
+    cbar.set_label('Geopotencial (m)')
     
     
     # Agregar marcas de latitud en el borde izquierdo
     ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
-    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)], fontsize=8)
+    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)])
     
     # Agregar marcas de longitud en el borde inferior
     ax.set_xticks(range(lon_range[0], lon_range[1]+1, 20), crs=ccrs.PlateCarree())
-    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)], fontsize=8)
+    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)])
     
     # Muestra la figura
     # plt.show()
@@ -319,8 +334,8 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     
     
     # Crear una figura para un mapa del mundo
-    plt.figure(figsize=(15, 9), dpi=250)
-    ax = plt.axes(projection=ccrs.PlateCarree())
+    fig, ax = plt.subplots(figsize=(11, 5), dpi=250, subplot_kw=dict(projection=ccrs.PlateCarree()))
+    ax.set_global()
 
     # Establecer límites manuales para cubrir todo el mundo
     ax.set_xlim(lon_range[0], lon_range[1])
@@ -331,32 +346,38 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
 
     # Agregar puntos de dispersión
-    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=10)
+    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=7)
 
     # Plotea los puntos en el mapa
     co = ax.contour(lon, lat, z, levels=niveles, cmap='jet',
-                    transform=ccrs.PlateCarree(), linewidths=0.5, vmax=variable.max(), vmin=variable.min())
+                    transform=ccrs.PlateCarree(), linewidths=0.3, vmax=variable.max(), vmin=variable.min())
     
     # valores de contorno
-    plt.clabel(co, inline=True, fontsize=8)
-
-    cbar = plt.colorbar(sc, ax=ax, orientation='vertical', pad=0.02, aspect=16, shrink=0.8)
-    cbar.set_label('Geopotencial (m)')
-
+    plt.clabel(co, inline=True, fontsize=6)
+    
     tipo = 'max' if es_max else 'min'
     
     # Añade títulos y etiquetas
-    plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles')
+    plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles', loc='center')
     plt.xlabel('Longitud (deg)')
     plt.ylabel('Latitud (deg)')
+
+    cax = fig.add_axes([ax.get_position().x1+0.01,
+                    ax.get_position().y0,
+                    0.02,
+                    ax.get_position().height])
+    cbar = plt.colorbar(sc, cax=cax, orientation='vertical')
+
+    cbar.set_label('Geopotencial (m)')
+    
     
     # Agregar marcas de latitud en el borde izquierdo
     ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
-    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)], fontsize=8)
+    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)])
     
     # Agregar marcas de longitud en el borde inferior
     ax.set_xticks(range(lon_range[0], lon_range[1]+1, 20), crs=ccrs.PlateCarree())
-    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)], fontsize=8)
+    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)])
     
     
     # Muestra la figura
@@ -426,8 +447,8 @@ def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_ran
     
     
     # Crear una figura para un mapa del mundo
-    plt.figure(figsize=(15, 9), dpi=250)
-    ax = plt.axes(projection=ccrs.PlateCarree())
+    fig, ax = plt.subplots(figsize=(11, 5), dpi=250, subplot_kw=dict(projection=ccrs.PlateCarree()))
+    ax.set_global()
 
     # Establecer límites manuales para cubrir todo el mundo
     ax.set_xlim(lon_range[0], lon_range[1])
@@ -439,7 +460,7 @@ def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_ran
     
     
     #agregar puntos de dispersión
-    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=10)
+    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=7)
     
     # Agregar círculos alrededor de cada punto
     for i in range(len(latitudes)):
@@ -455,27 +476,30 @@ def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_ran
     co = ax.contour(lon, lat, z, levels=niveles, cmap='jet', transform=ccrs.PlateCarree(), linewidths=0.5, vmax=variable.max(), vmin=variable.min())
     
     #valores de contorno
-    plt.clabel(co, inline=True, fontsize=8)
+    plt.clabel(co, inline=True, fontsize=6)
     
-
-    cbar = plt.colorbar(sc, ax=ax, orientation='vertical', pad=0.02, aspect=16, shrink=0.8)
-    cbar.set_label('Geopotencial (m)')
-  
-
     tipo = 'max' if es_max else 'min'
     
     # Añade títulos y etiquetas
-    plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles')
+    plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles', loc='center')
     plt.xlabel('Longitud (deg)')
     plt.ylabel('Latitud (deg)')
+
+    cax = fig.add_axes([ax.get_position().x1+0.01,
+                    ax.get_position().y0,
+                    0.02,
+                    ax.get_position().height])
+    cbar = plt.colorbar(sc, cax=cax, orientation='vertical')
+
+    cbar.set_label('Geopotencial (m)')
     
     # Agregar marcas de latitud en el borde izquierdo
     ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
-    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)], fontsize=8)
+    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)])
     
     # Agregar marcas de longitud en el borde inferior
     ax.set_xticks(range(lon_range[0], lon_range[1]+1, 20), crs=ccrs.PlateCarree())
-    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)], fontsize=8)
+    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)])
 
     # Muestra la figura
     # plt.show()
