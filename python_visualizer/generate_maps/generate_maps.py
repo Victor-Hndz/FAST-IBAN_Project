@@ -4,11 +4,15 @@ import cartopy.crs as ccrs
 import cartopy as cartopy 
 import numpy as np
 import os
+import re
 
 
 g_0 = 9.80665 # m/s^2
 dist = 1000 # km
 lat_km = 111.32 # km/deg
+
+# Definir el patrón de expresión regular para extraer la fecha
+patron_fecha = r"_\d{4}.*UTC"
 
 
 def generate_contour_map(nc_data, es_max, niveles, tiempo, lat_range, lon_range):
@@ -24,9 +28,18 @@ def generate_contour_map(nc_data, es_max, niveles, tiempo, lat_range, lon_range)
     archivo_nc.close()
 
     z = z[tiempo]
-    
-    # Aplicar la conversión de unidades
     z = z / g_0
+    
+    # Ajustar valores mayores a 180 restando 360
+    if max(lon) > 180:
+        lon = [lon_i - 360 if lon_i >= 180 else lon_i for lon_i in lon]
+
+        # Convertir lon de 0 a 360 a -180 a 180
+        midpoint = len(lon) // 2
+        lon[:midpoint], lon[midpoint:] = lon[midpoint:], lon[:midpoint]
+
+        # Convertir z de 0 a 360 a -180 a 180
+        z = np.roll(z, shift=midpoint, axis=-1)
     
     # Crear una figura para un mapa del mundo
     plt.figure(figsize=(15, 9), dpi=250)
@@ -72,7 +85,9 @@ def generate_contour_map(nc_data, es_max, niveles, tiempo, lat_range, lon_range)
     print("Mapa generado. Guardando mapa...")
 
     # Definir el nombre base del archivo y la extensión 
-    nombre_base = f"out/mapa_geopotencial_contornos_%il_t%i_{tipo}" % (niveles, tiempo)
+    fecha = re.search(patron_fecha, nc_data).group()
+    fecha = fecha[1:]
+    nombre_base = f"out/mapa_geopotencial_contornos_%il_t%i_{tipo}_{fecha}" % (niveles, tiempo)
     extension = ".svg" 
     
     # Inicializar el contador para los números incrementales 
@@ -170,6 +185,11 @@ def generate_scatter_map(data, es_max, tiempo, lat_range, lon_range):
 def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
     #obtener solo los datos del tiempo seleccionado @TO-DO
     #data = data[data['time'] == tiempo]
+    
+    if tipo == 'omega':
+        data = data[data['type'] == 'omega']
+    else:
+        data = data[data['type'] == 'rex']
 
     latitudes_min1 = data['min1_lat'].copy()
     latitudes_min2 = data['min2_lat'].copy()
@@ -225,6 +245,7 @@ def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
     plt.xlabel('Longitud (deg)')
     plt.ylabel('Latitud (deg)')
     
+    
     # Agregar marcas de latitud en el borde izquierdo
     ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
     ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)], fontsize=8)
@@ -278,12 +299,24 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     lat = archivo_nc.variables['latitude'][:]
     lon = archivo_nc.variables['longitude'][:]
     z = archivo_nc.variables['z'][:]
-
+    
     # Cerrar el archivo NetCDF
     archivo_nc.close()
-
+    
     z = z[tiempo]
     z = z / g_0
+
+    # Ajustar valores mayores a 180 restando 360
+    if max(lon) > 180:
+        lon = [lon_i - 360 if lon_i >= 180 else lon_i for lon_i in lon]
+
+        # Convertir lon de 0 a 360 a -180 a 180
+        midpoint = len(lon) // 2
+        lon[:midpoint], lon[midpoint:] = lon[midpoint:], lon[:midpoint]
+
+        # Convertir z de 0 a 360 a -180 a 180
+        z = np.roll(z, shift=midpoint, axis=-1)
+    
     
     # Crear una figura para un mapa del mundo
     plt.figure(figsize=(15, 9), dpi=250)
@@ -333,7 +366,9 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     print("Mapa generado. Guardando mapa...")
 
     # Definir el nombre base del archivo y la extensión 
-    nombre_base = f"out/mapa_geopotencial_contornos_puntos_%il_t%i_{tipo}" % (niveles, tiempo)
+    fecha = re.search(patron_fecha, nc_data).group()
+    fecha = fecha[1:]
+    nombre_base = f"out/mapa_geopotencial_contornos_puntos_%il_t%i_{tipo}_{fecha}" % (niveles, tiempo)
     extension = ".svg" 
     
     # Inicializar el contador para los números incrementales 
@@ -377,6 +412,18 @@ def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_ran
 
     z = z[tiempo]
     z = z / g_0
+    
+    # Ajustar valores mayores a 180 restando 360
+    if max(lon) > 180:
+        lon = [lon_i - 360 if lon_i >= 180 else lon_i for lon_i in lon]
+
+        # Convertir lon de 0 a 360 a -180 a 180
+        midpoint = len(lon) // 2
+        lon[:midpoint], lon[midpoint:] = lon[midpoint:], lon[:midpoint]
+
+        # Convertir z de 0 a 360 a -180 a 180
+        z = np.roll(z, shift=midpoint, axis=-1)
+    
     
     # Crear una figura para un mapa del mundo
     plt.figure(figsize=(15, 9), dpi=250)
@@ -437,7 +484,9 @@ def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_ran
     print("Mapa generado. Guardando mapa...")
 
     # Definir el nombre base del archivo y la extensión 
-    nombre_base = f"out/mapa_geopotencial_contornos_puntos_circles_%il_t%i_{tipo}" % (niveles, tiempo)
+    fecha = re.search(patron_fecha, nc_data).group()
+    fecha = fecha[1:]
+    nombre_base = f"out/mapa_geopotencial_contornos_puntos_circles_%il_t%i_{tipo}_{fecha}" % (niveles, tiempo)
     extension = ".svg" 
     
     # Inicializar el contador para los números incrementales 

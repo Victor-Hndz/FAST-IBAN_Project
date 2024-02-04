@@ -16,7 +16,7 @@ int main(void) {
     if (!mkdir(DIR_NAME, DIR_PERMS)) 
         printf("Carpeta creada con éxito.\n");
     else 
-        perror("Error al crear la carpeta");
+        printf("La carpeta ya existe.\n");
 
     t_ini = omp_get_wtime();
 
@@ -75,6 +75,40 @@ int main(void) {
     // Close the file.
     if ((retval = nc_close(ncid)))
         ERR(retval)
+
+
+    // Check if the longitudes are in the range [-180, 180] or [0, 360] and correct them if necessary.
+    if(lons[NLON-1] > 180) {
+        float aux1;
+        short aux2;
+        
+        printf("Corrigiendo longitudes...\n");
+        
+        for(int i=0;i<NLON; i++) {
+            if(lons[i] >= 180)
+                lons[i] -= 360;
+        }
+
+        //intercambiar las dos mitades del array de longitudes.
+        for(int i=0;i<NLON/2; i++) {
+            aux1 = lons[i];
+            lons[i] = lons[NLON/2+i];
+            lons[NLON/2+i] = aux1;
+        }
+
+        for(int i=0;i<NTIME;i++)
+            for(int j=0;j<NLAT;j++)
+                for(int k=0;k<NLON/2;k++) {
+                    aux2 = z_in[i][j][k];
+                    z_in[i][j][k] = z_in[i][j][NLON/2+k];
+                    z_in[i][j][NLON/2+k] = aux2;
+                }
+    }
+    //printf("0:%f | 1:%f | NLON/2-1:%f | NLON/2:%f | NLON/2+1:%f | NLON-1:%f\n", lons[0], lons[1], lons[NLON/2-1], lons[NLON/2], lons[NLON/2+1], lons[NLON-1]);
+
+    // for(int i=0;i<NLON; i++) {
+    //     printf("%f\n", lons[i]);
+    // }
 
     t_fin = omp_get_wtime();
     printf("\nDatos leídos con éxito.\n");
@@ -215,6 +249,6 @@ int main(void) {
     free(candidates);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, DIR_NAME);
-    printf("\n## Tiempo total de la ejecución: %.6f s.\n", t_total);
+    printf("\n## Tiempo total de la ejecución: %.6f s.\n\n", t_total);
     return 0;
 }
