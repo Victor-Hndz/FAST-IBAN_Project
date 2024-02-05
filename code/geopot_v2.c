@@ -5,11 +5,10 @@
 
 
 int main(void) {
-    int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2, is_equal, candidates_size=0;
+    int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2, is_equal;
     double scale_factor, offset, z_calculated1, z_calculated2, t_ini, t_fin, t_total;
     short z_aux, z_aux_selected;
     char long_name[NC_MAX_NAME+1] = "";
-    candidate *candidates = NULL;
 
 
     // Create the directory for the output file.
@@ -26,6 +25,8 @@ int main(void) {
 
     extract_nc_data(ncid);
     float lats[NLAT], lons[NLON];
+    int candidates_size[NTIME];
+    candidate **candidates = (candidate**) calloc(NTIME, sizeof(candidate*));
 
     // Program variable to hold the data we will read.
     short (*z_lists_arr_maxs)[NLAT][NLON] = calloc(NTIME, sizeof(*z_lists_arr_maxs));
@@ -183,8 +184,10 @@ int main(void) {
                     z_calculated1 = ((z_lists_arr_maxs[time][lat][lon] * scale_factor) + offset)/g_0;
                     z_calculated2 = ((z_aux_selected * scale_factor) + offset)/g_0;
 
-                    if(z_calculated1-BEARING_LIMIT > z_calculated2)
+                    if(z_calculated1-BEARING_LIMIT > z_calculated2) {
                         z_lists_arr_selected_max[time][lat][lon] = z_lists_arr_maxs[time][lat][lon];
+                        candidates_size[time]++;
+                    }
                 }
             }
         }
@@ -221,14 +224,11 @@ int main(void) {
     
     t_ini = omp_get_wtime();
 
-    for(int i=0; i<FILT_LAT(LAT_LIM)-1; i++) 
-        for(int j=0; j<NLON; j++) 
-            if (z_lists_arr_selected_max[0][i][j] != 0) 
-                candidates_size++;
+    for(int i=0; i<NTIME; i++) 
+        findCombinations(z_lists_arr_selected_max[i], z_lists_arr_selected_min[i], candidates, candidates_size, lats, lons, i);
 
-    findCombinations(z_lists_arr_selected_max[0], z_lists_arr_selected_min[0], &candidates, &candidates_size, lats, lons);
     t_fin = omp_get_wtime();
-    printf("\nCandidatos seleccionados con éxito. Tamaño: %d\n", candidates_size);
+    printf("\nCandidatos seleccionados con éxito.\n");
     printf("#4. Candidatos seleccionados: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
    
@@ -252,6 +252,9 @@ int main(void) {
     free(z_lists_arr_selected_max);
     free(z_lists_arr_selected_min);
     free(z_in);
+
+    for(int i=0; i<NTIME; i++)
+        free(candidates[i]);
     free(candidates);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, DIR_NAME);

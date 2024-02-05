@@ -30,18 +30,20 @@ void export_z_to_csv(short (*z_mat)[NLAT][NLON], char *long_name, int control, f
     fclose(fp);
 }
 
-void export_candidate_to_csv(candidate *candidatos, int size, char *long_name, double offset, double scale_factor) {
+void export_candidate_to_csv(candidate **candidatos, int *size, char *long_name, double offset, double scale_factor) {
     FILE *fp;
     char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
     sprintf(filename, "%s/%s_candidates.csv", DIR_NAME, long_name);
     fp = fopen(filename, "w");
 
-    fprintf(fp, "type,min1_lat,min1_lon,z_min1,min2_lat,min2_lon,z_min2,max_lat,max_lon,z_max\n");
-    for(int i=0; i<size; i++) {
-        if(candidatos[i].type == OMEGA) 
-            fprintf(fp, "omega,%.2f,%.2f,%.1f,%.2f,%.2f,%.1f,%.2f,%.2f,%.1f\n", candidatos[i].min1.lat, candidatos[i].min1.lon, ((candidatos[i].z_min1*scale_factor)+offset)/g_0, candidatos[i].min2.lat, candidatos[i].min2.lon, ((candidatos[i].z_min2*scale_factor)+offset)/g_0, candidatos[i].max.lat, candidatos[i].max.lon, ((candidatos[i].z_max*scale_factor)+offset)/g_0);
-        else 
-            fprintf(fp, "rex,%.2f,%.2f,%.1f,,,,%2.f,%.2f,%.1f\n", candidatos[i].min1.lat, candidatos[i].min1.lon, ((candidatos[i].z_min1*scale_factor)+offset)/g_0, candidatos[i].max.lat, candidatos[i].max.lon, ((candidatos[i].z_max*scale_factor)+offset)/g_0);
+    fprintf(fp, "time,type,min1_lat,min1_lon,z_min1,min2_lat,min2_lon,z_min2,max_lat,max_lon,z_max\n");
+    for(int a=0; a<NTIME; a++) {  
+        for(int i=0; i<size[a]; i++) {
+            if(candidatos[a][i].type == OMEGA) 
+                fprintf(fp, "%d,omega,%.2f,%.2f,%.1f,%.2f,%.2f,%.1f,%.2f,%.2f,%.1f\n", a, candidatos[a][i].min1.lat, candidatos[a][i].min1.lon, ((candidatos[a][i].z_min1*scale_factor)+offset)/g_0, candidatos[a][i].min2.lat, candidatos[a][i].min2.lon, ((candidatos[a][i].z_min2*scale_factor)+offset)/g_0, candidatos[a][i].max.lat, candidatos[a][i].max.lon, ((candidatos[a][i].z_max*scale_factor)+offset)/g_0);
+            else 
+                fprintf(fp, "%d,rex,%.2f,%.2f,%.1f,,,,%2.f,%.2f,%.1f\n", a, candidatos[a][i].min1.lat, candidatos[a][i].min1.lon, ((candidatos[a][i].z_min1*scale_factor)+offset)/g_0, candidatos[a][i].max.lat, candidatos[a][i].max.lon, ((candidatos[a][i].z_max*scale_factor)+offset)/g_0);
+        }
     }
     fclose(fp);
 }

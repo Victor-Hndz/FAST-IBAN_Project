@@ -72,12 +72,12 @@ short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, f
 }
 
 //Función para encontrar los candidatos.
-void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], candidate **candidatos, int *size, float* lats, float *lons) {
+void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], candidate **candidatos, int *size, float* lats, float *lons, int time) {
     coord_point p_candidato, p_aux, p_max;
     int found;
 
-    (*candidatos) = (candidate*) calloc(*size, sizeof(candidate));
-    *size = 0;
+    candidatos[time] = (candidate*) calloc(size[time], sizeof(candidate));
+    size[time] = 0;
     
     //recorrer la matriz de minimos y máximos.
     for(int i=0; i<FILT_LAT(LAT_LIM)-1; i++) {
@@ -106,32 +106,32 @@ void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], 
                             found = 0;
 
                             if(p_max.lon >= p_candidato.lon && p_max.lon <= p_aux.lon && p_max.lat > p_candidato.lat && p_max.lat > p_aux.lat) {                              
-                                for(int s=0; s<(*size); s++) {
-                                    if((*candidatos)[s].z_max == selected_max[a][b]) {
+                                for(int s=0; s<size[time]; s++) {
+                                    if(candidatos[time][s].z_max == selected_max[a][b]) {
                                         found = 1;
                                         
-                                        if(abs_value_double((*candidatos)[s].min1.lon - (*candidatos)[s].min2.lon) > abs_value_double(p_candidato.lon - p_aux.lon))
-                                            (*candidatos)[s] = create_candidate(OMEGA, p_candidato, p_aux, p_max, selected_min[i][j], selected_min[x][y], selected_max[a][b]);
+                                        if(abs_value_double(candidatos[time][s].min1.lon - candidatos[time][s].min2.lon) > abs_value_double(p_candidato.lon - p_aux.lon))
+                                            candidatos[time][s] = create_candidate(time, OMEGA, p_candidato, p_aux, p_max, selected_min[i][j], selected_min[x][y], selected_max[a][b]);
                                     }
                                 }
 
                                 if(found == 0) {
-                                    (*size)++;
-                                    (*candidatos)[(*size)-1] = create_candidate(OMEGA, p_candidato, p_aux, p_max, selected_min[i][j], selected_min[x][y], selected_max[a][b]);
+                                    size[time]++;
+                                    candidatos[time][size[time]-1] = create_candidate(time, OMEGA, p_candidato, p_aux, p_max, selected_min[i][j], selected_min[x][y], selected_max[a][b]);
                                 }
                             } else if(p_max.lat > p_candidato.lat && p_max.lon > p_candidato.lon-10 && p_max.lon < p_candidato.lon+10) {
-                                for(int s=0; s<(*size); s++) {
-                                    if((*candidatos)[s].z_max == selected_max[a][b]) {
+                                for(int s=0; s<size[time]; s++) {
+                                    if(candidatos[time][s].z_max == selected_max[a][b]) {
                                         found = 1;
                                         
-                                        if(abs_value_double((*candidatos)[s].min1.lon - (*candidatos)[s].max.lon) > abs_value_double(p_candidato.lon - p_max.lon))
-                                            (*candidatos)[s] = create_candidate(REX, p_candidato, (coord_point){-1,-1}, p_max, selected_min[i][j], -1, selected_max[a][b]);
+                                        if(abs_value_double(candidatos[time][s].min1.lon - candidatos[time][s].max.lon) > abs_value_double(p_candidato.lon - p_max.lon))
+                                            candidatos[time][s] = create_candidate(time, REX, p_candidato, (coord_point){-1,-1}, p_max, selected_min[i][j], -1, selected_max[a][b]);
                                     }
                                 }
 
                                 if(found == 0) {
-                                    (*size)++;
-                                    (*candidatos)[(*size)-1] = create_candidate(REX, p_candidato, (coord_point){-1,-1}, p_max, selected_min[i][j], -1, selected_max[a][b]);
+                                    size[time]++;
+                                    candidatos[time][size[time]-1] = create_candidate(time, REX, p_candidato, (coord_point){-1,-1}, p_max, selected_min[i][j], -1, selected_max[a][b]);
                                 }
                             } else
                                 continue;

@@ -193,7 +193,7 @@ def generate_scatter_map(data, es_max, tiempo, lat_range, lon_range):
 
 def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
     #obtener solo los datos del tiempo seleccionado @TO-DO
-    #data = data[data['time'] == tiempo]
+    data = data[data['time'] == tiempo]
     
     if tipo == 'omega':
         data = data[data['type'] == 'omega']

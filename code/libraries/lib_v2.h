@@ -58,6 +58,8 @@ typedef struct {
 
 //Struct that holds a candidate.
 typedef struct candidate_list {
+    //int id;
+    int time;
     enum Tipo_form type;
     coord_point min1;
     coord_point min2;
@@ -69,6 +71,6 @@ typedef struct candidate_list {
 
 // Functions
 coord_point create_point(double lat, double lon);
-candidate create_candidate(enum Tipo_form type, coord_point min1, coord_point min2, coord_point max, short z_min1, short z_min2, short z_max);
+candidate create_candidate(int time, enum Tipo_form type, coord_point min1, coord_point min2, coord_point max, short z_min1, short z_min2, short z_max);
 
 #endif // LIB_H2
