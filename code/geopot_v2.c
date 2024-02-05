@@ -220,6 +220,12 @@ int main(void) {
     t_total += (t_fin-t_ini);
     
     t_ini = omp_get_wtime();
+
+    for(int i=0; i<FILT_LAT(LAT_LIM)-1; i++) 
+        for(int j=0; j<NLON; j++) 
+            if (z_lists_arr_selected_max[0][i][j] != 0) 
+                candidates_size++;
+
     findCombinations(z_lists_arr_selected_max[0], z_lists_arr_selected_min[0], &candidates, &candidates_size, lats, lons);
     t_fin = omp_get_wtime();
     printf("\nCandidatos seleccionados con éxito. Tamaño: %d\n", candidates_size);

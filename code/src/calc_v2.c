@@ -75,6 +75,9 @@ short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, f
 void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], candidate **candidatos, int *size, float* lats, float *lons) {
     coord_point p_candidato, p_aux, p_max;
     int found;
+
+    (*candidatos) = (candidate*) calloc(*size, sizeof(candidate));
+    *size = 0;
     
     //recorrer la matriz de minimos y máximos.
     for(int i=0; i<FILT_LAT(LAT_LIM)-1; i++) {
@@ -114,11 +117,6 @@ void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], 
 
                                 if(found == 0) {
                                     (*size)++;
-                                    (*candidatos) = (candidate*) realloc((*candidatos), (*size)*sizeof(candidate));
-                                    if((*candidatos) == NULL) {
-                                        perror("Error: No se ha podido reservar memoria para el candidato.\n");
-                                        exit(EXIT_FAILURE);
-                                    }
                                     (*candidatos)[(*size)-1] = create_candidate(OMEGA, p_candidato, p_aux, p_max, selected_min[i][j], selected_min[x][y], selected_max[a][b]);
                                 }
                             } else if(p_max.lat > p_candidato.lat && p_max.lon > p_candidato.lon-10 && p_max.lon < p_candidato.lon+10) {
@@ -133,11 +131,6 @@ void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], 
 
                                 if(found == 0) {
                                     (*size)++;
-                                    (*candidatos) = (candidate*) realloc((*candidatos), (*size)*sizeof(candidate));
-                                    if((*candidatos) == NULL) {
-                                        perror("Error: No se ha podido reservar memoria para el candidato.\n");
-                                        exit(EXIT_FAILURE);
-                                    }
                                     (*candidatos)[(*size)-1] = create_candidate(REX, p_candidato, (coord_point){-1,-1}, p_max, selected_min[i][j], -1, selected_max[a][b]);
                                 }
                             } else
