@@ -199,6 +199,10 @@ def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
         data = data[data['type'] == 'omega']
     else:
         data = data[data['type'] == 'rex']
+        
+    if(data.empty):
+        print("No hay datos para el tipo seleccionado.\n")
+        return
 
     latitudes_min1 = data['min1_lat'].copy()
     latitudes_min2 = data['min2_lat'].copy()

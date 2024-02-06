@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Ruta de la carpeta de destino para cmake
-carpeta_cmake="/home/jago/investigacion/FAST-IBAN_Project/code/build_v2"
+carpeta_cmake="/home/jago/investigacion/FAST-IBAN_Project/code/build"
 
 #nombre del ejecutable
-nombre_ejecutable="FAST-IBAN_v2"
+nombre_ejecutable="FAST-IBAN"
 
 # Ruta del script move_files.sh
 ruta_move_files="/home/jago/investigacion/FAST-IBAN_Project/python_visualizer/data"

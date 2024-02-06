@@ -1,11 +1,12 @@
-#if !defined(LIB_H)
-    #define LIB_H
+#if !defined(LIB)
+    #define LIB
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <netcdf.h>
 #include <sys/stat.h>
+#include <math.h>
 
 /*DEFINES*/
 
@@ -15,14 +16,17 @@
 
 
 // Handle errors by printing an error message and exiting with a non-zero status.
-#define ERR(e) {printf("Error: %s\n", nc_strerror(e)); return 2;}
+#define ERR(e) {if (e != NC_NOERR) {fprintf(stderr, "Error: %s\n", nc_strerror(e)); exit(EXIT_FAILURE);}}
 
-#define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
+// #define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
+#define FILE_NAME "data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc"
 
-#define NDIMS 3
-#define NTIME 4
-#define NLAT 361
-#define NLON 1440
+#define RES 0.25 // Resolution of the map in degrees
+
+extern int NTIME, NLAT, NLON;
+
+#define LAT_LIM 25
+#define FILT_LAT(g) (360-(g) / RES)
 #define REC_NAME "time"
 #define LAT_NAME "latitude"
 #define LON_NAME "longitude"
@@ -35,16 +39,18 @@
 #define DIR_NAME "out"
 #define DIR_PERMS 0777
 
-#define RES 0.25 // Resolution of the map in degrees
 
 #define g_0 9.80665 // Standard gravity in m/s^2
 #define R 6371 // Earth's radius in km
 #define N_BEARINGS 8 // Number of bearings to use in the great circle method
 #define DIST 1000 // Distance in km to use in the great circle method
 #define BEARING_STEP 22.5 // Bearing step in degrees to use in the great circle method
-#define BEARING_START -180 // Bearing start in degrees to use in the great circle method
+#define BEARING_START (-180) // Bearing start in degrees to use in the great circle method
+#define BEARING_LIMIT 40
+#define INF 9999999
 
 /*STRUCTS*/
+enum Tipo_form{OMEGA, REX};
 
 //Struct that holds a point (lat, lon).
 typedef struct {
@@ -52,41 +58,24 @@ typedef struct {
     double lon;
 } coord_point;
 
-// Struct to hold the data we will read for the max and min local values.
-typedef struct z_data {
+//Struct that holds a candidate.
+typedef struct candidate_list {
+    int id;
+    double value;
     int time;
-	coord_point coord;
-    double z;
-    struct z_data *prev, *next;
-} z_local_lim;
+    enum Tipo_form type;
+    coord_point min1;
+    coord_point min2;
+    coord_point max;
+    short z_min1;
+    short z_min2;
+    short z_max;
+} candidate;
 
-// Struct to make a linked list of local max and min values.
-typedef struct z_lims {
-    int numVars;
-    z_local_lim *first;
-    z_local_lim *last;
-    struct z_lims *prev, *next;
-} z_local_lims;
-
-//Array holder of lists.
-typedef struct {
-    int numVars;
-    z_local_lims *first;
-} z_local_lims_array;
-
-/* FUNCTIONS */
+// Functions
 coord_point create_point(double lat, double lon);
-z_local_lim *create_lim(int time, coord_point point, short z);
-z_local_lims *create_lims(void);
+candidate create_candidate(int id, int time, enum Tipo_form type, coord_point min1, coord_point min2, coord_point max, short z_min1, short z_min2, short z_max, double max_val, double min_val);
+int compare_candidates(candidate a, candidate b);
+int compare_points(coord_point a, coord_point b);
 
-void add_list(z_local_lims *z_data_array, z_local_lim *z_data);
-void add_list_array(z_local_lims_array *z_lists_arr, z_local_lims *z_data_array);
-
-z_local_lim *find_lim(z_local_lims_array *z_data_array, coord_point point, int time);
-
-void print_z_lims_data(z_local_lim *z_data, double offset, double scale_factor);
-void print_list(z_local_lims *z_data_array, double offset, double scale_factor);
-
-void free_list_array(z_local_lims_array *z_data_array);
-
-#endif // LIB_H
+#endif // LIB

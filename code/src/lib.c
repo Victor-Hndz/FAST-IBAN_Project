@@ -1,5 +1,5 @@
 #include "../libraries/lib.h"
-
+#include "../libraries/utils.h"
 
 // Function to create a coord_point struct from a latitude and longitude.
 coord_point create_point(double lat, double lon) {
@@ -7,118 +7,54 @@ coord_point create_point(double lat, double lon) {
     return point;
 }
 
-// Function to create a new list.
-z_local_lims *create_lims(void) {
-    z_local_lims *z_data_array = malloc(sizeof(z_local_lims));
-    z_data_array->numVars = 0;
-    z_data_array->first = NULL;
-    z_data_array->last = NULL;
-    z_data_array->prev = NULL;
-    z_data_array->next = NULL;
+candidate create_candidate(int id, int time, enum Tipo_form type, coord_point min1, coord_point min2, coord_point max, short z_min1, short z_min2, short z_max, double max_val, double min_val) {
+    double valor, z_range=max_val-min_val;
 
-    return z_data_array;
-}
+    if(type == OMEGA) {
+        // Criterio 1: Más grande el Z_max y más pequeños los Z_min.
+        valor = (((z_max - min_val) / z_range) - ((((z_min1 - min_val) / z_range) + ((z_min2 - min_val) / z_range))/2));
 
-// Function to create a new local max or min value.
-z_local_lim *create_lim(int time, coord_point point, short z) {
-    z_local_lim *z_data = malloc(sizeof(z_local_lim));
-    z_data->time = time;
-    z_data->coord = point;
-    z_data->z = z;
-    z_data->prev = NULL;
-    z_data->next = NULL;
+        // Criterio 2: Min, alineados en latitud lo máximo posible.
+        valor -= fabs(min1.lat - min2.lat);
 
-    return z_data;
-}
-
-
-// Function to add a new local max or min value to the linked list.
-void add_list(z_local_lims *z_data_array, z_local_lim *z_data) {
-    if (z_data_array->numVars == 0) {
-        z_data_array->first = z_data;
-        z_data_array->last = z_data;
-        z_data_array->numVars++;
-    } else {
-        z_data_array->last->next = z_data;
-        z_data->prev = z_data_array->last;
-        z_data_array->last = z_data;
-        z_data_array->numVars++;
-    }
-}
-
-// Function to add a list to the array of lists.
-void add_list_array(z_local_lims_array *z_lists_arr, z_local_lims *z_data_array) {
-    if (z_lists_arr->numVars == 0) {
-        z_lists_arr->first = z_data_array;
-        z_lists_arr->numVars++;
-    } else {
-        z_local_lims *aux = z_lists_arr->first;
+        // Criterio 3: El max, centrado al máximo posible en longitud.
+        valor -= ((distance_between_points(min1, max) + distance_between_points(min2, max)) / (distance_between_points(min1, min2) * 2));
         
-        while (aux->next != NULL) {
-            aux = aux->next;
-        }
+        // Criterio 4: Los min, lo más cerca posible del max. dentro de unos rangos.
+        valor -= (((fabs(max.lat - min1.lat) + fabs(max.lat - min2.lat)) + (fabs(max.lon - min1.lon) + fabs(max.lon - min2.lon))) / ((fabs(min1.lat - min2.lat) + fabs(min1.lon - min2.lon)) * 2));
 
-        aux->next = z_data_array;
-        z_data_array->prev = aux;
-        z_lists_arr->numVars++;
+        //Criterio 5: Los min, lo más cerca posible entre ellos.
+        valor -= distance_between_points(min1, min2);
+    } else if(type == REX) {
+        // Criterio 1: Más grande el Z_max y más pequeños los Z_min.
+        valor = (((z_max - min_val) / z_range) - ((z_min1 - min_val) / z_range));
+
+        // Criterio 3: El max, centrado al máximo posible en longitud.
+        valor -= fabs(min1.lon - max.lon);
+
+        // Criterio 4: El min, lo más cerca posible del max. dentro de unos rangos.
+        valor -= fabs(min1.lat - max.lat);
     }
+
+    //valor = fmax(0.0, fmin(1.0, valor));
+
+    candidate new_candidate = {id, valor, time, type, min1, min2, max, z_min1, z_min2, z_max}; 
+    return new_candidate;
 }
 
-// Function to find a z_local_lim struct in the linked list searching by the coord_point and time.
-z_local_lim *find_lim(z_local_lims_array *z_data_array, coord_point point, int time) {
-    z_local_lims *aux = z_data_array->first;
-    
-    if(time > 0)
-        for(int i=0; i<time; i++)
-            aux = aux->next;
-    
-    z_local_lim *aux2 = aux->first;
-
-    while (aux2 != NULL) {
-        if (aux2->coord.lat == point.lat && aux2->coord.lon == point.lon) {
-            return aux2;
-        }
-        aux2 = aux2->next;
-    }
-    
-    return NULL;
+// Function to compare two candidates. Returns 1 if they are the same, 0 otherwise.
+int compare_candidates(candidate a, candidate b) {
+    //comparar cada uno de los puntos de los candidatos
+    if(a.min1.lat == b.min1.lat && a.min1.lon == b.min1.lon && a.min2.lat == b.min2.lat && a.min2.lon == b.min2.lon && a.max.lat == b.max.lat && a.max.lon == b.max.lon && a.value == b.value) 
+        return 1;
+    else 
+        return 0;
 }
 
-// Function to print the data of a local max or min value.
-void print_z_lims_data(z_local_lim *z_data, double offset, double scale_factor) {
-    printf("Time: %d\n", z_data->time);
-    printf("Latitude: %f\n", z_data->coord.lat);
-    printf("Longitude: %f\n", z_data->coord.lon);
-    printf("Z: %f\n", z_data->z);
-}
-
-
-// Function to print the list of local max or min values.
-void print_list(z_local_lims *z_data_array, double offset, double scale_factor) {
-    z_local_lim *aux = z_data_array->first;
-    while (aux != NULL) {
-        print_z_lims_data(aux, offset, scale_factor);
-        aux = aux->next;
-    }
-}
-
-//Function to free the memory of the linked list.
-void free_list_array(z_local_lims_array *z_data_array) {
-    if(z_data_array->numVars == 0) 
-        free(z_data_array);
-    else {
-        z_local_lims *aux = z_data_array->first;
-        z_local_lim *aux2;
-        while (aux != NULL) {
-            aux2 = aux->first;
-            while (aux2 != NULL) {
-                aux->first = aux->first->next;
-                free(aux2);
-                aux2 = aux->first;
-            }
-            z_data_array->first = z_data_array->first->next;
-            free(aux);
-            aux = z_data_array->first;
-        }
-    }
+// Function to compare two points. Returns 1 if they are the same, 0 otherwise.
+int compare_points(coord_point a, coord_point b) {
+    if(a.lat == b.lat && a.lon == b.lon) 
+        return 1;
+    else 
+        return 0;
 }

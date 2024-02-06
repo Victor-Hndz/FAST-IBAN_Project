@@ -1,14 +1,15 @@
-#include "libraries/lib_v2.h"
-#include "libraries/utils_v2.h"
-#include "libraries/calc_v2.h"
+#include "libraries/lib.h"
+#include "libraries/utils.h"
+#include "libraries/calc.h"
 #include <omp.h>
 
 
 int main(void) {
-    int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2, is_equal;
+    int ncid, z_varid, lat_varid, lon_varid, retval, i, j, cont, cont2, is_equal, id_pointer=0;
     double scale_factor, offset, z_calculated1, z_calculated2, t_ini, t_fin, t_total;
     short z_aux, z_aux_selected;
     char long_name[NC_MAX_NAME+1] = "";
+    double max_val = -INF, min_val = INF;
 
 
     // Create the directory for the output file.
@@ -187,6 +188,9 @@ int main(void) {
                     if(z_calculated1-BEARING_LIMIT > z_calculated2) {
                         z_lists_arr_selected_max[time][lat][lon] = z_lists_arr_maxs[time][lat][lon];
                         candidates_size[time]++;
+
+                        if(z_lists_arr_selected_max[time][lat][lon] > max_val)
+                            max_val = z_lists_arr_selected_max[time][lat][lon];
                     }
                 }
             }
@@ -209,8 +213,12 @@ int main(void) {
                     z_calculated1 = ((z_lists_arr_mins[time][lat][lon] * scale_factor) + offset)/g_0;
                     z_calculated2 = ((z_aux_selected * scale_factor) + offset)/g_0;
 
-                    if(z_calculated1+BEARING_LIMIT < z_calculated2)
+                    if(z_calculated1+BEARING_LIMIT < z_calculated2) {
                         z_lists_arr_selected_min[time][lat][lon] = z_lists_arr_mins[time][lat][lon];
+
+                        if(z_lists_arr_selected_min[time][lat][lon] < min_val)
+                            min_val = z_lists_arr_selected_min[time][lat][lon];
+                    }
                 }
             }
         }  
@@ -224,8 +232,10 @@ int main(void) {
     
     t_ini = omp_get_wtime();
 
-    for(int i=0; i<NTIME; i++) 
-        findCombinations(z_lists_arr_selected_max[i], z_lists_arr_selected_min[i], candidates, candidates_size, lats, lons, i);
+    for(int i=0; i<NTIME; i++) {
+        findCombinations(z_lists_arr_selected_max[i], z_lists_arr_selected_min[i], candidates, candidates_size, lats, lons, i, max_val, min_val, &id_pointer);
+        printf("Tiempo %d: %d candidatos.\n", i, candidates_size[i]);
+    }
 
     t_fin = omp_get_wtime();
     printf("\nCandidatos seleccionados con éxito.\n");

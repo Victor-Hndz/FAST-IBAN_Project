@@ -1,10 +1,11 @@
-#if !defined(CALC_H)
-#define CALC_H
+#if !defined(CALC)
+#define CALC
 
 #include "lib.h"
-#include <math.h>
+#include "utils.h"
+
 
 coord_point coord_from_great_circle(coord_point initial, double dist, double bearing);
-double bilinear_interpolation(coord_point p, z_local_lims_array *z_lists_arr, int time);
-
-#endif // CALC_H
+short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, float* lons);
+void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], candidate **candidatos, int *candidates_size, float* lats, float *lons, int time, double max_val, double min_val, int *id);
+#endif // CALC
