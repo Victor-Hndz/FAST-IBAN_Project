@@ -8,6 +8,7 @@ void extract_nc_data(int ncid);
 
 void export_z_to_csv(short (*z_mat)[NLAT][NLON], char *long_name, int control, float* lats, float* lons, double offset, double scale_factor);
 void export_candidate_to_csv(candidate **candidatos, int *size, char *long_name, double offset, double scale_factor);
+void export_selected_points_to_csv(selected_point *selected_points, int size, char *filename, double offset, double scale_factor, int time);
 
 int findIndex(float *arr, int n, double target);
 double distance_between_points(coord_point p1, coord_point p2);

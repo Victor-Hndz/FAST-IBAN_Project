@@ -319,11 +319,18 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     lon = archivo_nc.variables['longitude'][:]
     z = archivo_nc.variables['z'][:]
     
+    fecha = re.search(patron_fecha, nc_data).group()
+    fecha = fecha[1:]
+    # fecha = fecha.split('_')[0]
+    
+    #dependiendo del tiempo, se recorta el instante en la fecha con forma _WW-XX-YY-ZZUTC y si es instante 2 nos quedamos con _YYUTC
+    
     # Cerrar el archivo NetCDF
     archivo_nc.close()
     
     z = z[tiempo]
     z = z / g_0
+    
 
     # Ajustar valores mayores a 180 restando 360
     if max(lon) > 180:
@@ -362,7 +369,7 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     tipo = 'max' if es_max else 'min'
     
     # Añade títulos y etiquetas
-    plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles', loc='center')
+    plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles - {fecha}', loc='center')
     plt.xlabel('Longitud (deg)')
     plt.ylabel('Latitud (deg)')
 
@@ -391,8 +398,6 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     print("Mapa generado. Guardando mapa...")
 
     # Definir el nombre base del archivo y la extensión 
-    fecha = re.search(patron_fecha, nc_data).group()
-    fecha = fecha[1:]
     nombre_base = f"out/mapa_geopotencial_contornos_puntos_%il_t%i_{tipo}_{fecha}" % (niveles, tiempo)
     extension = ".svg" 
     

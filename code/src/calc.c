@@ -121,8 +121,7 @@ void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], 
                                     continue;  
 
                                 for(int s=0; s<size[time]; s++) {
-                                    if(compare_points(candidatos[time][s].max, p_max) == 1 || compare_points(candidatos[time][s].min1, p_candidato) == 1 || 
-                                    compare_points(candidatos[time][s].min2, p_aux) == 1) {
+                                    if(compare_points(candidatos[time][s].max, p_max) == 1) {
                                         found = 1;
                                         cand_aux = create_candidate(-1, time, OMEGA, p_candidato, p_aux, p_max, selected_min[i][j], selected_min[x][y], selected_max[a][b], max_val, min_val);
                                         
@@ -145,7 +144,7 @@ void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], 
                                     continue;  
 
                                 for(int s=0; s<size[time]; s++) {
-                                    if(compare_points(candidatos[time][s].max, p_max) == 1 || compare_points(candidatos[time][s].min1, p_candidato) == 1) {
+                                    if(compare_points(candidatos[time][s].max, p_max) == 1) {
                                         found = 1;
                                         cand_aux = create_candidate(-1, time, REX, p_candidato, (coord_point){-1,-1}, p_max, selected_min[i][j], -1, selected_max[a][b], max_val, min_val);
                                         
@@ -168,4 +167,45 @@ void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], 
             }
         }
     }
+}
+
+//Función para calcular la distancia entre dos puntos en el globo.
+double point_distance(coord_point p1, coord_point p2) {
+    double lat1, lon1, lat2, lon2, dlat, dlon, a, c, d;
+
+    lat1 = p1.lat * M_PI / 180;
+    lon1 = p1.lon * M_PI / 180;
+    lat2 = p2.lat * M_PI / 180;
+    lon2 = p2.lon * M_PI / 180;
+
+    dlat = lat2 - lat1;
+    dlon = lon2 - lon1;
+
+    //Haversine formula
+    a = pow(sin(dlat/2), 2) + cos(lat1) * cos(lat2) * pow(sin(dlon/2), 2);
+    c = 2 * atan2(sqrt(a), sqrt(1-a));
+    d = R * c;
+
+    return d;
+}
+
+//Función para calcular la desviación cuadrática media.
+double calculate_rmsd(selected_point* points, selected_point centroid, int size) {
+    double sum_squared_distance = 0.0;
+    for (int i = 0; i < size; i++) {
+        int dist = point_distance(points[i].point, centroid.point);
+        sum_squared_distance += dist * dist;
+    }
+    return sqrt(sum_squared_distance / size);
+}
+
+void from_latlon_to_xyz(float* xyz, float lat, float lon) {
+    xyz[0] = cos(lat) * cos(lon);
+    xyz[1] = cos(lat) * sin(lon);
+    xyz[2] = sin(lat);
+}
+
+void from_xyz_to_latlon(float* latlon, float x, float y, float z) {
+    latlon[0] = atan2(y, x);
+    latlon[1] = atan2(z, sqrt(x*x + y*y));
 }

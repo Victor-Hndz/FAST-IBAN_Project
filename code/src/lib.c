@@ -7,6 +7,12 @@ coord_point create_point(double lat, double lon) {
     return point;
 }
 
+// Function to create a selected_point struct.
+selected_point create_selected_point(coord_point point, short z, int cent) {
+    selected_point new_point = {point, z, cent};
+    return new_point;
+}
+
 candidate create_candidate(int id, int time, enum Tipo_form type, coord_point min1, coord_point min2, coord_point max, short z_min1, short z_min2, short z_max, double max_val, double min_val) {
     double valor, z_range=max_val-min_val;
 

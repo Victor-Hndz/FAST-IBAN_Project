@@ -7,6 +7,7 @@
 #include <netcdf.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <time.h>
 
 /*DEFINES*/
 
@@ -47,10 +48,12 @@ extern int NTIME, NLAT, NLON;
 #define BEARING_STEP 22.5 // Bearing step in degrees to use in the great circle method
 #define BEARING_START (-180) // Bearing start in degrees to use in the great circle method
 #define BEARING_LIMIT 40
-#define INF 9999999
+#define INF (1.0E+30)
+#define MAX_K 10
 
 /*STRUCTS*/
 enum Tipo_form{OMEGA, REX};
+enum Tipo_maxmin{MAX, MIN};
 
 //Struct that holds a point (lat, lon).
 typedef struct {
@@ -72,8 +75,16 @@ typedef struct candidate_list {
     short z_max;
 } candidate;
 
+//Struct that holds a selected point.
+typedef struct selected_point_list {
+    coord_point point;
+    short z;
+    int cent;
+} selected_point;
+
 // Functions
 coord_point create_point(double lat, double lon);
+selected_point create_selected_point(coord_point point, short z, int cent);
 candidate create_candidate(int id, int time, enum Tipo_form type, coord_point min1, coord_point min2, coord_point max, short z_min1, short z_min2, short z_max, double max_val, double min_val);
 int compare_candidates(candidate a, candidate b);
 int compare_points(coord_point a, coord_point b);

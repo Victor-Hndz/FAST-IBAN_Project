@@ -175,6 +175,7 @@ int main(void) {
                 if(z_lists_arr_maxs[time][lat][lon] == 0) 
                     continue;
 
+                int bearing_count = 0;
                 for(i=0; i<N_BEARINGS*2;i++) {
                     coord_point p = {lats[lat], lons[lon]};
                     z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_lists_arr_all[time], lats, lons);
@@ -182,16 +183,20 @@ int main(void) {
                     if(z_aux_selected == 0)
                         continue;
 
-                    z_calculated1 = ((z_lists_arr_maxs[time][lat][lon] * scale_factor) + offset)/g_0;
-                    z_calculated2 = ((z_aux_selected * scale_factor) + offset)/g_0;
+                    z_calculated1 = (((z_lists_arr_maxs[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_lists_arr_maxs[time][lat][lon] * scale_factor) + offset)/g_0) % 20);
+                    z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % 20);
 
-                    if(z_calculated1-BEARING_LIMIT > z_calculated2) {
-                        z_lists_arr_selected_max[time][lat][lon] = z_lists_arr_maxs[time][lat][lon];
-                        candidates_size[time]++;
-
-                        if(z_lists_arr_selected_max[time][lat][lon] > max_val)
-                            max_val = z_lists_arr_selected_max[time][lat][lon];
+                    if(z_calculated1 >= z_calculated2-20) {
+                        bearing_count++;
                     }
+                }
+
+                if(bearing_count == N_BEARINGS*2) {
+                    z_lists_arr_selected_max[time][lat][lon] = z_lists_arr_maxs[time][lat][lon];
+                    candidates_size[time]++;
+
+                    if(z_lists_arr_selected_max[time][lat][lon] > max_val)
+                        max_val = z_lists_arr_selected_max[time][lat][lon];
                 }
             }
         }
@@ -203,6 +208,7 @@ int main(void) {
                 if(z_lists_arr_mins[time][lat][lon] == 0) 
                     continue;
 
+                int bearing_count = 0;
                 for(i=0; i<N_BEARINGS*2;i++) {
                     coord_point p = {lats[lat], lons[lon]};
                     z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_lists_arr_all[time], lats, lons);
@@ -210,15 +216,19 @@ int main(void) {
                     if(z_aux_selected == 0)
                         continue;
                     
-                    z_calculated1 = ((z_lists_arr_mins[time][lat][lon] * scale_factor) + offset)/g_0;
-                    z_calculated2 = ((z_aux_selected * scale_factor) + offset)/g_0;
+                    z_calculated1 = (((z_lists_arr_mins[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_lists_arr_mins[time][lat][lon] * scale_factor) + offset)/g_0) % 20);
+                    z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % 20);
 
-                    if(z_calculated1+BEARING_LIMIT < z_calculated2) {
-                        z_lists_arr_selected_min[time][lat][lon] = z_lists_arr_mins[time][lat][lon];
-
-                        if(z_lists_arr_selected_min[time][lat][lon] < min_val)
-                            min_val = z_lists_arr_selected_min[time][lat][lon];
+                    if(z_calculated1 <= z_calculated2+20) {
+                        bearing_count++;
                     }
+                }
+
+                if(bearing_count == N_BEARINGS*2) {
+                    z_lists_arr_selected_min[time][lat][lon] = z_lists_arr_mins[time][lat][lon];
+
+                    if(z_lists_arr_selected_min[time][lat][lon] < min_val)
+                        min_val = z_lists_arr_selected_min[time][lat][lon];
                 }
             }
         }  

@@ -112,6 +112,17 @@ void extract_nc_data(int ncid) {
     }
 }
 
+// Function to export the data of the selected points to a csv file.
+void export_selected_points_to_csv(selected_point *selected_points, int size, char *filename, double offset, double scale_factor, int time) {
+    printf("Exporting selected points to csv file...\n");
+    FILE *fp = fopen(filename, "a");
+
+    for(int i=0; i<size; i++) {
+        fprintf(fp, "%d,%.2f,%.2f,%.1f,%d\n", time, selected_points[i].point.lat, selected_points[i].point.lon, ((selected_points[i].z*scale_factor)+offset)/g_0, selected_points[i].cent);
+    }
+    fclose(fp);
+}
+
 // Function to calculate the distance between two points.
 double distance_between_points(coord_point p1, coord_point p2) {
     return sqrt(pow(p2.lat - p1.lat, 2) + pow(p2.lon - p1.lon, 2));
