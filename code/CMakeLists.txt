@@ -27,6 +27,7 @@ enable_testing()
 
 add_library(UTILS src/utils.c libraries/utils.h) 
 add_library(CALC src/calc.c libraries/calc.h)
+add_library(INIT src/init.c libraries/init.h)
 add_library(LIB src/lib.c libraries/lib.h)
 
 
@@ -39,6 +40,7 @@ target_link_libraries(FAST-IBAN PRIVATE OpenMP::OpenMP_C)
 
 target_link_libraries(FAST-IBAN PRIVATE UTILS)
 target_link_libraries(FAST-IBAN PRIVATE CALC)
+target_link_libraries(FAST-IBAN PRIVATE INIT)
 target_link_libraries(FAST-IBAN PRIVATE LIB)
 
 
