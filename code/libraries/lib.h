@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 /*DEFINES*/
 
@@ -19,8 +20,8 @@
 // Handle errors by printing an error message and exiting with a non-zero status.
 #define ERR(e) {if (e != NC_NOERR) {fprintf(stderr, "Error: %s\n", nc_strerror(e)); exit(EXIT_FAILURE);}}
 
-// #define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
-#define FILE_NAME "data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc"
+#define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
+// #define FILE_NAME "data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc"
 
 #define RES 0.25 // Resolution of the map in degrees
 
@@ -48,12 +49,12 @@ extern int NTIME, NLAT, NLON;
 #define BEARING_STEP 22.5 // Bearing step in degrees to use in the great circle method
 #define BEARING_START (-180) // Bearing start in degrees to use in the great circle method
 #define BEARING_LIMIT 40
+#define CONTOUR_STEP 20
 #define INF (1.0E+30)
 #define MAX_K 10
 
 /*STRUCTS*/
 enum Tipo_form{OMEGA, REX};
-enum Tipo_maxmin{MAX, MIN};
 
 //Struct that holds a point (lat, lon).
 typedef struct {
