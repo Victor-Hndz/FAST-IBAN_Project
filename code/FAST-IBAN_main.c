@@ -21,7 +21,6 @@ int main(void) {
         return 2;
     }
 
-
     t_ini = omp_get_wtime();
 
     // Open the file.
@@ -121,7 +120,7 @@ int main(void) {
                         }
 
                         z_calculated1 = (((z_in[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_in[time][lat][lon] * scale_factor) + offset)/g_0) % CONTOUR_STEP);
-                        z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % CONTOUR_STEP);
+                        z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % CONTOUR_STEP);                        
 
                         if(z_calculated1 >= z_calculated2)
                             bearing_count_max++;

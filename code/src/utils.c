@@ -59,7 +59,6 @@ int findIndex(float *arr, int n, double target) {
 
 // Function to export the data of the selected points to a csv file.
 void export_selected_points_to_csv(selected_point *selected_points, int size, char *filename, double offset, double scale_factor, int time) {
-    printf("Exporting selected points to csv file...\n");
     FILE *fp = fopen(filename, "a");
 
     for(int i=0; i<size; i++) {

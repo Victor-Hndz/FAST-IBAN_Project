@@ -79,6 +79,11 @@ int main(void) {
         ERR(retval)
 
 
+    bool procesado[NLAT][NLON];
+
+    memset(procesado, false, sizeof(procesado));
+
+
     // Check if the longitudes are in the range [-180, 180] or [0, 360] and correct them if necessary.
     if(lons[NLON-1] > 180) {
         float aux1;
@@ -143,21 +148,33 @@ int main(void) {
                         else
                             z_aux = z_in[time][i][j];
 
-                        if (z_in[time][lat][lon] > z_aux)
-                            cont++;
-                        if (z_in[time][lat][lon] < z_aux)
-                            cont2++;
-                        if (z_in[time][lat][lon] == z_aux) 
-                            is_equal = 1;
+                        if(!procesado[i][j]) {
+                            if (z_in[time][lat][lon] > z_aux)
+                                cont++;
+                            if (z_in[time][lat][lon] < z_aux)
+                                cont2++;
+                            if (z_in[time][lat][lon] == z_aux) 
+                                is_equal = 1;
+                        }
                     }
                 }
                 cont += is_equal;
                 cont2 += is_equal;
 
-                if(cont==8)
+                if(cont==8) {
                     z_lists_arr_maxs[time][lat][lon] = z_in[time][lat][lon];
-                else if (cont2==8) 
+                    
+                    for(i=lat-1; i<=lat+1; i++) 
+                        for(j=lon-1; j<=lon+1; j++) 
+                            procesado[i][j] = true;
+
+                } else if (cont2==8) {
                     z_lists_arr_mins[time][lat][lon] = z_in[time][lat][lon];
+
+                    for(i=lat-1; i<=lat+1; i++) 
+                        for(j=lon-1; j<=lon+1; j++) 
+                            procesado[i][j] = true;
+                }
             }
         }
     }
@@ -180,22 +197,26 @@ int main(void) {
                     coord_point p = {lats[lat], lons[lon]};
                     z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_lists_arr_all[time], lats, lons);
                     
-                    if(z_aux_selected == 0) {
+                    if(z_aux_selected == -1) {
                         bearing_count++;
                         continue;
                     }
 
-                    z_calculated1 = (((z_lists_arr_maxs[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_lists_arr_maxs[time][lat][lon] * scale_factor) + offset)/g_0) % 20);
-                    z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % 20);
+                    // z_calculated1 = (((z_lists_arr_maxs[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_lists_arr_maxs[time][lat][lon] * scale_factor) + offset)/g_0) % 20);
+                    // z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % 20);
 
-                    if(z_calculated1 >= z_calculated2) {
-                        bearing_count++;
-                    }
+                    // if(z_calculated1 >= z_calculated2)
+                        //bearing_count++;
+
+                    z_calculated1 = (((z_in[time][lat][lon] * scale_factor) + offset)/g_0);
+                    z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0);
+
+                    if(z_calculated1-BEARING_LIMIT > z_calculated2) 
+                        bearing_count++;     
                 }
 
                 if(bearing_count == N_BEARINGS*2) {
                     z_lists_arr_selected_max[time][lat][lon] = z_lists_arr_maxs[time][lat][lon];
-                    candidates_size[time]++;
 
                     if(z_lists_arr_selected_max[time][lat][lon] > max_val)
                         max_val = z_lists_arr_selected_max[time][lat][lon];
@@ -215,17 +236,24 @@ int main(void) {
                     coord_point p = {lats[lat], lons[lon]};
                     z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_lists_arr_all[time], lats, lons);
                     
-                    if(z_aux_selected == 0) {
+                    if(z_aux_selected == -1) {
                         bearing_count++;
                         continue;
                     }
                     
-                    z_calculated1 = (((z_lists_arr_mins[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_lists_arr_mins[time][lat][lon] * scale_factor) + offset)/g_0) % 20);
-                    z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % 20);
+                    // z_calculated1 = (((z_lists_arr_mins[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_lists_arr_mins[time][lat][lon] * scale_factor) + offset)/g_0) % 20);
+                    // z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % 20);
 
-                    if(z_calculated1 <= z_calculated2) {
+
+                    // if(z_calculated1 <= z_calculated2) {
+                    //     bearing_count++;
+                    // }
+
+                    z_calculated1 = (((z_in[time][lat][lon] * scale_factor) + offset)/g_0);
+                    z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0);
+
+                    if(z_calculated1+BEARING_LIMIT < z_calculated2) 
                         bearing_count++;
-                    }
                 }
 
                 if(bearing_count == N_BEARINGS*2) {
@@ -246,10 +274,10 @@ int main(void) {
     
     t_ini = omp_get_wtime();
 
-    for(int i=0; i<NTIME; i++) {
-        findCombinations(z_lists_arr_selected_max[i], z_lists_arr_selected_min[i], candidates, candidates_size, lats, lons, i, max_val, min_val, &id_pointer);
-        printf("Tiempo %d: %d candidatos.\n", i, candidates_size[i]);
-    }
+    // for(int i=0; i<NTIME; i++) {
+    //     findCombinations(z_lists_arr_selected_max[i], z_lists_arr_selected_min[i], candidates, candidates_size, lats, lons, i, max_val, min_val, &id_pointer);
+    //     printf("Tiempo %d: %d candidatos.\n", i, candidates_size[i]);
+    // }
 
     t_fin = omp_get_wtime();
     printf("\nCandidatos seleccionados con éxito.\n");
@@ -259,12 +287,12 @@ int main(void) {
     t_ini = omp_get_wtime();
     export_z_to_csv(z_lists_arr_maxs, long_name, 1, lats, lons, offset, scale_factor);
     export_z_to_csv(z_lists_arr_mins, long_name, -1, lats, lons, offset, scale_factor);
-    export_z_to_csv(z_lists_arr_all, long_name, 0, lats, lons, offset, scale_factor);
+    //export_z_to_csv(z_lists_arr_all, long_name, 0, lats, lons, offset, scale_factor);
 
     export_z_to_csv(z_lists_arr_selected_max, long_name, 2, lats, lons, offset, scale_factor);
     export_z_to_csv(z_lists_arr_selected_min, long_name, -2, lats, lons, offset, scale_factor);
 
-    export_candidate_to_csv(candidates, candidates_size, long_name, offset, scale_factor);
+    //export_candidate_to_csv(candidates, candidates_size, long_name, offset, scale_factor);
 
     t_fin = omp_get_wtime();
     printf("#5. Escritura CSV: %.6f s.\n", t_fin-t_ini);

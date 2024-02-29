@@ -23,15 +23,8 @@ def main():
     for option in options:           
         if options[option]['map'] == 'cont':
             print('Generating contour map')
-            if options[option]['es_max'] == 'both':
-                gm.generate_contour_map(nc_data=options[option]['nc_data'], es_max=True, niveles=options[option]['levels'],
-                                        tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
-                
-                gm.generate_contour_map(nc_data=options[option]['nc_data'], es_max=False, niveles=options[option]['levels'],
-                                        tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
-            else:
-                gm.generate_contour_map(nc_data=options[option]['nc_data'], es_max=options[option]['es_max'], niveles=options[option]['levels'],
-                                        tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+            gm.generate_contour_map(nc_data=options[option]['nc_data'], niveles=options[option]['levels'],
+                                    tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
 
         elif options[option]['map'] == 'disp':
             print('Generating scatter map')
