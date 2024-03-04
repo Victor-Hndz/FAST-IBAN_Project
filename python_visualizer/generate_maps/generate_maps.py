@@ -241,7 +241,7 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
         
     #filtrar los valores para que z, la latitud y la longitud se encuentren en el rango correcto
     lat, lon, z = filt_data(lat, lon, z, lat_range, lon_range)
-    latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
+    #latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
     
     #get z max and min
     z_max = z.max()
@@ -261,7 +261,10 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     # valores de contorno
     plt.clabel(co, inline=True, fontsize=6)
     
-    tipo = 'max' if es_max else 'min'
+    if(es_max == 'comb'):
+        tipo = 'comb'
+    else:
+        tipo = 'max' if es_max else 'min'
     
     # Añade títulos, colorbar y etiquetas
     visual_adds(fig, ax, sc, new_date, lat_range, lon_range, niveles, tipo)

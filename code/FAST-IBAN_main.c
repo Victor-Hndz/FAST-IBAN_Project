@@ -104,62 +104,72 @@ int main(void) {
                 cont += is_equal;
                 cont2 += is_equal;
 
-                if(cont==8) {
-                    for(i=lat-1; i<=lat+1; i++) 
-                        for(j=lon-1; j<=lon+1; j++) 
-                            procesado[i][j] = true;
+                if(cont == 8) {
+                    selected_max_points[time][selected_max_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
+                    selected_max_size++;
+                    selected_max_points[time] = realloc(selected_max_points[time], (selected_max_size+1)*sizeof(selected_point));
+                } else if(cont2 == 8) {
+                    selected_min_points[time][selected_min_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
+                    selected_min_size++;
+                    selected_min_points[time] = realloc(selected_min_points[time], (selected_min_size+1)*sizeof(selected_point));
+                }
 
-                    bearing_count_max=0;
-                    for(i=0; i<N_BEARINGS*2;i++) {
-                        coord_point p = create_point(lats[lat], lons[lon]);
-                        z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_in[time], lats, lons);
+                // if(cont==8) {
+                //     for(i=lat-1; i<=lat+1; i++) 
+                //         for(j=lon-1; j<=lon+1; j++) 
+                //             procesado[i][j] = true;
+
+                //     bearing_count_max=0;
+                //     for(i=0; i<N_BEARINGS*2;i++) {
+                //         coord_point p = create_point(lats[lat], lons[lon]);
+                //         z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_in[time], lats, lons);
                         
-                        if(z_aux_selected == -1) {
-                            bearing_count_max++;
-                            continue;
-                        }
+                //         if(z_aux_selected == -1) {
+                //             bearing_count_max++;
+                //             continue;
+                //         }
 
-                        z_calculated1 = (((z_in[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_in[time][lat][lon] * scale_factor) + offset)/g_0) % CONTOUR_STEP);
-                        z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % CONTOUR_STEP);                        
+                //         z_calculated1 = (((z_in[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_in[time][lat][lon] * scale_factor) + offset)/g_0) % CONTOUR_STEP);
+                //         z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % CONTOUR_STEP);                        
 
-                        if(z_calculated1 >= z_calculated2)
-                            bearing_count_max++;
-                    }
+                //         if(z_calculated1 >= z_calculated2)
+                //             bearing_count_max++;
+                //     }
 
-                    if(bearing_count_max == N_BEARINGS*2) {
-                        selected_max_points[time][selected_max_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
-                        selected_max_size++;
-                        selected_max_points[time] = realloc(selected_max_points[time], (selected_max_size+1)*sizeof(selected_point));
-                    }
-                } else if (cont2==8) {
-                    for(i=lat-1; i<=lat+1; i++) 
-                        for(j=lon-1; j<=lon+1; j++) 
-                            procesado[i][j] = true;
+                //     if(bearing_count_max == N_BEARINGS*2) {
+                //         selected_max_points[time][selected_max_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
+                //         selected_max_size++;
+                //         selected_max_points[time] = realloc(selected_max_points[time], (selected_max_size+1)*sizeof(selected_point));
+                //     }
+                // } else if (cont2==8) {
+                //     for(i=lat-1; i<=lat+1; i++) 
+                //         for(j=lon-1; j<=lon+1; j++) 
+                //             procesado[i][j] = true;
                             
-                    bearing_count_min=0;
-                    for(i=0; i<N_BEARINGS*2;i++) {
-                        coord_point p = {lats[lat], lons[lon]};
-                        z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_in[time], lats, lons);
+                //     bearing_count_min=0;
+                //     for(i=0; i<N_BEARINGS*2;i++) {
+                //         coord_point p = {lats[lat], lons[lon]};
+                //         z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_in[time], lats, lons);
    
 
-                        if(z_aux_selected == -1) {
-                            bearing_count_min++;
-                            continue;
-                        }
+                //         if(z_aux_selected == -1) {
+                //             bearing_count_min++;
+                //             continue;
+                //         }
 
-                        z_calculated1 = (((z_in[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_in[time][lat][lon] * scale_factor) + offset)/g_0) % CONTOUR_STEP);
-                        z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % CONTOUR_STEP);
+                //         z_calculated1 = (((z_in[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_in[time][lat][lon] * scale_factor) + offset)/g_0) % CONTOUR_STEP);
+                //         z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % CONTOUR_STEP);
 
-                        if(z_calculated1 <= z_calculated2) 
-                            bearing_count_min++;
-                    }
+                //         if(z_calculated1 <= z_calculated2) 
+                //             bearing_count_min++;
+                //     }
 
-                    if(bearing_count_min == N_BEARINGS*2) {
-                        selected_min_points[time][selected_min_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
-                        selected_min_size++;
-                        selected_min_points[time] = realloc(selected_min_points[time], (selected_min_size+1)*sizeof(selected_point));
-                    }
-                }
+                //     if(bearing_count_min == N_BEARINGS*2) {
+                //         selected_min_points[time][selected_min_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
+                //         selected_min_size++;
+                //         selected_min_points[time] = realloc(selected_min_points[time], (selected_min_size+1)*sizeof(selected_point));
+                //     }
+                // }
             }
         }
         export_selected_points_to_csv(selected_max_points[time], selected_max_size, filename1, offset, scale_factor, time);

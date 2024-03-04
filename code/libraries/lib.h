@@ -20,9 +20,9 @@
 // Handle errors by printing an error message and exiting with a non-zero status.
 #define ERR(e) {if (e != NC_NOERR) {fprintf(stderr, "Error: %s\n", nc_strerror(e)); exit(EXIT_FAILURE);}}
 
-// #define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
+#define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
 // #define FILE_NAME "data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc"
-#define FILE_NAME "data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc"
+// #define FILE_NAME "data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc"
 
 #define RES 0.25 // Resolution of the map in degrees
 
