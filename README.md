@@ -47,4 +47,8 @@ para debug:
 - descomentar en cmakelists: set(CMAKE_BUILD_TYPE Debug) y enable_testing()
 - gdb ./FAST-IBAN_v2 o ./fichero_que_sea
 
+para arreglar problemas en el commit:
+- git rm --cached /ruta/al/archivo
+- git commit --ammend --no-edit
+
 Todo está WIP y en fase de pruebas.
