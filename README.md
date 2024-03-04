@@ -8,8 +8,10 @@ comando para ejecutar read4d.c --> ./read4d
 comando todo en uno --> gcc read4d.c functs.c functs.h -o read4d -lnetcdf && "./"read4d
 
 ## NUEVO
-USAR build_v2 y geopot_v2. El CMakeLists.txt está preparado para usar la versión 2.
-Tests aún sin implementar para versión 2
+Para ejecutar todo de golpe con la configuración actual: exec_all.sh
+
+
+Usar build y FAST-IBAN_main.c. El CMakeLists.txt está preparado.
 
 para compilar --> usar cmake (explicado abajo)
 
@@ -17,18 +19,13 @@ Usa un archivo de entrada .nc
 
 Genera una carpeta out (si no existe) y dentro mete todos los ficheros de salida que son .csv con diferentes datos de interés.
 
-En python visualizer, a partir de un fichero csv  se ejecuta el script y genera una imagen que es un mapa representando los valores del csv.
+En python visualizer, a partir de un fichero csv se ejecuta el script y genera una imagen que es un mapa representando los valores del csv. Se usa un fichero de configuración config.yaml
 - Comando de ejecución del script de python para mapas de dispersión --> python generate_map.py
 - Comando de ejecución para mapa de contornos --> python generate_contour_map.py
 
-## OBSOLETO
-En el fichero "Diagrama de estrcuturas FAST-IBAN" está explicado el funcionamiento de las listas.
-
-Para compilar y hacer pruebas usando cmake:
-
 para usar cmake, haces:
-- mkdir build2
-- cd build2
+- mkdir build
+- cd build
 - cmake -G "MinGW Makefiles" .. (Windows)
 - cmake .. (linux)
 - cmake --build .
@@ -45,7 +42,7 @@ para añadir tests:
 
 para debug:
 - descomentar en cmakelists: set(CMAKE_BUILD_TYPE Debug) y enable_testing()
-- gdb ./FAST-IBAN_v2 o ./fichero_que_sea
+- gdb ./FAST-IBAN_main o ./fichero_que_sea
 
 para arreglar problemas en el commit:
 - git rm --cached /ruta/al/archivo
