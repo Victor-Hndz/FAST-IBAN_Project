@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs 
 import cartopy as cartopy 
 import numpy as np
-import os
 import re
 from utils.map_utils import *
 
@@ -47,9 +46,12 @@ def generate_contour_map(nc_data, niveles, tiempo, lat_range, lon_range):
     
     # Plotea los contornos en el mapa
     co = ax.contour(lon, lat, z, levels=niveles, cmap='jet', transform=ccrs.PlateCarree(), linewidths=0.3)
+    
+    #valores de contorno
+    plt.clabel(co, inline=True, fontsize=6)
 
     # Añade títulos, colorbar y etiquetas
-    visual_adds(fig, ax, co, niveles, new_date, lat_range, lon_range)
+    visual_adds(fig, ax, co, new_date, lat_range, lon_range, niveles)
 
     # Muestra la figura
     # plt.show()
@@ -65,85 +67,61 @@ def generate_contour_map(nc_data, niveles, tiempo, lat_range, lon_range):
     
 
 
-
-def generate_scatter_map(data, es_max, tiempo, lat_range, lon_range):
+def generate_scatter_map(data, es_max, tiempo, date, lat_range, lon_range):
+    #Extraer la fecha del archivo
+    fecha = re.search(patron_fecha, date).group()
+    fecha = fecha[1:]
+    
+    #Dejar fecha con el instante de tiempo correcto
+    new_date = extract_date(fecha, tiempo)
+    
     #obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == tiempo]
-    
     latitudes = data['latitude'].copy()
     longitudes = data['longitude'].copy()
     variable = data['z'].copy()
+    
+    # Ajustar valores mayores a 180 restando 360
+    if max(longitudes) > 180:
+        longitudes, variable = adjust_lon(longitudes, variable)
+        
+    #filtrar los valores para que z, la latitud y la longitud se encuentren en el rango correcto
+    latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
 
     # Crear una figura para un mapa del mundo
-    fig, ax = plt.subplots(figsize=(11, 5), dpi=250, subplot_kw=dict(projection=ccrs.PlateCarree()))
-    ax.set_global()
-    
-    # Establecer límites manuales para cubrir todo el mundo
-    ax.set_xlim(lon_range[0], lon_range[1])
-    ax.set_ylim(lat_range[0], lat_range[1])
-    
-    # Agregar detalles geográficos al mapa
-    ax.coastlines()
-    ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
+    fig, ax = config_map(lat_range, lon_range)
 
     # Scatter plot
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=7)
     
+    #Decide si es max o min
     tipo = 'max' if es_max else 'min'
     
-    # Añade títulos y etiquetas
-    plt.title(f'Geopotencial {tipo} en 500 hPa', loc='center')
-    plt.xlabel('Longitud (deg)')
-    plt.ylabel('Latitud (deg)')
-
-    cax = fig.add_axes([ax.get_position().x1+0.01,
-                    ax.get_position().y0,
-                    0.02,
-                    ax.get_position().height])
-    cbar = plt.colorbar(sc, cax=cax, orientation='vertical')
-
-    cbar.set_label('Geopotencial (m)')
-    
-    # Agregar marcas de latitud en el borde izquierdo
-    ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
-    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)])
-    
-    # Agregar marcas de longitud en el borde inferior
-    ax.set_xticks(range(lon_range[0], lon_range[1]+1, 20), crs=ccrs.PlateCarree())
-    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)])
+    #Añade títulos, etiquetas y colorbar
+    visual_adds(fig, ax, sc, new_date, lat_range, lon_range, None, tipo)
     
     # Muestra la figura
     # plt.show()
 
-    # La barra de progreso llegará al 100% cuando termine de generar el mapa.
     print("Mapa generado. Guardando mapa...")
     
     # Guardar con el nombre original
-    nombre_base = f"out/mapa_geopotencial_puntos_t{tiempo}_{tipo}"
+    nombre_base = f"out/mapa_geopotencial_puntos_{tipo}_{new_date}"
     extension = ".svg"
 
-    # Inicializar el contador para los números incrementales 
-    contador = 0 
+    # Guardar la figura en la ubicación especificada
+    save_file(nombre_base, extension) 
     
-    # Generar un nombre de archivo único 
-    while True: 
-        if contador == 0: 
-            nombre_archivo = f"{nombre_base}{extension}" 
-        else: 
-            nombre_archivo = f"{nombre_base}({contador}){extension}" 
-        if not os.path.exists(nombre_archivo): 
-            break 
-        contador += 1 
-    
-    # Guardar la figura como imagen en la ubicación especificada 
-    plt.savefig(nombre_archivo) 
-    
-    # Informa que la imagen ha sido guardada 
-    print(f"Imagen guardada como: {nombre_archivo}") 
     
 
-def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
-    #obtener solo los datos del tiempo seleccionado @TO-DO
+def generate_scatter_map_selected(data, tipo, tiempo, date, lat_range, lon_range):
+    #Extraer la fecha del archivo
+    fecha = re.search(patron_fecha, date).group()
+    fecha = fecha[1:]
+    
+    #Dejar fecha con el instante de tiempo correcto
+    new_date = extract_date(fecha, tiempo)
+    
     data = data[data['time'] == tiempo]
     
     if tipo == 'omega':
@@ -167,18 +145,24 @@ def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
     z_min2 = data['z_min2'].copy()
     z_max = data['z_max'].copy()
     
-
-    # Crear una figura para un mapa del mundo
-    fig, ax = plt.subplots(figsize=(11, 5), dpi=250, subplot_kw=dict(projection=ccrs.PlateCarree()))
-    ax.set_global()
     
-    # Establecer límites manuales para cubrir todo el mundo
-    ax.set_xlim(lon_range[0], lon_range[1])
-    ax.set_ylim(lat_range[0], lat_range[1])
+    # Ajustar valores mayores a 180 restando 360
+    if(max(longitudes_min1) > 180):
+        longitudes_min1, z_min1 = adjust_lon(longitudes_min1, z_min1)
+        
+    if(max(longitudes_min2) > 180):
+        longitudes_min2, z_min2 = adjust_lon(longitudes_min2, z_min2)
+        
+    if(max(longitudes_max) > 180):
+        longitudes_max, z_max = adjust_lon(longitudes_max, z_max)
+        
+    #filtrar los valores para que z, la latitud y la longitud se encuentren en el rango correcto
+    latitudes_min1, longitudes_min1, z_min1 = filt_data(latitudes_min1, longitudes_min1, z_min1, lat_range, lon_range)
+    latitudes_min2, longitudes_min2, z_min2 = filt_data(latitudes_min2, longitudes_min2, z_min2, lat_range, lon_range)
+    latitudes_max, longitudes_max, z_max = filt_data(latitudes_max, longitudes_max, z_max, lat_range, lon_range)
     
-    # Agregar detalles geográficos al mapa
-    ax.coastlines()
-    ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
+    #configurar el mapa
+    fig, ax = config_map(lat_range, lon_range)
 
     if tipo == 'omega':
         #maximo y minimo de los z
@@ -191,8 +175,7 @@ def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
         
         ax.plot([longitudes_min1, longitudes_min2], [latitudes_min1, latitudes_min2], [z_min1, z_min2], c='purple', transform=ccrs.PlateCarree(), linewidth=0.75, linestyle='--')
         ax.plot([longitudes_min1, longitudes_max], [latitudes_min1, latitudes_max], [z_min1, z_max], c='green', transform=ccrs.PlateCarree(), linewidth=0.75, linestyle='--')
-        ax.plot([longitudes_min2, longitudes_max], [latitudes_min2, latitudes_max], [z_min2, z_max], c='green', transform=ccrs.PlateCarree(), linewidth=0.75, linestyle='--')
-        
+        ax.plot([longitudes_min2, longitudes_max], [latitudes_min2, latitudes_max], [z_min2, z_max], c='green', transform=ccrs.PlateCarree(), linewidth=0.75, linestyle='--') 
     else:
         #maximo y minimo de los z
         all_max = max(max(z_max), max(z_min1))
@@ -203,58 +186,30 @@ def generate_scatter_map_selected(data, tipo, tiempo, lat_range, lon_range):
         ax.plot([longitudes_min1, longitudes_max], [latitudes_min1, latitudes_max], [z_min1, z_max], c='green', transform=ccrs.PlateCarree(), linewidth=0.75, linestyle='--')   
     
     # Añade títulos y etiquetas
-    plt.title(f'Puntos seleccionados de tipo {tipo} en 500hPa', loc='center')
-    plt.xlabel('Longitud (deg)')
-    plt.ylabel('Latitud (deg)')
-
-    cax = fig.add_axes([ax.get_position().x1+0.01,
-                    ax.get_position().y0,
-                    0.02,
-                    ax.get_position().height])
-    cbar = plt.colorbar(sc1, cax=cax, orientation='vertical')
-
-    cbar.set_label('Geopotencial (m)')
-    
-    
-    # Agregar marcas de latitud en el borde izquierdo
-    ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
-    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)])
-    
-    # Agregar marcas de longitud en el borde inferior
-    ax.set_xticks(range(lon_range[0], lon_range[1]+1, 20), crs=ccrs.PlateCarree())
-    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)])
+    visual_adds(fig, ax, sc1, new_date, lat_range, lon_range, None, tipo)
     
     # Muestra la figura
     # plt.show()
     
-    # La barra de progreso llegará al 100% cuando termine de generar el mapa.
     print("Mapa generado. Guardando mapa...")
     
     # Guardar con el nombre original
-    nombre_base = f"out/mapa_geopotencial_puntos_selected_t{tiempo}_{tipo}"
+    nombre_base = f"out/mapa_geopotencial_puntos_selected_{tipo}_{new_date}"
     extension = ".svg"
 
-    # Inicializar el contador para los números incrementales 
-    contador = 0 
-    
-    # Generar un nombre de archivo único 
-    while True: 
-        if contador == 0: 
-            nombre_archivo = f"{nombre_base}{extension}" 
-        else: 
-            nombre_archivo = f"{nombre_base}({contador}){extension}" 
-        if not os.path.exists(nombre_archivo): 
-            break 
-        contador += 1 
-    
-    # Guardar la figura como imagen en la ubicación especificada 
-    plt.savefig(nombre_archivo) 
-    
-    # Informa que la imagen ha sido guardada 
-    print(f"Imagen guardada como: {nombre_archivo}") 
+    # Guardar la figura en la ubicación especificada
+    save_file(nombre_base, extension) 
+
 
 
 def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon_range):   
+    #Extraer la fecha del archivo
+    fecha = re.search(patron_fecha, nc_data).group()
+    fecha = fecha[1:]
+    
+    #Dejar fecha con el instante de tiempo correcto
+    new_date = extract_date(fecha, tiempo)
+    
     # obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == tiempo]
     
@@ -270,49 +225,34 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     lon = archivo_nc.variables['longitude'][:]
     z = archivo_nc.variables['z'][:]
     
-    fecha = re.search(patron_fecha, nc_data).group()
-    fecha = fecha[1:]
-    # fecha = fecha.split('_')[0]
-    
-    #dependiendo del tiempo, se recorta el instante en la fecha con forma _WW-XX-YY-ZZUTC y si es instante 2 nos quedamos con _YYUTC
-    
+     
     # Cerrar el archivo NetCDF
     archivo_nc.close()
     
     z = z[tiempo]
     z = z / g_0
     
+    # Ajustar valores mayores a 180 restando 360
+    if max(lon) > 180:
+        lon, z = adjust_lon(lon, z)
+        
+    if max(longitudes) > 180:
+        longitudes, variable = adjust_lon(longitudes, variable)
+        
+    #filtrar los valores para que z, la latitud y la longitud se encuentren en el rango correcto
+    lat, lon, z = filt_data(lat, lon, z, lat_range, lon_range)
+    latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
+    
     #get z max and min
     z_max = z.max()
     z_min = z.min()
     
-
-    # Ajustar valores mayores a 180 restando 360
-    if max(lon) > 180:
-        lon = [lon_i - 360 if lon_i >= 180 else lon_i for lon_i in lon]
-
-        # Convertir lon de 0 a 360 a -180 a 180
-        midpoint = len(lon) // 2
-        lon[:midpoint], lon[midpoint:] = lon[midpoint:], lon[:midpoint]
-
-        # Convertir z de 0 a 360 a -180 a 180
-        z = np.roll(z, shift=midpoint, axis=-1)
-    
-    
-    # Crear una figura para un mapa del mundo
-    fig, ax = plt.subplots(figsize=(11, 5), dpi=250, subplot_kw=dict(projection=ccrs.PlateCarree()))
-    ax.set_global()
-
-    # Establecer límites manuales para cubrir todo el mundo
-    ax.set_xlim(lon_range[0], lon_range[1])
-    ax.set_ylim(lat_range[0], lat_range[1])
-
-    # Agregar detalles geográficos al mapa
-    ax.coastlines()
-    ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
+    #configurar el mapa
+    fig, ax = config_map(lat_range, lon_range)
 
     # Agregar puntos de dispersión
-    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=7, vmax=z_max, vmin=z_min)
+    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', 
+                    transform=ccrs.PlateCarree(), s=7, vmax=z_max, vmin=z_min)
 
     # Plotea los puntos en el mapa
     co = ax.contour(lon, lat, z, levels=niveles, cmap='jet',
@@ -323,60 +263,32 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     
     tipo = 'max' if es_max else 'min'
     
-    # Añade títulos y etiquetas
-    plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles - {fecha}', loc='center')
-    plt.xlabel('Longitud (deg)')
-    plt.ylabel('Latitud (deg)')
-
-    cax = fig.add_axes([ax.get_position().x1+0.01,
-                    ax.get_position().y0,
-                    0.02,
-                    ax.get_position().height])
-    cbar = plt.colorbar(sc, cax=cax, orientation='vertical')
-
-    cbar.set_label('Geopotencial (m)')
-    
-    
-    # Agregar marcas de latitud en el borde izquierdo
-    ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
-    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)])
-    
-    # Agregar marcas de longitud en el borde inferior
-    ax.set_xticks(range(lon_range[0], lon_range[1]+1, 20), crs=ccrs.PlateCarree())
-    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)])
+    # Añade títulos, colorbar y etiquetas
+    visual_adds(fig, ax, sc, new_date, lat_range, lon_range, niveles, tipo)
     
     
     # Muestra la figura
     # plt.show()
 
-    # La barra de progreso llegará al 100% cuando termine de generar el mapa.
     print("Mapa generado. Guardando mapa...")
 
     # Definir el nombre base del archivo y la extensión 
-    nombre_base = f"out/mapa_geopotencial_contornos_puntos_%il_t%i_{tipo}_{fecha}" % (niveles, tiempo)
+    nombre_base = f"out/mapa_geopotencial_contornos_puntos_{niveles}l_{tipo}_{new_date}"
     extension = ".svg" 
     
-    # Inicializar el contador para los números incrementales 
-    contador = 0 
-    
-    # Generar un nombre de archivo único 
-    while True: 
-        if contador == 0: 
-            nombre_archivo = f"{nombre_base}{extension}" 
-        else: 
-            nombre_archivo = f"{nombre_base}({contador}){extension}" 
-        if not os.path.exists(nombre_archivo): 
-            break 
-        contador += 1 
-    
-    # Guardar la figura como imagen en la ubicación especificada 
-    plt.savefig(nombre_archivo) 
-    
-    # Informa que la imagen ha sido guardada 
-    print(f"Imagen guardada como: {nombre_archivo}") 
+    # Guardar la figura en la ubicación especificada
+    save_file(nombre_base, extension)
+     
     
 
 def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_range, lon_range):    
+    #Extraer la fecha del archivo
+    fecha = re.search(patron_fecha, nc_data).group()
+    fecha = fecha[1:]
+    
+    #Dejar fecha con el instante de tiempo correcto
+    new_date = extract_date(fecha, tiempo)
+    
     #obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == tiempo]
     
@@ -400,28 +312,17 @@ def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_ran
     
     # Ajustar valores mayores a 180 restando 360
     if max(lon) > 180:
-        lon = [lon_i - 360 if lon_i >= 180 else lon_i for lon_i in lon]
+        lon, z = adjust_lon(lon, z)
 
-        # Convertir lon de 0 a 360 a -180 a 180
-        midpoint = len(lon) // 2
-        lon[:midpoint], lon[midpoint:] = lon[midpoint:], lon[:midpoint]
-
-        # Convertir z de 0 a 360 a -180 a 180
-        z = np.roll(z, shift=midpoint, axis=-1)
+    if max(longitudes) > 180:
+        longitudes, variable = adjust_lon(longitudes, variable)
+        
+    #filtrar los valores para que z, la latitud y la longitud se encuentren en el rango correcto
+    lat, lon, z = filt_data(lat, lon, z, lat_range, lon_range)
+    latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
     
-    
-    # Crear una figura para un mapa del mundo
-    fig, ax = plt.subplots(figsize=(11, 5), dpi=250, subplot_kw=dict(projection=ccrs.PlateCarree()))
-    ax.set_global()
-
-    # Establecer límites manuales para cubrir todo el mundo
-    ax.set_xlim(lon_range[0], lon_range[1])
-    ax.set_ylim(lat_range[0], lat_range[1])
-
-    # Agregar detalles geográficos al mapa
-    ax.coastlines()
-    ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
-    
+    #configurar el mapa
+    fig, ax = config_map(lat_range, lon_range)
     
     #agregar puntos de dispersión
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=7)
@@ -444,54 +345,17 @@ def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_ran
     
     tipo = 'max' if es_max else 'min'
     
-    # Añade títulos y etiquetas
-    plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles', loc='center')
-    plt.xlabel('Longitud (deg)')
-    plt.ylabel('Latitud (deg)')
-
-    cax = fig.add_axes([ax.get_position().x1+0.01,
-                    ax.get_position().y0,
-                    0.02,
-                    ax.get_position().height])
-    cbar = plt.colorbar(sc, cax=cax, orientation='vertical')
-
-    cbar.set_label('Geopotencial (m)')
-    
-    # Agregar marcas de latitud en el borde izquierdo
-    ax.set_yticks(range(lat_range[0], lat_range[1]+1, 10), crs=ccrs.PlateCarree())
-    ax.set_yticklabels([f'{deg}' for deg in range(lat_range[0], lat_range[1]+1, 10)])
-    
-    # Agregar marcas de longitud en el borde inferior
-    ax.set_xticks(range(lon_range[0], lon_range[1]+1, 20), crs=ccrs.PlateCarree())
-    ax.set_xticklabels([f'{deg}' for deg in range(lon_range[0], lon_range[1]+1, 20)])
+    # Añade títulos, colorbar y etiquetas
+    visual_adds(fig, ax, sc, new_date, lat_range, lon_range, niveles, tipo)
 
     # Muestra la figura
     # plt.show()
 
-    # La barra de progreso llegará al 100% cuando termine de generar el mapa.
     print("Mapa generado. Guardando mapa...")
 
     # Definir el nombre base del archivo y la extensión 
-    fecha = re.search(patron_fecha, nc_data).group()
-    fecha = fecha[1:]
-    nombre_base = f"out/mapa_geopotencial_contornos_puntos_circles_%il_t%i_{tipo}_{fecha}" % (niveles, tiempo)
+    nombre_base = f"out/mapa_geopotencial_contornos_puntos_circles_{niveles}l_{tipo}_{new_date}"
     extension = ".svg" 
     
-    # Inicializar el contador para los números incrementales 
-    contador = 0 
-    
-    # Generar un nombre de archivo único 
-    while True: 
-        if contador == 0: 
-            nombre_archivo = f"{nombre_base}{extension}" 
-        else: 
-            nombre_archivo = f"{nombre_base}({contador}){extension}" 
-        if not os.path.exists(nombre_archivo): 
-            break 
-        contador += 1 
-    
-    # Guardar la figura como imagen en la ubicación especificada 
-    plt.savefig(nombre_archivo) 
-    
-    # Informa que la imagen ha sido guardada 
-    print(f"Imagen guardada como: {nombre_archivo}") 
+    #Guardar la figura en la ubicación especificada
+    save_file(nombre_base, extension)

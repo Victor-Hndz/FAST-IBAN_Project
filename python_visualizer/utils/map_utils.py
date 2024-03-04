@@ -101,13 +101,27 @@ def filt_data(lat, lon, z, lat_range, lon_range):
     Returns:
         tuple(lat, lon, z): Tupla con lat, lon y z ajustados.
     """
+    #si no son arrays de numpy, convertirlos
+    if(not isinstance(lat, np.ndarray)):
+        lat = np.array(lat)
+    if(not isinstance(lon, np.ndarray)):
+        lon = np.array(lon)
+    if(not isinstance(z, np.ndarray)):
+        z = np.array(z)
+    
+    
     lat_idx = np.where((lat >= lat_range[0]) & (lat <= lat_range[1]))[0]
     lon_idx = np.where((lon >= lon_range[0]) & (lon <= lon_range[1]))[0]
-
+    
     lat = lat[lat_idx]
     lon = lon[lon_idx]
-    z = z[lat_idx]
-    z = z[:, lon_idx]
+    
+    if(len(z.shape) == 1):
+        z_idx = np.where((lat >= lat_range[0]) & (lat <= lat_range[1]))[0]
+        z = z[z_idx]
+    else:
+        z = z[lat_idx]
+        z = z[:, lon_idx]
     
     return lat, lon, z
 
@@ -136,24 +150,33 @@ def config_map(lat_range, lon_range):
     
     return fig, ax
 
-def visual_adds(fig, ax, co, niveles, new_date, lat_range, lon_range):
+def visual_adds(fig, ax, map, new_date, lat_range, lon_range, niveles=None, tipo=None):
     """Añade detalles visuales a la figura y el eje especificados.
     Añade valores de contorno, títulos, etiquetas, barra de colores y marcas de latitud y longitud.
 
     Args:
         fig (Figure): figura a la que se le añadirán detalles visuales.
         ax (Axes): eje al que se le añadirán detalles visuales.
-        co (_type_): valores del contorno.
-        niveles (_type_): niveles del contorno.
+        map (_type_): valores del mapa.
         new_date (_type_): fecha para el título.
         lat_range (_type_): rangos de latitud.
         lon_range (_type_): rangos de longitud.
+        niveles (_type_): niveles del contorno.
+        tipo (_type_, optional): valor de máximo o mínimo. Defaults to None.
     """
-    #valores de contorno
-    plt.clabel(co, inline=True, fontsize=6)
 
     # Añade títulos y etiquetas
-    plt.title(f'Geopotencial en 500 hPa con {niveles} niveles - {new_date}', loc='center')
+    if(tipo != None):
+        if(niveles != None):
+            plt.title(f'Geopotencial {tipo} en 500 hPa con {niveles} niveles - {new_date}', loc='center')
+        else:
+            plt.title(f'Geopotencial {tipo} en 500 hPa - {new_date}', loc='center')
+    else:
+        if(niveles != None):
+            plt.title(f'Geopotencial en 500 hPa con {niveles} niveles - {new_date}', loc='center')
+        else:
+            plt.title(f'Geopotencial en 500 hPa - {new_date}', loc='center')
+        
     plt.xlabel('Longitud (deg)')
     plt.ylabel('Latitud (deg)')
 
@@ -162,7 +185,7 @@ def visual_adds(fig, ax, co, niveles, new_date, lat_range, lon_range):
                     ax.get_position().y0,
                     0.02,
                     ax.get_position().height])
-    cbar = plt.colorbar(co, cax=cax, orientation='vertical')
+    cbar = plt.colorbar(map, cax=cax, orientation='vertical')
 
     cbar.set_label('Geopotencial (m)')
     
@@ -180,6 +203,7 @@ def save_file(nombre_base: str, extension: str):
     Args:
         nombre_base (str): nombre base del archivo.
         extension (str): extensión del archivo.
+        tipo (str, optional): valor de máximo o mínimo. Defaults to None.
     """
     # Inicializar el contador para los números incrementales 
     contador = 0 

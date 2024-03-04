@@ -30,13 +30,13 @@ def main():
             print('Generating scatter map')
             if options[option]['es_max'] == 'both':
                 gm.generate_scatter_map(data=pd.read_csv('data/Geopotential_selected_max.csv'), es_max=True, tiempo=options[option]['time'],
-                                        lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                                        date=options[option]['date'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
                 
                 gm.generate_scatter_map(data=pd.read_csv('data/Geopotential_selected_min.csv'), es_max=False, tiempo=options[option]['time'],
-                                        lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                                        date=options[option]['date'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
             else:
                 gm.generate_scatter_map(data=pd.read_csv('data/Geopotential_selected_'+options[option]['es_max']+'.csv'), es_max=options[option]['es_max'], tiempo=options[option]['time'],
-                                        lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                                        date=options[option]['date'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
                 
         elif options[option]['map'] == 'comb':
             print('Generating combined map')
@@ -75,10 +75,10 @@ def main():
                                              tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
                 
                 gm.generate_scatter_map_selected(data=pd.read_csv('data/Geopotential_candidates.csv'), tipo='rex',
-                                             tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                                             tiempo=options[option]['time'], date=options[option]['date'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
             else:
                 gm.generate_scatter_map_selected(data=pd.read_csv('data/Geopotential_candidates.csv'), tipo=options[option]['type'],
-                                             tiempo=options[option]['time'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
+                                             tiempo=options[option]['time'], date=options[option]['date'], lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
                 
                 
 if __name__ == '__main__':
