@@ -105,10 +105,18 @@ int main(void) {
                 cont2 += is_equal;
 
                 if(cont == 8) {
+                    for(i=lat-1; i<=lat+1; i++) 
+                        for(j=lon-1; j<=lon+1; j++) 
+                            procesado[i][j] = true;
+
                     selected_max_points[time][selected_max_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
                     selected_max_size++;
                     selected_max_points[time] = realloc(selected_max_points[time], (selected_max_size+1)*sizeof(selected_point));
                 } else if(cont2 == 8) {
+                    for(i=lat-1; i<=lat+1; i++) 
+                        for(j=lon-1; j<=lon+1; j++) 
+                            procesado[i][j] = true;
+                            
                     selected_min_points[time][selected_min_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
                     selected_min_size++;
                     selected_min_points[time] = realloc(selected_min_points[time], (selected_min_size+1)*sizeof(selected_point));

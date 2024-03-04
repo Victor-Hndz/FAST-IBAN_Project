@@ -1,7 +1,7 @@
 import os
 
-file1 = '../data/Geopotential_selected_max.csv'
-file2 = '../data/Geopotential_selected_min.csv'
+file1 = './data/Geopotential_selected_max.csv'
+file2 = './data/Geopotential_selected_min.csv'
 
 #from the files, take the common part in the name and eliminate the different part
 common = os.path.commonprefix([file1, file2])

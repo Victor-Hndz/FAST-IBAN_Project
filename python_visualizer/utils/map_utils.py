@@ -60,7 +60,7 @@ def extract_date(fecha: str, tiempo: int) -> str:
         t = re.findall(patron_tiempo, time)[t]
         
         #montamos la nueva fecha
-        new_date = re.search(patron_dia_unico, fecha).group() + "_" + t + "UTC"
+        new_date = re.search(patron_dia_unico, fecha).group() + t + "UTC"
         
     return new_date
 
