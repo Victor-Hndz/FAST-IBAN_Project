@@ -18,4 +18,3 @@ with open(file1, 'r') as f1, open(file2, 'r') as f2, open(common, 'w') as f3:
         f3.write(line)
         
 print('Files combined')
-
