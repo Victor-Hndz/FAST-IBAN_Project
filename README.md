@@ -1,15 +1,6 @@
 # PROYECTO FAST-IBA<sup>3</sup>N (FAST Identificación de Bloqueos Atmosféricos Automático en el Atlántico Norte)
 
-## OBSOLETO
-comando para compilar read4d.c --> gcc read4d.c functs.c functs.h -o read4d -lnetcdf
-
-comando para ejecutar read4d.c --> ./read4d
-
-comando todo en uno --> gcc read4d.c functs.c functs.h -o read4d -lnetcdf && "./"read4d
-
-## NUEVO
 Para ejecutar todo de golpe con la configuración actual: exec_all.sh
-
 
 Usar build y FAST-IBAN_main.c. El CMakeLists.txt está preparado.
 
