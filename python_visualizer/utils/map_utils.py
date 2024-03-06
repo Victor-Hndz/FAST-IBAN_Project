@@ -37,6 +37,7 @@ def extract_date(fecha: str, tiempo: int) -> str:
         #extraemos el día
         dia_ini = int(re.search(patron_dias, fecha).group()[8:10])
         dia = dia_ini + dia
+        
         #si dia es de un solo dígito, añadir un 0 al principio
         if(dia < 10):
             dia = "0" + str(dia)
@@ -46,21 +47,13 @@ def extract_date(fecha: str, tiempo: int) -> str:
         
         #montamos la nueva fecha
         new_date = re.search(patron_aamm, fecha).group() + str(dia) + "_" + t + "UTC"
-    else:
-        #contar los instantes de tiempo que hay
-        time = re.search(patron_dia_unico, fecha).group()
-        
-        #contar uno por cada vez que patron_tiempo encaje
-        t_mod = len(re.findall(patron_tiempo, time))
-        
+    else:        
         #dependiendo del valor de "tiempo", obtener el instante de ese día
-        t = tiempo % t_mod
-        
-        #extraemos el instante de tiempo
-        t = re.findall(patron_tiempo, time)[t]
+        if(tiempo < 10):
+            tiempo = "0" + str(tiempo)
         
         #montamos la nueva fecha
-        new_date = re.search(patron_dia_unico, fecha).group() + t + "UTC"
+        new_date = re.search(patron_dia_unico, fecha).group() + tiempo + "UTC"
         
     return new_date
 
