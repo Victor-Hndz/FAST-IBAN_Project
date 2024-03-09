@@ -126,7 +126,7 @@ int main(void) {
                             bearing_count_max++;
                     }
 
-                    if(bearing_count_max == N_BEARINGS*2) {
+                    if(bearing_count_max >= (N_BEARINGS-1)*2) {
                         selected_max_points[time][selected_max_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
                         selected_max_size++;
                         selected_max_points[time] = realloc(selected_max_points[time], (selected_max_size+1)*sizeof(selected_point));
@@ -154,7 +154,7 @@ int main(void) {
                             bearing_count_min++;
                     }
 
-                    if(bearing_count_min == N_BEARINGS*2) {
+                    if(bearing_count_min >= (N_BEARINGS-1)*2) {
                         selected_min_points[time][selected_min_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
                         selected_min_size++;
                         selected_min_points[time] = realloc(selected_min_points[time], (selected_min_size+1)*sizeof(selected_point));

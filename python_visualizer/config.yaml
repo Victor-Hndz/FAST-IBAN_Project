@@ -1,11 +1,11 @@
 OPTION1:
   map: comb
-  nc_data: data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc
+  # nc_data: data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc
   # nc_data: data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc
-  # nc_data: data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc
+  nc_data: data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc
   es_max: comb
   levels: 70
-  time: 0
+  time: 8
   lat_range:
   - 25
   - 90

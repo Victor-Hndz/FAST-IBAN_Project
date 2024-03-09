@@ -252,9 +252,10 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
 
     # Agregar puntos de dispersión
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', 
-                    transform=ccrs.PlateCarree(), s=7, vmax=z_max, vmin=z_min)
+                    transform=ccrs.PlateCarree(), s=7, vmax=4570, vmin=6040)
 
-    # Plotea los puntos en el mapa
+    niveles = [4570, 4600, 5200, 5300, 5400, 5600, 5800, 6040]
+    # Agregar contornos al mapa
     co = ax.contour(lon, lat, z, levels=niveles, cmap='jet',
                     transform=ccrs.PlateCarree(), linewidths=0.3)
     
@@ -362,3 +363,59 @@ def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_ran
     
     #Guardar la figura en la ubicación especificada
     save_file(nombre_base, extension)
+
+
+
+def generate_contour_area_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon_range):
+    #Extraer la fecha del archivo
+    fecha = re.search(patron_fecha, nc_data).group()
+    fecha = fecha[1:]
+    
+    #Dejar fecha con el instante de tiempo correcto
+    new_date = extract_date(fecha, tiempo)
+    
+    # obtener solo los datos del tiempo seleccionado
+    data = data[data['time'] == tiempo]
+    
+    latitudes = data['latitude'].copy()
+    longitudes = data['longitude'].copy()
+    variable = data['z'].copy()
+    
+    # Abrir el archivo NetCDF
+    archivo_nc = nc.Dataset(nc_data, 'r')
+    
+    # Obtener los datos de tiempo, latitud, longitud y la variable z
+    lat = archivo_nc.variables['latitude'][:]
+    lon = archivo_nc.variables['longitude'][:]
+    z = archivo_nc.variables['z'][:]
+    
+     
+    # Cerrar el archivo NetCDF
+    archivo_nc.close()
+    
+    z = z[tiempo]
+    z = z / g_0
+    
+    # Ajustar valores mayores a 180 restando 360
+    if max(lon) > 180:
+        lon, z = adjust_lon(lon, z)
+        
+    if max(longitudes) > 180:
+        longitudes, variable = adjust_lon(longitudes, variable)
+        
+    #filtrar los valores para que z, la latitud y la longitud se encuentren en el rango correcto
+    lat, lon, z = filt_data(lat, lon, z, lat_range, lon_range)
+    #latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
+    
+    #get z max and min
+    z_max = z.max()
+    z_min = z.min()
+    
+    #configurar el mapa
+    fig, ax = config_map(lat_range, lon_range)
+    
+    #Agregar contornos al mapa
+    co = ax.contour(lon, lat, z, levels=niveles, cmap='jet',
+                    transform=ccrs.PlateCarree(), linewidths=0.3)
+    
+    #para cada uno de los puntos en variable, se crea un poligono con los puntos que esten dentro de un mismo contorno y cercanos
