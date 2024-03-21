@@ -2,7 +2,7 @@
 
 
 //Initialize and create files and folders
-void init_files(char* filename1, char* filename2, char* long_name) {
+void init_files(char* filename1, char* filename2, char* filename3, char* long_name) {
     // Create the directory for the output file.
     if (!mkdir(DIR_NAME, DIR_PERMS)) 
         printf("Carpeta creada con éxito.\n");
@@ -18,6 +18,11 @@ void init_files(char* filename1, char* filename2, char* long_name) {
     sprintf(filename2, "%s/%s_selected_min.csv", DIR_NAME, long_name);
     fp = fopen(filename2, "w");
     fprintf(fp, "time,latitude,longitude,z,centroid\n");
+    fclose(fp);
+
+    sprintf(filename3, "%s/%s_groups_max.csv", DIR_NAME, long_name);
+    fp = fopen(filename3, "w");
+    fprintf(fp, "time,id,n_points,points\n");
     fclose(fp);
 }
 

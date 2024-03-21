@@ -6,17 +6,18 @@
 
 
 int main(void) {
-    int ncid, retval, i, j, cont, cont2, is_equal, selected_max_size, selected_min_size, bearing_count_max, bearing_count_min;
+    int ncid, retval, i, j, cont, cont2, is_equal, selected_max_size, selected_min_size, bearing_count_max, bearing_count_min, prev_id;
     double scale_factor, offset, z_calculated1, z_calculated2, t_ini, t_fin, t_total;
     short z_aux, z_aux_selected;
     char long_name[NC_MAX_NAME+1] = "";
-    selected_point* centroids;
-    float *xyz = (float*) calloc(3, sizeof(float));
-    float *latlon = (float*) calloc(2, sizeof(float));
+    // selected_point* centroids;
+    // float *xyz = (float*) calloc(3, sizeof(float));
+    // float *latlon = (float*) calloc(2, sizeof(float));
     char *filename1 = malloc(sizeof(char)*(NC_MAX_NAME+1));
     char *filename2 = malloc(sizeof(char)*(NC_MAX_NAME+1));
+    char *filename3 = malloc(sizeof(char)*(NC_MAX_NAME+1));
 
-    if(filename1 == NULL || filename2 == NULL || xyz == NULL || latlon == NULL) {
+    if(filename1 == NULL || filename2 == NULL || filename3 == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
@@ -60,10 +61,11 @@ int main(void) {
 
     //srandom(time(NULL));
 
-    init_files(filename1, filename2, long_name);
+    init_files(filename1, filename2, filename3, long_name);
 
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
     for (int time=0; time<NTIME; time++) { 
+        prev_id=0;
         selected_max_size = 0;
         selected_min_size = 0;
         selected_max_points[time] = malloc(sizeof(selected_point));
@@ -127,9 +129,14 @@ int main(void) {
                     }
 
                     if(bearing_count_max >= (N_BEARINGS-1)*2) {
-                        selected_max_points[time][selected_max_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
+                        if(selected_max_size != 0) 
+                            prev_id++;
+
+                        selected_max_points[time][selected_max_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], prev_id);
                         selected_max_size++;
                         selected_max_points[time] = realloc(selected_max_points[time], (selected_max_size+1)*sizeof(selected_point));
+
+                        group_points(selected_max_points[time], selected_max_size, z_in[time], lats, lons, scale_factor, offset);
                     }
                 } else if (cont2==8) {
                     for(i=lat-1; i<=lat+1; i++) 
@@ -155,126 +162,111 @@ int main(void) {
                     }
 
                     if(bearing_count_min >= (N_BEARINGS-1)*2) {
-                        selected_min_points[time][selected_min_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], -1);
+                        if(selected_min_size != 0)
+                            prev_id++;
+
+                        selected_min_points[time][selected_min_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], prev_id);
                         selected_min_size++;
                         selected_min_points[time] = realloc(selected_min_points[time], (selected_min_size+1)*sizeof(selected_point));
+                        
+                        group_points(selected_min_points[time], selected_min_size, z_in[time], lats, lons, scale_factor, offset);
                     }
                 }
             }
         }
+
+        // int n_groups_max = selected_max_size, prev_n_groups_max = 0;
+        // int min_i, min_j;
+        // int cicle_count = 0;
+        // float min_dist;
+        // double dist;
+        // mean_dist mean_dist = {-1, 0};
+        // bool visited[n_groups_max];
+
+        // memset(visited, false, sizeof(visited));
+        // selected_point_group *groups_max = malloc(n_groups_max*sizeof(selected_point_group));
+
+        // for(i = 0; i<n_groups_max; i++)
+        //     groups_max[i] = create_selected_point_group(i, 1, INF, &selected_max_points[time][i]);
+
+        // while(n_groups_max > 1) {
+        //     prev_n_groups_max = n_groups_max;
+        //     min_i = -1;
+        //     min_j = -1;
+        //     min_dist = INF;
+        //     for(i = 0; i<n_groups_max; i++) {
+        //         for(j=i+1; j<n_groups_max; j++) {
+        //             dist = point_distance(groups_max[i].points[0].point, groups_max[j].points[0].point);
+
+        //             if(dist < min_dist && !visited[i] && !visited[j]) {
+        //                 min_dist = dist;
+        //                 min_i = i;
+        //                 min_j = j;
+        //             }
+        //         }
+        //     }  
+        //     printf("Grupo %d: %d puntos, RMSD: %.6f\n", groups_max[min_i].id, groups_max[min_i].n_points, groups_max[min_i].rmsd);
+        //     for (i = 0; i < groups_max[min_i].n_points; i++) {
+        //         printf("Punto %d: %.6f, %.6f\n", i, groups_max[min_i].points[i].point.lat, groups_max[min_i].points[i].point.lon);
+        //     }
+            
+        //     printf("Grupo %d: %d puntos, RMSD: %.6f\n", groups_max[min_j].id, groups_max[min_j].n_points, groups_max[min_j].rmsd);
+        //     for (i = 0; i < groups_max[min_j].n_points; i++) {
+        //         printf("Punto %d: %.6f, %.6f\n", i, groups_max[min_j].points[i].point.lat, groups_max[min_j].points[i].point.lon);
+        //     }
+
+        //     if(min_i == -1 || min_j == -1) {
+        //         break;
+        //     }
+
+        //     visited[min_i] = true;
+        //     visited[min_j] = true;
+
+        //     n_groups_max = combine_groups(groups_max, n_groups_max, min_i, min_j, mean_dist);
+            
+        //     cicle_count++;
+        //     printf("Ciclo %d: %d grupos y %d grupos previos\n", cicle_count, n_groups_max, prev_n_groups_max);
+           
+        //     if(n_groups_max == prev_n_groups_max && cicle_count == n_groups_max) {
+        //         break; 
+        //     } else if (n_groups_max == prev_n_groups_max) 
+        //         continue;
+        //     else {
+        //         cicle_count = 0;
+        //         visited[min_i] = false;
+        //         visited[min_j] = false;
+        //     }
+        // }
+        
+        // export_groups_to_csv(groups_max, n_groups_max, filename3, offset, scale_factor, time);
+        // for(i=0; i<n_groups_max-1; i++) {
+        //     // printf("Grupo %d: %d puntos, RMSD: %.6f\n", groups_max[i].id, groups_max[i].n_points, groups_max[i].rmsd);
+        //     free(groups_max[i].points);
+        // }
+        // free(groups_max);
+
+
         export_selected_points_to_csv(selected_max_points[time], selected_max_size, filename1, offset, scale_factor, time);
         export_selected_points_to_csv(selected_min_points[time], selected_min_size, filename2, offset, scale_factor, time);
         free(selected_max_points[time]);
         free(selected_min_points[time]);
-
-        // double last_val, last_k_val, result = -INF; 
-        // int first_k_it = 0;
-        // int selected_k = -1;
-        
-        // for(k=MAX_K; k>=1; k--) {
-        //     //Seleccionar k centroides aleatorios.
-        //     centroids = (selected_point*) realloc(centroids, k*sizeof(selected_point));
-        //     double actual_val = 0;
-        //     last_val = INF;
-        //     int first_it = 0;
-
-        //     for(i=0; i<k; i++) {
-        //         centroids[i] = selected_max_points[time][random() % selected_max_size];
-                
-        //         //Comprobar que no se repitan.
-        //         for(j=0; j<i; j++) {
-        //             if(centroids[i].point.lat == centroids[j].point.lat && centroids[i].point.lon == centroids[j].point.lon) {
-        //                 i--;
-        //                 break;
-        //             }
-        //         }
-        //         //printf("Centroide %d: %f, %f\n", i, centroids[i].point.lat, centroids[i].point.lon);
-        //     }
-
-        //     //recalcular centroides hasta que no cambien.
-        //     while(actual_val < last_val) {
-        //         if(first_it == 1) {
-        //             last_val = actual_val;
-        //             actual_val = 0;
-
-        //             //Recalcular los centroides.
-        //             for(i=0; i<k; i++) {
-        //                 float sum_x = 0;
-        //                 float sum_y = 0;
-        //                 float sum_z = 0;
-        //                 int count = 0;
-
-        //                 for(j=0; j<selected_max_size; j++) {
-        //                     if(selected_max_points[time][j].cent == i) {
-        //                         from_latlon_to_xyz(xyz, selected_max_points[time][j].point.lat, selected_max_points[time][j].point.lon);
-        //                         sum_x += xyz[0];
-        //                         sum_y += xyz[1];
-        //                         sum_z += xyz[2];
-        //                         count++;
-        //                     }
-        //                 }
-        //                 sum_x /= count;
-        //                 sum_y /= count;
-        //                 sum_z /= count;
-        //                 from_xyz_to_latlon(latlon, sum_x, sum_y, sum_z);
-        //                 centroids[i].point.lat = latlon[0];
-        //                 centroids[i].point.lon = latlon[1];
-        //             }
-        //         }
-
-        //         //Asignar cada punto al centroide más cercano.
-        //         for(i=0; i<selected_max_size; i++) {
-        //             double min_dist = INF;
-        //             int min_centroid = 0;
-        //             for(j=0; j<k; j++) {
-        //                 int dist = point_distance(selected_max_points[time][i].point, centroids[j].point);
-        //                 if(dist < min_dist) {
-        //                     min_dist = dist;
-        //                     min_centroid = j;
-        //                 }
-        //             }
-        //             selected_max_points[time][i].cent = min_centroid;
-        //         }
-
-        //         for(i = 0; i<k; i++) {
-        //             actual_val += calculate_rmsd(selected_max_points[time], centroids[i], selected_max_size);
-        //         }
-        //         actual_val /= k;
-        //         first_it = 1;
-        //         //printf("Valor de k: %d, valor actual: %f, valor anterior: %f\n", k, actual_val, last_val);
-        //     }
-
-        //     if(first_k_it == 0) {
-        //         last_k_val = last_val;
-        //         first_k_it = 1;
-        //     } else { 
-                
-        //         printf("Valor de k: %d, RMSD: %f, RMSD anterior: %f, diferencia: %f\n", k, last_val, last_k_val, (last_val-last_k_val)/last_k_val*100);
-        //         if((last_val-last_k_val)/last_k_val > result) {
-        //             selected_k = k;
-        //             result = (last_val-last_k_val)/last_k_val;
-        //         }
-        //         last_k_val = last_val;
-        //     }
-        //     //si el valor actual no mejora el valor de k-1, se detiene.
-        // }  
-        //printf("\nValor de k: %d seleccionado. RMSD: %f\n", selected_k, result);
+        printf("Tiempo %d procesado.\n", time);
     }
-    //printf("Centroides seleccionados con éxito.\n");
     t_fin = omp_get_wtime();
     
     printf("#2. Máximos y mínimos seleccionados con éxito: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
     
 
+    free(z_in);
     free(selected_max_points);
     free(selected_min_points);
-    free(centroids);
-    free(z_in);
-    free(xyz);
-    free(latlon);
+    // free(centroids);
+    // free(xyz);
+    // free(latlon);
     free(filename1);
     free(filename2);
+    free(filename3);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, DIR_NAME);
     printf("\n## Tiempo total de la ejecución: %.6f s.\n\n", t_total);

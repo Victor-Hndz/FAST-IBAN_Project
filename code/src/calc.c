@@ -20,6 +20,18 @@ coord_point coord_from_great_circle(coord_point initial, double dist, double bea
     return final;
 }
 
+double bearing_from_points(coord_point a, coord_point b) {
+    double dlon = (b.lon - a.lon) * M_PI / 180;
+    double lat1 = a.lat * M_PI / 180;
+    double lat2 = b.lat * M_PI / 180;
+
+    double y = sin(dlon) * cos(lat2);
+    double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dlon);
+
+    return atan2(y, x) * 180 / M_PI;
+
+}
+
 short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, float* lons) {
     double z, z1, z2, z3, z4;
     
@@ -70,6 +82,47 @@ short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, f
 
     return (short)round(z);
 }
+
+void group_points(selected_point* points, int size, short (*z_in)[NTIME], float *lats, float *lons, double scale_factor, double offset) {
+    int contour = ((points[size-1].z*scale_factor + offset)/g_0) - ((int)((points[size-1].z*scale_factor + offset)/g_0) % CONTOUR_STEP);
+    int aux_cont, contour_cont;
+    double bearing, dist_pointer;
+    float dist;
+    short z_aux_selected;
+    coord_point point_aux;
+
+    for(int i=0;i<size-1;i++) {
+        // printf("Point %d: %.2f %.2f %.2f\n", i, points[i].point.lat, points[i].point.lon, ((points[i].z*scale_factor + offset)/g_0));
+        // printf("Contour: %d\n", contour);
+        if(((points[i].z*scale_factor + offset)/g_0) >= contour && ((points[i].z*scale_factor + offset)/g_0) < contour+CONTOUR_STEP) {
+            printf("Distance: %.2f\n", point_distance(points[i].point, points[size-1].point));
+            if(point_distance(points[i].point, points[size-1].point) <= DIST) {
+                bearing = bearing_from_points(points[i].point, points[size-1].point);
+                point_aux = points[size-1].point;
+                dist_pointer = 0;
+                contour_cont = 0;
+
+                while(dist_pointer < point_distance(points[i].point, points[size-1].point)) {
+                    printf("Dist pointer: %.2f\n", dist_pointer);
+                    dist = R*cos(point_aux.lat* M_PI / 180)*(RES*M_PI / 180);
+                    printf("Dist: %.2f\n", dist);
+                    point_aux = coord_from_great_circle(point_aux, dist, bearing);
+                    z_aux_selected = bilinear_interpolation(point_aux, z_in, lats, lons);
+                    aux_cont = ((z_aux_selected*scale_factor + offset)/g_0) - ((int)((z_aux_selected*scale_factor + offset)/g_0) % CONTOUR_STEP);
+                    if(aux_cont > contour+20 || aux_cont < contour) {
+                        contour_cont++;
+                        contour = aux_cont;
+                    }
+                    dist_pointer += dist;
+                }
+
+                if(contour_cont <= 2) 
+                    points[size-1].cent = points[i].cent;
+            }
+        }
+    }
+}
+
 
 //Función para encontrar los candidatos.
 void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], candidate **candidatos, int *size, float* lats, float *lons, int time, double max_val, double min_val, int *id) {
@@ -169,6 +222,91 @@ void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], 
     }
 }
 
+//Función para combinar dos grupos de puntos.
+int combine_groups(selected_point_group *groups, int n_groups, int i, int j, mean_dist mean_dist) {
+    selected_point *aux_points = malloc((groups[i].n_points + groups[j].n_points)*sizeof(selected_point));
+    double mean_dist_i=0, mean_dist_i_to_j=0, mean_dist_ij = 0;
+    bool flag = false;
+
+    for(int k=0; k<groups[i].n_points; k++) 
+        aux_points[k] = groups[i].points[k];
+
+    for(int k=0; k<groups[j].n_points; k++) 
+        aux_points[groups[i].n_points + k] = groups[j].points[k];
+
+    if(mean_dist.mean == -1) {
+        mean_dist.mean = point_distance(groups[i].points[0].point, groups[j].points[0].point)/2;
+        mean_dist.n_points = 2;
+        flag = true;
+    }
+    
+    if(groups[i].n_points != 1 || groups[j].n_points != 1){
+        for(int x=0; x<groups[i].n_points; x++) 
+            for(int y=0; y<groups[i].n_points; y++)
+                mean_dist_i += point_distance(groups[i].points[x].point, groups[i].points[y].point);       
+        mean_dist_i /= groups[i].n_points;
+
+
+        for(int k=0; k<groups[j].n_points; k++) 
+            mean_dist_i_to_j += groups_mean_distance(groups[i], groups[j].points[k]);
+        mean_dist_i_to_j /= groups[j].n_points;
+
+
+        for(int x=0; x<groups[i].n_points+groups[j].n_points; x++) 
+            for(int y=x+1; y<groups[i].n_points+groups[j].n_points; y++) 
+                mean_dist_ij += point_distance(aux_points[x].point, aux_points[y].point);        
+        mean_dist_ij /= groups[i].n_points+groups[j].n_points;
+
+
+        printf("Mean dist i: %f\n", mean_dist_i);
+        printf("Mean dist i to j: %f\n", mean_dist_i_to_j);
+        printf("Mean dist ij: %f\n", mean_dist_ij);
+
+        if(mean_dist_i + mean_dist_ij > mean_dist_i_to_j) {
+            mean_dist.mean = (mean_dist.mean*mean_dist.n_points + mean_dist_ij) / (mean_dist.n_points+(groups[i].n_points + groups[j].n_points));
+            mean_dist.n_points += (groups[i].n_points + groups[j].n_points);
+
+            groups[i].n_points += groups[j].n_points;
+            groups[i].points = aux_points;
+
+            for(int k=j; k<n_groups-1; k++) 
+                groups[k] = groups[k+1];
+
+            groups = realloc(groups, (n_groups-1)*sizeof(selected_point_group));
+
+            n_groups--;
+        } else 
+            free(aux_points);
+    } else if(mean_dist.mean != -1 && point_distance(groups[i].points[0].point, groups[j].points[0].point) <= mean_dist.mean*2) {      
+        groups[i].n_points += groups[j].n_points;
+        groups[i].points = aux_points;
+
+        if(flag == false) {
+            mean_dist.mean = (mean_dist.mean*mean_dist.n_points + point_distance(groups[i].points[0].point, groups[j].points[0].point)) / (mean_dist.n_points+1);
+            mean_dist.n_points++;
+        }
+
+        for(int k=j; k<n_groups-1; k++) 
+            groups[k] = groups[k+1];
+
+        groups = realloc(groups, (n_groups-1)*sizeof(selected_point_group));
+
+        n_groups--;
+    } else 
+        free(aux_points);
+    return n_groups;
+}
+
+
+double groups_mean_distance(selected_point_group g, selected_point p) {
+    double sum = 0.0;
+
+    for(int i=0; i<g.n_points; i++) 
+        sum += point_distance(g.points[i].point, p.point);
+
+    return sum / g.n_points;
+}
+
 //Función para calcular la distancia entre dos puntos en el globo.
 double point_distance(coord_point p1, coord_point p2) {
     double lat1, lon1, lat2, lon2, dlat, dlon, a, c, d;
@@ -189,14 +327,20 @@ double point_distance(coord_point p1, coord_point p2) {
     return d;
 }
 
-//Función para calcular la desviación cuadrática media.
-double calculate_rmsd(selected_point* points, selected_point centroid, int size) {
-    double sum_squared_distance = 0.0;
-    for (int i = 0; i < size; i++) {
-        int dist = point_distance(points[i].point, centroid.point);
-        sum_squared_distance += dist * dist;
-    }
-    return sqrt(sum_squared_distance / size);
+//Función para calcular la distancia cuadrática media.
+double calculate_rmsd(selected_point* points, int size) {
+    double sum_squared_distance = 0.0, dist = 0;
+
+    if(size == 2)
+        return point_distance(points[0].point, points[1].point);
+
+    for (int i = 0; i < size; i++) 
+        for (int j = i+1; j < size; j++) {
+            dist = point_distance(points[i].point, points[j].point);
+            sum_squared_distance += dist * dist;
+        }
+    
+    return sqrt(sum_squared_distance / (size * size));
 }
 
 void from_latlon_to_xyz(float* xyz, float lat, float lon) {

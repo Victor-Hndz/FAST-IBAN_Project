@@ -20,9 +20,9 @@
 // Handle errors by printing an error message and exiting with a non-zero status.
 #define ERR(e) {if (e != NC_NOERR) {fprintf(stderr, "Error: %s\n", nc_strerror(e)); exit(EXIT_FAILURE);}}
 
-// #define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
+#define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
 // #define FILE_NAME "data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc"
-#define FILE_NAME "data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc"
+// #define FILE_NAME "data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc"
 
 #define RES 0.25 // Resolution of the map in degrees
 
@@ -58,7 +58,7 @@ extern int NTIME, NLAT, NLON;
 enum Tipo_form{OMEGA, REX};
 
 //Struct that holds a point (lat, lon).
-typedef struct {
+typedef struct point{
     double lat;
     double lon;
 } coord_point;
@@ -84,9 +84,23 @@ typedef struct selected_point_list {
     int cent;
 } selected_point;
 
+//Struct that holds a group of selected points.
+typedef struct group {
+    int id;
+    int n_points;
+    float rmsd;
+    selected_point *points;
+} selected_point_group;
+
+typedef struct mean {
+    double mean;
+    int n_points;
+} mean_dist;
+
 // Functions
 coord_point create_point(double lat, double lon);
 selected_point create_selected_point(coord_point point, short z, int cent);
+selected_point_group create_selected_point_group(int id, int n_points, float rmsd, selected_point *points);
 candidate create_candidate(int id, int time, enum Tipo_form type, coord_point min1, coord_point min2, coord_point max, short z_min1, short z_min2, short z_max, double max_val, double min_val);
 int compare_candidates(candidate a, candidate b);
 int compare_points(coord_point a, coord_point b);

@@ -13,6 +13,19 @@ selected_point create_selected_point(coord_point point, short z, int cent) {
     return new_point;
 }
 
+// Function to create a selected_point_group struct.
+selected_point_group create_selected_point_group(int id, int n_points, float rmsd, selected_point *points) {
+    selected_point_group new_group;
+    new_group.id = id;
+    new_group.n_points = n_points;
+    new_group.rmsd = rmsd;
+    new_group.points = malloc(n_points*sizeof(selected_point));
+    for(int i=0; i<n_points; i++) {
+        new_group.points[i] = points[i];
+    }
+    return new_group;
+}
+
 candidate create_candidate(int id, int time, enum Tipo_form type, coord_point min1, coord_point min2, coord_point max, short z_min1, short z_min2, short z_max, double max_val, double min_val) {
     double valor, z_range=max_val-min_val;
 

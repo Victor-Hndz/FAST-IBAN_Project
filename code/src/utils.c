@@ -67,6 +67,22 @@ void export_selected_points_to_csv(selected_point *selected_points, int size, ch
     fclose(fp);
 }
 
+void export_groups_to_csv(selected_point_group *group, int size, char *filename, double offset, double scale_factor, int time) {
+    FILE *fp = fopen(filename, "a");
+
+    for(int i=0; i<size; i++) {
+        fprintf(fp, "%d,%d,%d,\"[", time, group[i].id, group[i].n_points);
+        for(int j=0; j<group[i].n_points; j++) {
+            fprintf(fp, "(%.2f,%.2f,%.1f)", group[i].points[j].point.lat, group[i].points[j].point.lon, ((group[i].points[j].z*scale_factor)+offset)/g_0);
+            
+            if(j < group[i].n_points-1)
+                fprintf(fp, ",");
+        }
+        fprintf(fp, "]\"\n");
+    }
+    fclose(fp);
+}
+
 // Function to calculate the distance between two points.
 double distance_between_points(coord_point p1, coord_point p2) {
     return sqrt(pow(p2.lat - p1.lat, 2) + pow(p2.lon - p1.lon, 2));

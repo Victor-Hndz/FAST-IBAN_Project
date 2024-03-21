@@ -23,7 +23,7 @@ set(CMAKE_BUILD_TYPE Debug)
 enable_testing()
 
 
-# add_subdirectory(tests)
+add_subdirectory(tests)
 
 add_library(UTILS src/utils.c libraries/utils.h) 
 add_library(CALC src/calc.c libraries/calc.h)
