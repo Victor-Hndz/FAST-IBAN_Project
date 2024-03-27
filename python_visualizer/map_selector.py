@@ -40,20 +40,7 @@ def main():
                 
         elif options[option]['map'] == 'comb':
             print('Generating combined map')
-            if options[option]['es_max'] == 'both':
-                gm.generate_combined_map(data=pd.read_csv('data/Geopotential_selected_max.csv'), nc_data=options[option]['nc_data'], 
-                                         es_max=True, niveles=options[option]['levels'], tiempo=options[option]['time'], 
-                                         lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
-                
-                gm.generate_combined_map(data=pd.read_csv('data/Geopotential_selected_min.csv'), nc_data=options[option]['nc_data'], 
-                                         es_max=False, niveles=options[option]['levels'], tiempo=options[option]['time'], 
-                                         lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
-            elif options[option]['es_max'] == 'comb':
-                gm.generate_combined_map(data=pd.read_csv('data/Geopotential_selected_comb.csv'), nc_data=options[option]['nc_data'], 
-                                         es_max=options[option]['es_max'], niveles=options[option]['levels'], tiempo=options[option]['time'], 
-                                         lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
-            else:
-                gm.generate_combined_map(data=pd.read_csv('data/Geopotential_selected_'+options[option]['es_max']+'.csv'), nc_data=options[option]['nc_data'], 
+            gm.generate_combined_map(data=pd.read_csv('data/Geopotential_selected.csv'), nc_data=options[option]['nc_data'], 
                                          es_max=options[option]['es_max'], niveles=options[option]['levels'], tiempo=options[option]['time'], 
                                          lat_range=options[option]['lat_range'], lon_range=options[option]['lon_range'])
                 

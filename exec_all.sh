@@ -29,7 +29,7 @@ cd "$ruta_move_files" && bash "$script_mv_files"
 cd "$carpeta_objetivo_python" && bash "$script_clean_python_out"
 
 #Ejecutar el script de combinar archivos
-python "$script_comb_files"
+# python "$script_comb_files"
 
 # Ejecutar el script de Python
 python "$script_python"

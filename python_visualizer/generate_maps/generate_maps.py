@@ -210,6 +210,18 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     fecha = re.search(patron_fecha, nc_data).group()
     fecha = fecha[1:]
     
+    if(es_max == 'comb'):
+        tipo = 'comb'
+    elif(es_max == 'max'):
+        tipo = 'max'
+        data = data[data['type'] == tipo.upper()]
+    elif(es_max == 'min'):
+        tipo = 'min'
+        data = data[data['type'] == tipo.upper()]
+    else:
+        tipo = 'max' if es_max else 'min'
+        data = data[data['type'] == tipo.upper()]
+    
     #Dejar fecha con el instante de tiempo correcto
     new_date = extract_date(fecha, tiempo)
     
@@ -219,7 +231,7 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     latitudes = data['latitude'].copy()
     longitudes = data['longitude'].copy()
     variable = data['z'].copy()
-    cent = data['centroid'].copy()
+    cent = data['group'].copy()
     
     # Abrir el archivo NetCDF
     archivo_nc = nc.Dataset(nc_data, 'r')
@@ -269,14 +281,6 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     cont_txt = plt.clabel(co, inline=True, fontsize=4)
     cont_txt = plt.setp(cont_txt, path_effects=[path_effects.Stroke(linewidth=0.5, foreground='white'), path_effects.Normal()])
     
-    if(es_max == 'comb'):
-        tipo = 'comb'
-    elif(es_max == 'max'):
-        tipo = 'max'
-    elif(es_max == 'min'):
-        tipo = 'min'
-    else:
-        tipo = 'max' if es_max else 'min'
     
     # Añade títulos, colorbar y etiquetas
     visual_adds(fig, ax, sc, new_date, lat_range, lon_range, niveles, tipo)
@@ -346,19 +350,19 @@ def generate_combined_map_circle(data, nc_data, es_max, niveles, tiempo, lat_ran
     # Agregar círculos alrededor de cada punto
     for i in range(len(latitudes)):
         # Convertir la distancia en kilómetros a grados de longitud (aproximado)
-        delta_lon = dist / (lat_km * np.cos(np.radians(latitudes.iloc[i])))
+        delta_lon = dist / (lat_km * np.cos(np.radians(latitudes[i])))
     
 
-        circle = plt.Circle((longitudes.iloc[i], latitudes.iloc[i]), radius=delta_lon, color='red', fill=False, linestyle='dashed')
+        circle = plt.Circle((longitudes[i], latitudes[i]), radius=delta_lon, color='black', fill=False, linestyle='dashed', linewidth=0.5)
         ax.add_patch(circle)
 
     
-    # Plotea los puntos en el mapa
-    co = ax.contour(lon, lat, z, levels=niveles, cmap='jet', 
-                    transform=ccrs.PlateCarree(), linewidths=0.5, vmax=variable.max(), vmin=variable.min())
+    # # Plotea los puntos en el mapa
+    # co = ax.contour(lon, lat, z, levels=niveles, cmap='jet', 
+    #                 transform=ccrs.PlateCarree(), linewidths=0.5, vmax=variable.max(), vmin=variable.min())
     
-    #valores de contorno
-    plt.clabel(co, inline=True, fontsize=6)
+    # #valores de contorno
+    # plt.clabel(co, inline=True, fontsize=6)
     
     tipo = 'max' if es_max else 'min'
     
@@ -514,58 +518,3 @@ def generate_groups_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon_r
     # Guardar la figura en la ubicación especificada
     save_file(nombre_base, extension)
     
-
-
-# def generate_contour_area_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon_range):
-#     #Extraer la fecha del archivo
-#     fecha = re.search(patron_fecha, nc_data).group()
-#     fecha = fecha[1:]
-    
-#     #Dejar fecha con el instante de tiempo correcto
-#     new_date = extract_date(fecha, tiempo)
-    
-#     # obtener solo los datos del tiempo seleccionado
-#     data = data[data['time'] == tiempo]
-    
-#     latitudes = data['latitude'].copy()
-#     longitudes = data['longitude'].copy()
-#     variable = data['z'].copy()
-    
-#     # Abrir el archivo NetCDF
-#     archivo_nc = nc.Dataset(nc_data, 'r')
-    
-#     # Obtener los datos de tiempo, latitud, longitud y la variable z
-#     lat = archivo_nc.variables['latitude'][:]
-#     lon = archivo_nc.variables['longitude'][:]
-#     z = archivo_nc.variables['z'][:]
-    
-     
-#     # Cerrar el archivo NetCDF
-#     archivo_nc.close()
-    
-#     z = z[tiempo]
-#     z = z / g_0
-    
-#     # Ajustar valores mayores a 180 restando 360
-#     if max(lon) > 180:
-#         lon, z = adjust_lon(lon, z)
-        
-#     if max(longitudes) > 180:
-#         longitudes, variable = adjust_lon(longitudes, variable)
-        
-#     #filtrar los valores para que z, la latitud y la longitud se encuentren en el rango correcto
-#     lat, lon, z = filt_data(lat, lon, z, lat_range, lon_range)
-#     #latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
-    
-#     #get z max and min
-#     z_max = z.max()
-#     z_min = z.min()
-    
-#     #configurar el mapa
-#     fig, ax = config_map(lat_range, lon_range)
-    
-#     #Agregar contornos al mapa
-#     co = ax.contour(lon, lat, z, levels=niveles, cmap='jet',
-#                     transform=ccrs.PlateCarree(), linewidths=0.3)
-    
-#     #para cada uno de los puntos en variable, se crea un poligono con los puntos que esten dentro de un mismo contorno y cercanos

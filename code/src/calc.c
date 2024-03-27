@@ -84,227 +84,46 @@ short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, f
 }
 
 void group_points(selected_point* points, int size, short (*z_in)[NTIME], float *lats, float *lons, double scale_factor, double offset) {
-    int contour = ((points[size-1].z*scale_factor + offset)/g_0) - ((int)((points[size-1].z*scale_factor + offset)/g_0) % CONTOUR_STEP);
-    int aux_cont, contour_cont;
+    int contour, aux_cont, contour_cont;
     double bearing, dist_pointer;
     float dist;
     short z_aux_selected;
     coord_point point_aux;
+    
+    contour = (((points[size-1].z*scale_factor) + offset)/g_0) - ((int)(((points[size-1].z*scale_factor) + offset)/g_0) % CONTOUR_STEP);
 
+    
     for(int i=0;i<size-1;i++) {
-        // printf("Point %d: %.2f %.2f %.2f\n", i, points[i].point.lat, points[i].point.lon, ((points[i].z*scale_factor + offset)/g_0));
-        // printf("Contour: %d\n", contour);
-        if(((points[i].z*scale_factor + offset)/g_0) >= contour && ((points[i].z*scale_factor + offset)/g_0) < contour+CONTOUR_STEP) {
-            printf("Distance: %.2f\n", point_distance(points[i].point, points[size-1].point));
-            if(point_distance(points[i].point, points[size-1].point) <= DIST) {
-                bearing = bearing_from_points(points[i].point, points[size-1].point);
-                point_aux = points[size-1].point;
-                dist_pointer = 0;
-                contour_cont = 0;
+        if(points[i].type == points[size-1].type) {
+            if((((points[i].z*scale_factor) + offset)/g_0) >= contour-CONTOUR_STEP && (((points[i].z*scale_factor) + offset)/g_0) < contour+2*CONTOUR_STEP) {
+                if(point_distance(points[i].point, points[size-1].point) <= DIST) {
+                    bearing = bearing_from_points(points[i].point, points[size-1].point);
+                    point_aux = points[size-1].point;
+                    dist_pointer = 0;
+                    contour_cont = 0;
 
-                while(dist_pointer < point_distance(points[i].point, points[size-1].point)) {
-                    printf("Dist pointer: %.2f\n", dist_pointer);
-                    dist = R*cos(point_aux.lat* M_PI / 180)*(RES*M_PI / 180);
-                    printf("Dist: %.2f\n", dist);
-                    point_aux = coord_from_great_circle(point_aux, dist, bearing);
-                    z_aux_selected = bilinear_interpolation(point_aux, z_in, lats, lons);
-                    aux_cont = ((z_aux_selected*scale_factor + offset)/g_0) - ((int)((z_aux_selected*scale_factor + offset)/g_0) % CONTOUR_STEP);
-                    if(aux_cont > contour+20 || aux_cont < contour) {
-                        contour_cont++;
-                        contour = aux_cont;
-                    }
-                    dist_pointer += dist;
-                }
+                    while(dist_pointer < point_distance(points[i].point, points[size-1].point)) {
+                        dist = R*cos(point_aux.lat* M_PI / 180)*(RES*M_PI / 180);
+                        point_aux = coord_from_great_circle(point_aux, dist, bearing);
+                        z_aux_selected = bilinear_interpolation(point_aux, z_in, lats, lons);
 
-                if(contour_cont <= 2) 
-                    points[size-1].cent = points[i].cent;
-            }
-        }
-    }
-}
-
-
-//Función para encontrar los candidatos.
-void findCombinations(short (*selected_max)[NLON], short (*selected_min)[NLON], candidate **candidatos, int *size, float* lats, float *lons, int time, double max_val, double min_val, int *id) {
-    coord_point p_candidato, p_aux, p_max;
-    int found;
-    candidate cand_aux;
-
-    candidatos[time] = (candidate*) calloc(size[time], sizeof(candidate));
-    size[time] = 0;
-    
-    //recorrer la matriz de minimos y máximos.
-    for(int i=0; i<FILT_LAT(LAT_LIM)-1; i++) {
-        for(int j=0; j<NLON; j++) {
-            if(selected_min[i][j] == 0)
-                continue;
-            
-            p_candidato = (coord_point){lats[i], lons[j]};
-
-            for(int x=i; x<FILT_LAT(LAT_LIM)-1; x++) {
-                for(int y=j; y<NLON; y++) {
-                    if(selected_min[x][y] == 0) 
-                        continue;
-                
-                    p_aux = (coord_point){lats[x], lons[y]};
-
-                    if(p_candidato.lat == p_aux.lat && p_candidato.lon == p_aux.lon) 
-                        continue;
-
-                    if(fabs(p_candidato.lon - p_aux.lon) > 80 || fabs(p_candidato.lat - p_aux.lat) > 20)
-                        continue;
-
-                    if(fabs(p_candidato.lon - p_aux.lon) < 10 || fabs(p_candidato.lat - p_aux.lat) < 5)
-                        continue;
-                    
-                    for(int a=0; a<FILT_LAT(LAT_LIM)-1; a++) {
-                        for(int b=0; b<NLON; b++) {
-                            if(selected_max[a][b] == 0) 
-                                continue;
-
-                            p_max = (coord_point){lats[a], lons[b]};
-                            found = 0;
-
-                            if(p_max.lon >= p_candidato.lon && p_max.lon <= p_aux.lon && p_max.lat > p_candidato.lat && p_max.lat > p_aux.lat) {      
-                                if(fabs(p_candidato.lon - p_max.lon) > 80 || fabs(p_candidato.lat - p_max.lat) > 20 || 
-                                    fabs(p_aux.lon - p_max.lon) > 80 || fabs(p_aux.lat - p_max.lat) > 20)
-                                    continue;
-
-                                if(fabs(p_candidato.lon - p_max.lon) < 10 ||  fabs(p_aux.lon - p_max.lon) < 10)
-                                    continue;  
-
-                                for(int s=0; s<size[time]; s++) {
-                                    if(compare_points(candidatos[time][s].max, p_max) == 1) {
-                                        found = 1;
-                                        cand_aux = create_candidate(-1, time, OMEGA, p_candidato, p_aux, p_max, selected_min[i][j], selected_min[x][y], selected_max[a][b], max_val, min_val);
-                                        
-                                        if(cand_aux.value > candidatos[time][s].value) {
-                                            cand_aux.id = candidatos[time][s].id;
-                                            candidatos[time][s] = cand_aux;
-                                        }
-                                    }
-                                }
-
-                                if(found == 0) {
-                                    size[time]++;
-                                    candidatos[time][size[time]-1] = create_candidate((*id)++, time, OMEGA, p_candidato, p_aux, p_max, selected_min[i][j], selected_min[x][y], selected_max[a][b], max_val, min_val);
-                                }
-                            } else if(p_max.lat > p_candidato.lat && p_max.lon > p_candidato.lon-10 && p_max.lon < p_candidato.lon+10) {
-                                if(fabs(p_candidato.lon - p_max.lon) < 3 ||  fabs(p_candidato.lat - p_max.lat) < 3)
-                                    continue;  
-                                
-                                if(fabs(p_candidato.lat - p_max.lat) > 15)
-                                    continue;  
-
-                                for(int s=0; s<size[time]; s++) {
-                                    if(compare_points(candidatos[time][s].max, p_max) == 1) {
-                                        found = 1;
-                                        cand_aux = create_candidate(-1, time, REX, p_candidato, (coord_point){-1,-1}, p_max, selected_min[i][j], -1, selected_max[a][b], max_val, min_val);
-                                        
-                                        if(cand_aux.value > candidatos[time][s].value) {
-                                            cand_aux.id = candidatos[time][s].id;
-                                            candidatos[time][s] = cand_aux;
-                                        }
-                                    }
-                                }
-
-                                if(found == 0) {
-                                    size[time]++;
-                                    candidatos[time][size[time]-1] = create_candidate((*id)++, time, REX, p_candidato, (coord_point){-1,-1}, p_max, selected_min[i][j], -1, selected_max[a][b], max_val, min_val);
-                                }
-                            } else
-                                continue;
+                        if(z_aux_selected == -1)
+                            continue;
+                        
+                        aux_cont = (((z_aux_selected*scale_factor) + offset)/g_0) - ((int)(((z_aux_selected*scale_factor) + offset)/g_0) % CONTOUR_STEP);
+                        if(aux_cont > contour+20 || aux_cont < contour) {
+                            contour_cont++;
+                            contour = aux_cont;
                         }
+                        dist_pointer += dist;
                     }
+
+                    if(contour_cont <= 2) 
+                        points[size-1].group = points[i].group;
                 }
             }
         }
     }
-}
-
-//Función para combinar dos grupos de puntos.
-int combine_groups(selected_point_group *groups, int n_groups, int i, int j, mean_dist mean_dist) {
-    selected_point *aux_points = malloc((groups[i].n_points + groups[j].n_points)*sizeof(selected_point));
-    double mean_dist_i=0, mean_dist_i_to_j=0, mean_dist_ij = 0;
-    bool flag = false;
-
-    for(int k=0; k<groups[i].n_points; k++) 
-        aux_points[k] = groups[i].points[k];
-
-    for(int k=0; k<groups[j].n_points; k++) 
-        aux_points[groups[i].n_points + k] = groups[j].points[k];
-
-    if(mean_dist.mean == -1) {
-        mean_dist.mean = point_distance(groups[i].points[0].point, groups[j].points[0].point)/2;
-        mean_dist.n_points = 2;
-        flag = true;
-    }
-    
-    if(groups[i].n_points != 1 || groups[j].n_points != 1){
-        for(int x=0; x<groups[i].n_points; x++) 
-            for(int y=0; y<groups[i].n_points; y++)
-                mean_dist_i += point_distance(groups[i].points[x].point, groups[i].points[y].point);       
-        mean_dist_i /= groups[i].n_points;
-
-
-        for(int k=0; k<groups[j].n_points; k++) 
-            mean_dist_i_to_j += groups_mean_distance(groups[i], groups[j].points[k]);
-        mean_dist_i_to_j /= groups[j].n_points;
-
-
-        for(int x=0; x<groups[i].n_points+groups[j].n_points; x++) 
-            for(int y=x+1; y<groups[i].n_points+groups[j].n_points; y++) 
-                mean_dist_ij += point_distance(aux_points[x].point, aux_points[y].point);        
-        mean_dist_ij /= groups[i].n_points+groups[j].n_points;
-
-
-        printf("Mean dist i: %f\n", mean_dist_i);
-        printf("Mean dist i to j: %f\n", mean_dist_i_to_j);
-        printf("Mean dist ij: %f\n", mean_dist_ij);
-
-        if(mean_dist_i + mean_dist_ij > mean_dist_i_to_j) {
-            mean_dist.mean = (mean_dist.mean*mean_dist.n_points + mean_dist_ij) / (mean_dist.n_points+(groups[i].n_points + groups[j].n_points));
-            mean_dist.n_points += (groups[i].n_points + groups[j].n_points);
-
-            groups[i].n_points += groups[j].n_points;
-            groups[i].points = aux_points;
-
-            for(int k=j; k<n_groups-1; k++) 
-                groups[k] = groups[k+1];
-
-            groups = realloc(groups, (n_groups-1)*sizeof(selected_point_group));
-
-            n_groups--;
-        } else 
-            free(aux_points);
-    } else if(mean_dist.mean != -1 && point_distance(groups[i].points[0].point, groups[j].points[0].point) <= mean_dist.mean*2) {      
-        groups[i].n_points += groups[j].n_points;
-        groups[i].points = aux_points;
-
-        if(flag == false) {
-            mean_dist.mean = (mean_dist.mean*mean_dist.n_points + point_distance(groups[i].points[0].point, groups[j].points[0].point)) / (mean_dist.n_points+1);
-            mean_dist.n_points++;
-        }
-
-        for(int k=j; k<n_groups-1; k++) 
-            groups[k] = groups[k+1];
-
-        groups = realloc(groups, (n_groups-1)*sizeof(selected_point_group));
-
-        n_groups--;
-    } else 
-        free(aux_points);
-    return n_groups;
-}
-
-
-double groups_mean_distance(selected_point_group g, selected_point p) {
-    double sum = 0.0;
-
-    for(int i=0; i<g.n_points; i++) 
-        sum += point_distance(g.points[i].point, p.point);
-
-    return sum / g.n_points;
 }
 
 //Función para calcular la distancia entre dos puntos en el globo.
