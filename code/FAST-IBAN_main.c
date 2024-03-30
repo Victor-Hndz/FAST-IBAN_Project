@@ -131,11 +131,14 @@ int main(void) {
                     selected_points[time][selected_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], prev_id, tipo);
                     selected_size++;
                     selected_points[time] = realloc(selected_points[time], (selected_size+1)*sizeof(selected_point));
-
-                    group_points(selected_points[time], selected_size, z_in[time], lats, lons, scale_factor, offset);
                 }
             }
         }
+        for(i=0; i<selected_size; i++) {
+            printf("Point %d\n", i);
+            group_points(selected_points[time], selected_points[time][i], selected_size, z_in[time], lats, lons, scale_factor, offset);
+        }
+    
         order_ids(selected_points[time], selected_size);
 
         export_selected_points_to_csv(selected_points[time], selected_size, filename, offset, scale_factor, time);

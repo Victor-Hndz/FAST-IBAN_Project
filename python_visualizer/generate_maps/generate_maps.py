@@ -211,7 +211,7 @@ def generate_combined_map(data, nc_data, es_max, niveles, tiempo, lat_range, lon
     fecha = fecha[1:]
     
     if(es_max == 'comb'):
-        tipo = 'comb'
+        tipo = 'max-min'
     elif(es_max == 'max'):
         tipo = 'max'
         data = data[data['type'] == tipo.upper()]

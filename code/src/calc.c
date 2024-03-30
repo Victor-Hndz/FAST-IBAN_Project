@@ -27,8 +27,8 @@ double bearing_from_points(coord_point a, coord_point b) {
 
     double y = sin(dlon) * cos(lat2);
     double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dlon);
-
-    return atan2(y, x) * 180 / M_PI;
+    //si da negativo, se suma 360 para que esté en el rango [0, 360]
+    return fmod(atan2(y, x) * 180 / M_PI + 360, 360);
 
 }
 
@@ -83,35 +83,47 @@ short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, f
     return (short)round(z);
 }
 
-void group_points(selected_point* points, int size, short (*z_in)[NTIME], float *lats, float *lons, double scale_factor, double offset) {
-    int contour, aux_cont, contour_cont;
-    double bearing, dist_pointer;
+void group_points(selected_point* points, selected_point candidate, int size, short (*z_in)[NTIME], float *lats, float *lons, double scale_factor, double offset) {
+    int contour, aux_cont, contour_cont, candidate_index;
+    double bearing, dist_pointer, dist_between_points;
     float dist;
     short z_aux_selected;
     coord_point point_aux;
     
-    contour = (((points[size-1].z*scale_factor) + offset)/g_0) - ((int)(((points[size-1].z*scale_factor) + offset)/g_0) % CONTOUR_STEP);
+    contour = (((candidate.z*scale_factor) + offset)/g_0) - ((int)(((candidate.z*scale_factor) + offset)/g_0) % CONTOUR_STEP);
 
+    // if(points[size-1].point.lat == 38.5 && points[size-1].point.lon == 36.25) 
+    //     printf("Point %d: %f %f\n", points[size-1].group, points[size-1].point.lat, points[size-1].point.lon);
     
     for(int i=0;i<size-1;i++) {
-        if(points[i].type == points[size-1].type) {
+        if(selected_points_equal(points[i], candidate)) {
+            candidate_index = i;
+            continue;
+        }
+        
+        if(points[i].type == candidate.type) {
             if((((points[i].z*scale_factor) + offset)/g_0) >= contour-CONTOUR_STEP && (((points[i].z*scale_factor) + offset)/g_0) < contour+2*CONTOUR_STEP) {
-                if(point_distance(points[i].point, points[size-1].point) <= DIST) {
-                    bearing = bearing_from_points(points[i].point, points[size-1].point);
-                    point_aux = points[size-1].point;
+                dist_between_points = point_distance(points[i].point, candidate.point);
+                if(dist_between_points <= DIST) {
+                    bearing = bearing_from_points(points[i].point, candidate.point);
+                    point_aux = candidate.point;
                     dist_pointer = 0;
                     contour_cont = 0;
+                    // printf("i Point %d: %f %f\n", points[i].group, points[i].point.lat, points[i].point.lon);
+                    // printf("size-1 Point %d: %f %f\n", points[size-1].group, points[size-1].point.lat, points[size-1].point.lon);
 
-                    while(dist_pointer < point_distance(points[i].point, points[size-1].point)) {
+                    while(dist_pointer < point_distance(points[i].point, candidate.point)) {
+                        // printf("Dist: %f\n", dist_pointer);
                         dist = R*cos(point_aux.lat* M_PI / 180)*(RES*M_PI / 180);
                         point_aux = coord_from_great_circle(point_aux, dist, bearing);
+                        // printf("Aux Point %f %f\n", point_aux.lat, point_aux.lon);
                         z_aux_selected = bilinear_interpolation(point_aux, z_in, lats, lons);
 
                         if(z_aux_selected == -1)
-                            continue;
+                            break;
                         
                         aux_cont = (((z_aux_selected*scale_factor) + offset)/g_0) - ((int)(((z_aux_selected*scale_factor) + offset)/g_0) % CONTOUR_STEP);
-                        if(aux_cont > contour+20 || aux_cont < contour) {
+                        if(aux_cont > contour+CONTOUR_STEP || aux_cont < contour) {
                             contour_cont++;
                             contour = aux_cont;
                         }
@@ -119,7 +131,7 @@ void group_points(selected_point* points, int size, short (*z_in)[NTIME], float 
                     }
 
                     if(contour_cont <= 2) 
-                        points[size-1].group = points[i].group;
+                        points[i].group = candidate.group;
                 }
             }
         }

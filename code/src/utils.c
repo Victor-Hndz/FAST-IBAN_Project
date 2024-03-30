@@ -48,11 +48,6 @@ void export_selected_points_to_csv(selected_point *selected_points, int size, ch
     fclose(fp);
 }
 
-// Function to calculate the distance between two points.
-double distance_between_points(coord_point p1, coord_point p2) {
-    return sqrt(pow(p2.lat - p1.lat, 2) + pow(p2.lon - p1.lon, 2));
-}
-
 // Function to order the ids of the selected points.
 void order_ids(selected_point *points, int size) {
     int i, j;
@@ -85,4 +80,11 @@ void order_ids(selected_point *points, int size) {
             points[i].group = correct_id;
         }
     }
+}
+
+
+bool selected_points_equal(selected_point a, selected_point b) {
+    if(a.point.lat == b.point.lat && a.point.lon == b.point.lon && a.z == b.z && a.group == b.group && a.type == b.type)
+        return true;
+    return false;
 }
