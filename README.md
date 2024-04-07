@@ -40,3 +40,5 @@ para arreglar problemas en el commit:
 - git commit --ammend --no-edit
 
 Todo está WIP y en fase de pruebas.
+
+Comando CLI: python configurator_CLI.py -d config/data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc  config/data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc --t comb disp -r max min -l 70 -i 0 1 4 -la 25 90 -lo -180 180 -f svg
