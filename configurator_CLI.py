@@ -156,3 +156,6 @@ elif current_os == "Linux":
     print("Archivo de configuración .yaml creado exitosamente.")
 else:
     print("No se pudo detectar el sistema operativo.")
+
+exec(open("config_executor.py").read())
+print("Configuración ejecutada exitosamente.")
