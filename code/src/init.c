@@ -1,5 +1,43 @@
 #include "../libraries/init.h"
 
+int LAT_LIM_MIN, LAT_LIM_MAX, LON_LIM_MIN, LON_LIM_MAX;
+char* FILE_NAME;
+
+
+//Function to process the arguments
+void process_args(int argc, char *argv[]) {
+    if (argc != 6) {
+        //FILE_NAME = "data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc";
+        //FILE_NAME = "data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc";
+        FILE_NAME = "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc";
+        LAT_LIM_MIN = 25;
+        LAT_LIM_MAX = 90;
+        LON_LIM_MIN = -180;
+        LON_LIM_MAX = 180;
+    } else {
+        FILE_NAME = argv[1];
+        LAT_LIM_MIN = atoi(argv[2]);
+        LAT_LIM_MAX = atoi(argv[3]);
+        LON_LIM_MIN = atoi(argv[4]);
+        LON_LIM_MAX = atoi(argv[5]);
+
+        if(strlen(FILE_NAME) > 255) {
+            printf("Error: El nombre del archivo es demasiado largo.\n");
+            exit(1);
+        }
+
+        if(LAT_LIM_MIN < -90 || LAT_LIM_MIN > 90 || LAT_LIM_MAX < -90 || LAT_LIM_MAX > 90 || LAT_LIM_MIN > LAT_LIM_MAX) {
+            printf("Error: Los límites de latitud son incorrectos.\n");
+            exit(1);
+        }
+
+        if(LON_LIM_MIN < -180 || LON_LIM_MIN > 180 || LON_LIM_MAX < -180 || LON_LIM_MAX > 180 || LON_LIM_MIN > LON_LIM_MAX) {
+            printf("Error: Los límites de longitud son incorrectos.\n");
+            exit(1);
+        }
+    }
+}
+
 
 //Initialize and create files and folders
 void init_files(char* filename, char* long_name) {

@@ -5,7 +5,7 @@
 #include <omp.h>
 
 
-int main(void) {
+int main(int argc, char *argv[]) {
     int ncid, retval, i, j, cont, cont2, is_equal, selected_size, bearing_count, prev_id;
     double scale_factor, offset, z_calculated1, z_calculated2, t_ini, t_fin, t_total;
     short z_aux, z_aux_selected;
@@ -63,7 +63,7 @@ int main(void) {
         selected_points[time] = malloc(sizeof(selected_point));
         memset(procesado, false, sizeof(procesado));
 
-        for (int lat=0; lat<FILT_LAT(LAT_LIM)-1; lat++) {
+        for (int lat=0; lat<FILT_LAT(LAT_LIM_MIN)-1; lat++) {
             for (int lon=0; lon<NLON; lon++) {
                 cont = 0;
                 cont2 = 0;
