@@ -108,10 +108,17 @@ if args.all and args.instant:
     parser.error("El argumento --all no se puede usar junto con -i")
     
 # Convertir args.instant a una lista plana de cadenas de texto
-args.instant = [int(instant[0]) for instant in args.instant] if args.instant else None
+args.instant = [str(instant[0]) for instant in args.instant] if args.instant else None
     
 # Convertir args.data a una lista plana de cadenas de texto
 args.data = [data_file[0] for data_file in args.data] if args.data else None
+
+#Convertir latitud y longitud a str
+args.latrange = [str(lat) for lat in args.latrange] if args.latrange else None
+args.lonrange = [str(lon) for lon in args.lonrange] if args.lonrange else None
+
+#Convertir levels a str
+args.levels = str(args.levels) if args.levels else None
 
 print("Datos recopilados correctamente.")
 # print("Archivo de datos:", args.data)
@@ -141,8 +148,10 @@ configuration = {
     "output": args.out if args.out else None,
 }
 
+
 # Escribir el archivo de configuración según el sistema operativo
 if current_os == "Windows":
+    configuration = {key: str(value) for key, value in configuration.items()}
     # Escribir un archivo .conf
     config = configparser.ConfigParser()
     config["MAP"] = configuration
@@ -150,6 +159,7 @@ if current_os == "Windows":
         config.write(configfile)
     print("Archivo de configuración .conf creado exitosamente.")
 elif current_os == "Linux":
+    configuration = {'MAP': configuration}
     # Escribir un archivo .yaml
     with open('config/config.yaml', 'w') as yamlfile:
         yaml.dump(configuration, yamlfile, default_flow_style=False, sort_keys=False)

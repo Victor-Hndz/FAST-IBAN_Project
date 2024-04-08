@@ -13,10 +13,13 @@ int main(int argc, char *argv[]) {
     char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
     enum Tipo_form tipo;
 
+    process_args(argc, argv);
+    
     if(filename == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
+
 
     t_ini = omp_get_wtime();
 
@@ -135,7 +138,7 @@ int main(int argc, char *argv[]) {
             }
         }
         for(i=0; i<selected_size; i++) {
-            printf("Point %d\n", i);
+            // printf("Point %d\n", i);
             group_points(selected_points[time], selected_points[time][i], selected_size, z_in[time], lats, lons, scale_factor, offset);
         }
     

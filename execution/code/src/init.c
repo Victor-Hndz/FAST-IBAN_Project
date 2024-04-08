@@ -47,8 +47,23 @@ void init_files(char* filename, char* long_name) {
     else 
         printf("La carpeta ya existe.\n");
 
+    //FILE_NAME extract the last part of the path
+    char *p = strrchr(FILE_NAME, '/');
+    p == NULL ? p = FILE_NAME : p++;
 
-    sprintf(filename, "%s/%s_selected.csv", DIR_NAME, long_name);
+    //delete the extension from p
+    char *dot = strrchr(p, '.');
+    if (dot != NULL) *dot = '\0';
+
+
+    // Get the current date and time.
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+
+    char fecha[20];
+    sprintf(fecha, "%02d-%02d-%04d_%02d-%02d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min);
+
+    sprintf(filename, "%s/%s_selected_%s_%s.csv", DIR_NAME, long_name, p, fecha);
     FILE *fp = fopen(filename, "w");
     fprintf(fp, "time,latitude,longitude,z,group,type\n");
     fclose(fp);

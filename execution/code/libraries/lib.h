@@ -40,7 +40,7 @@ extern char* FILE_NAME;
 #define OFFSET "add_offset"
 #define LONG_NAME "long_name"
 
-#define DIR_NAME "out"
+#define DIR_NAME "config/out"
 #define DIR_PERMS 0777
 
 
