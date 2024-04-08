@@ -1,33 +1,11 @@
 import argparse
-import enum
 import os
 import platform
 import yaml
 import configparser
+from utils.enums import *
+from utils.map_utils import time_validator, date_from_nc
 
-# Definir enum para el tipo de datos
-class DataType(enum.Enum):
-    TYPE1 = "comb"
-    TYPE2 = "select"
-    TYPE3 = "disp"
-    TYPE4 = "cont"
-    TYPE5 = "comb_circ"
-    TYPE6 = "comb_groups"
-    
-# Definir enum para el tipo de datos
-class DataRange(enum.Enum):
-    RANGE1 = "max"
-    RANGE2 = "min"
-    RANGE3 = "both"
-    RANGE4 = "comb"
-
-# Definir enum para el formato
-class DataFormat(enum.Enum):
-    FORMAT1 = "png"
-    FORMAT2 = "jpg"
-    FORMAT3 = "jpeg"
-    FORMAT4 = "svg"
-    FORMAT5 = "pdf"
 
 # Función para verificar si el o los archivos existen y son válidos
 def check_files(file_paths):
@@ -107,30 +85,19 @@ args = parser.parse_args()
 if args.all and args.instant:
     parser.error("El argumento --all no se puede usar junto con -i")
     
-# Convertir args.instant a una lista plana de cadenas de texto
-args.instant = [str(instant[0]) for instant in args.instant] if args.instant else None
     
 # Convertir args.data a una lista plana de cadenas de texto
 args.data = [data_file[0] for data_file in args.data] if args.data else None
+args.instant = [int(instant[0]) for instant in args.instant] if args.instant else None
 
-#Convertir latitud y longitud a str
-args.latrange = [str(lat) for lat in args.latrange] if args.latrange else None
-args.lonrange = [str(lon) for lon in args.lonrange] if args.lonrange else None
-
-#Convertir levels a str
-args.levels = str(args.levels) if args.levels else None
+#Validar los instantes de tiempo
+for file in args.data:
+    dates = date_from_nc(file)
+    for instant in args.instant:
+        print(time_validator(instant, dates))
+        
 
 print("Datos recopilados correctamente.")
-# print("Archivo de datos:", args.data)
-# print("Tipos de datos:", args.type)
-# print("Rangos de datos:", args.range)
-# print("Número de niveles:", args.levels)
-# print("Número de instantes:", args.instant)
-# print("Rango de latitud:", args.latrange)
-# print("Rango de longitud:", args.lonrange)
-# print("Formato de datos:", args.format)
-# print("Todos los datos:", args.all)
-# print("Ruta de salida:", args.out)
 
 # Obtener el sistema operativo actual
 current_os = platform.system()
@@ -148,9 +115,15 @@ configuration = {
     "output": args.out if args.out else None,
 }
 
+#clear the output folder
+if os.path.exists("out/"):
+    for file in os.listdir("out/"):
+        os.remove("out/"+file)
+    print("Carpeta de salida limpia exitosamente.")
+
 
 # Escribir el archivo de configuración según el sistema operativo
-if current_os == "Windows":
+if os.name == "nt":
     configuration = {key: str(value) for key, value in configuration.items()}
     # Escribir un archivo .conf
     config = configparser.ConfigParser()
@@ -158,7 +131,7 @@ if current_os == "Windows":
     with open('config/config.conf', 'w') as configfile:
         config.write(configfile)
     print("Archivo de configuración .conf creado exitosamente.")
-elif current_os == "Linux":
+elif os.name == "posix":
     configuration = {'MAP': configuration}
     # Escribir un archivo .yaml
     with open('config/config.yaml', 'w') as yamlfile:

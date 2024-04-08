@@ -3,19 +3,19 @@ import platform
 import configparser
 import yaml
 import os
+from utils.enums import *
+
 
 execution_path = "execution/code/build/"
 exec_file = "execution/FAST-IBAN"
 
-#subprocess.Popen(["python", "archivo.py"])
-
 #Read the configuration file (yaml or conf, depending on the OS)
 current_os = platform.system()
-if current_os == "Windows":
+if os.name == 'nt':
     config = configparser.ConfigParser()
     config.read('config/config.conf')
     print("Archivo de configuración .conf leído exitosamente.")
-elif current_os == "Linux":
+elif os.name == 'posix':
     with open('config/config.yaml', 'r') as yamlfile:
         config = yaml.load(yamlfile, Loader=yaml.FullLoader)
     print("Archivo de configuración .yaml leído exitosamente.")
@@ -55,17 +55,23 @@ if process.returncode == 0:
 else:
     print(stderr)  # Mostrar el mensaje de error
     print("Error al ejecutar el build:")
+    exit(1)
     
 #Execute the C code for each file
 for file in files:
-    cmd = [exec_file, file, lat_range[0], lat_range[1], lon_range[0], lon_range[1]]
+    cmd = [exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1])]
     process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     stdout = process.stdout
     stderr = process.stderr
-
+    [int(lat) for lat in lat_range]
+    [int(lon) for lon in lon_range]
     if process.returncode == 0:
         print(stdout)  # Mostrar la salida del comando
         print("Ejecución completada exitosamente.")
+        for m in maps:
+            for e in es_max:
+                for t in times:
+                    DataType_map[DataType(m)](file, e, t, levels, lat_range, lon_range, file_format)
     else:
         print(stderr)  # Mostrar el mensaje de error
         print("Error al ejecutar el programa:")
