@@ -83,7 +83,7 @@ short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, f
     return (short)round(z);
 }
 
-void group_points(selected_point* points, selected_point candidate, int size, short (*z_in)[NTIME], float *lats, float *lons, double scale_factor, double offset) {
+void group_points(selected_point* points, selected_point candidate, int size, short (*z_in)[NLON], float *lats, float *lons, double scale_factor, double offset) {
     int contour, aux_cont, contour_cont, candidate_index;
     double bearing, dist_pointer, dist_between_points;
     float dist;
@@ -137,6 +137,191 @@ void group_points(selected_point* points, selected_point candidate, int size, sh
         }
     }
 }
+
+
+void search_formation(selected_point* points, int size, short (*z_in)[NLON], float *lats, float *lons, double scale_factor, double offset) {
+    int index_lat=-1, index_lon=-1, index_lat2=-1, index_lon2=-1, cont, contour, contour_aux, index, index2, index3, dist_contour_der, dist_contour_izq, selected_contour;
+    coord_point contour_der, contour_izq, selected_izq, selected_der;
+    bool same_c, found, contour_exit;
+
+    int max_lat = FILT_LAT(LAT_LIM_MIN)-1;
+    int contours_max[max_lat];
+    float actual_mean_dist, prev_mean_dist;
+
+    for(int i=0;i<size;i++) {
+        if(points[i].type == MAX) {
+            same_c = false;
+            cont = 0;
+            index = 1;
+            index_lat = findIndex(lats, NLAT, points[i].point.lat);
+            index_lon = findIndex(lons, NLON, points[i].point.lon);
+            selected_izq = create_point(-1, -1);
+            selected_der = create_point(-1, -1);
+            prev_mean_dist = INF;
+            
+            for(int x=0;x<max_lat;x++) 
+                contours_max[x] = -1;
+            
+            if(index_lat == -1 || index_lon == -1) 
+                continue;
+            
+            while(cont < max_lat) {
+                if(index_lat-index < 0)
+                    break;
+
+                contour = (((z_in[index_lat-index][index_lon]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat-index][index_lon]*scale_factor) + offset)/g_0) % CONTOUR_STEP) + CONTOUR_STEP;
+                // printf("Contorno %d\n", contour);
+
+                for(int x=0;x<cont;x++) 
+                    if(contour == contours_max[x]) 
+                        same_c = true;
+
+                if(same_c == false) {
+                    contours_max[cont] = contour;
+                    dist_contour_der = INT_MAX;
+                    dist_contour_izq = INT_MAX;
+                    contour_der = create_point(-1, -1);
+                    contour_izq = create_point(-1, -1);
+
+                    for(int j=0;j<size;j++) {
+                        if(points[j].type == MIN) {
+                            // if(contours_max[cont] == 5920 && points[i].point.lat == 42.5 && points[i].point.lon == 6.25 && points[j].point.lat == 42.25 && points[j].point.lon == -15.5)
+                            //     printf("Punto %d: (%.2f, %.2f) - %.2f - %s\n", j, points[j].point.lat, points[j].point.lon, ((points[j].z*scale_factor) + offset)/g_0, points[j].point.lon < points[i].point.lon ? "Izquierda" : "Derecha");
+                            if(points[j].point.lon > points[i].point.lon) {
+                                found = false;
+                                contour_exit = false;
+                                index2 = 1;
+                                index_lat2 = findIndex(lats, NLAT, points[j].point.lat);
+                                index_lon2 = findIndex(lons, NLON, points[j].point.lon);
+
+                                if(index_lat2 == -1 || index_lon2 == -1) 
+                                    continue;
+
+                                while(found == false) {
+                                    if(index_lat2+index2 > FILT_LAT(LAT_LIM_MIN)-1)
+                                        break;
+
+                                    contour = (((z_in[index_lat2+index2][index_lon2]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat2+index2][index_lon2]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
+
+                                    if(lats[index_lat2+index2] > points[i].point.lat)
+                                        break;
+
+                                    if(contour > contours_max[cont])
+                                        break;
+
+                                    if(contour == contours_max[cont] && lats[index_lat2+index2] <= points[i].point.lat) {
+                                        found = true;
+                                        index3 = 1;
+
+                                        while(contour_exit == false) {
+                                            if(index_lon2-index3 > NLON-1)
+                                                break;
+
+                                            contour = (((z_in[index_lat2][index_lon2-index3]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat2][index_lon2-index3]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
+                                            
+                                            // if(contour-CONTOUR_STEP > contours_max[cont])
+                                            //     break;
+
+                                            if(lons[index_lon2-index3] == points[i].point.lon) {
+                                                contour_exit = true;
+                                                break;
+                                            }
+                                            index3++;
+                                        }
+                                        if(contour_exit == false)
+                                            break; 
+                                            
+                                        if(abs(points[j].point.lat-lats[index_lat2+index2]) < dist_contour_der) {
+                                            dist_contour_der = abs(points[j].point.lat-lats[index_lat2+index2]);
+                                            contour_der = points[j].point;
+                                        } else if(abs(points[j].point.lat-lats[index_lat2+index2]) == dist_contour_der && abs(points[i].point.lon-lons[index_lon2]) < abs(points[i].point.lon-contour_der.lon))
+                                            contour_der = points[j].point;
+                                    }
+                                    index2++;
+                                }
+                            } else {
+                                found = false;
+                                contour_exit = false;
+                                index2 = 1;
+                                index_lat2 = findIndex(lats, NLAT, points[j].point.lat);
+                                index_lon2 = findIndex(lons, NLON, points[j].point.lon);
+
+                                if(index_lat2 == -1 || index_lon2 == -1) 
+                                    continue;
+
+                                while(found == false) {
+                                    if(index_lat2+index2 > FILT_LAT(LAT_LIM_MIN)-1)
+                                        break;
+
+                                    contour = (((z_in[index_lat2+index2][index_lon2]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat2+index2][index_lon2]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
+
+                                    if(lats[index_lat2+index2] > points[i].point.lat)
+                                        break;
+
+                                    if(contour > contours_max[cont])
+                                        break;
+
+                                    if(contour == contours_max[cont]  && lats[index_lat2+index2] < points[i].point.lat) {
+                                        found = true;
+                                        index3 = 1;
+
+                                        while(contour_exit == false) {
+                                            if(index_lon2+index3 > NLON-1)
+                                                break;
+
+                                            contour = (((z_in[index_lat2][index_lon2+index3]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat2][index_lon2+index3]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
+                                            
+                                            // if(contour-CONTOUR_STEP > contours_max[cont])
+                                            //     break;
+
+                                            if(lons[index_lon2+index3] == points[i].point.lon) {
+                                                contour_exit = true;
+                                                break;
+                                            }
+                                            index3++;
+                                        }
+                                        if(contour_exit == false)
+                                            break; 
+
+                                        if(abs(points[j].point.lat-lats[index_lat2+index2]) < dist_contour_izq) {
+                                            dist_contour_izq = abs(points[j].point.lat-lats[index_lat2+index2]);
+                                            contour_izq = points[j].point;
+                                        } else if(abs(points[j].point.lat-lats[index_lat2+index2]) == dist_contour_izq && abs(points[i].point.lon-lons[index_lon2]) < abs(points[i].point.lon-contour_izq.lon))
+                                            contour_izq = points[j].point;
+                                    }
+                                    index2++;
+                                }
+                            }
+                        }
+                    }
+                    if(contour_der.lat != -1 && contour_der.lon != -1 && contour_izq.lat != -1 && contour_izq.lon != -1) {
+                        actual_mean_dist = (point_distance(points[i].point, contour_izq) + point_distance(points[i].point, contour_der) + point_distance(contour_izq, contour_der))/3;
+                        if(actual_mean_dist < prev_mean_dist) {
+                            // printf("Distancia media actual: %.2f\n", prev_mean_dist);
+                            // printf("Distancia media actualizada: %.2f\n", actual_mean_dist);
+                            // printf("Contorno actual: %d\n", contours_max[cont]);
+                            
+                            prev_mean_dist = actual_mean_dist;
+                            selected_izq = contour_izq;
+                            selected_der = contour_der;
+                            selected_contour = contours_max[cont];
+                        }
+                    }
+                    cont++;
+                }
+                same_c = false;
+                index++;
+            }
+            if(selected_izq.lat != -1 && selected_izq.lon != -1 && selected_der.lat != -1 && selected_der.lon != -1) {
+                printf("Los puntos:\n-MAX: (%.2f, %.2f)\n-MIN1: (%.2f, %.2f)\n-MIN2: (%.2f, %.2f)\n\n", points[i].point.lat, points[i].point.lon, selected_izq.lat, selected_izq.lon, selected_der.lat, selected_der.lon);
+                printf("Se encuentran en la formación del contorno %d\n\n", selected_contour);
+            }
+            // else
+                // printf("No se ha encontrado formación para el MAX: (%.2f, %.2f)\n\n", points[i].point.lat, points[i].point.lon);
+        }
+    }
+}
+
 
 //Función para calcular la distancia entre dos puntos en el globo.
 double point_distance(coord_point p1, coord_point p2) {

@@ -5,11 +5,11 @@ char* FILE_NAME;
 
 
 //Function to process the arguments
-void process_args(int argc, char *argv[]) {
+void process_entry(int argc, char *argv[]) {
     if (argc != 6) {
         //FILE_NAME = "data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc";
         //FILE_NAME = "data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc";
-        FILE_NAME = "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc";
+        FILE_NAME = "../config/data/geopot_500hPa_2022-03-14_00-06-12-18UTC.nc";
         LAT_LIM_MIN = 25;
         LAT_LIM_MAX = 90;
         LON_LIM_MIN = -180;
@@ -47,7 +47,7 @@ void init_files(char* filename, char* long_name) {
     else 
         printf("La carpeta ya existe.\n");
 
-    //FILE_NAME extract the last part of the path
+    // FILE_NAME extract the last part of the path
     char *p = strrchr(FILE_NAME, '/');
     p == NULL ? p = FILE_NAME : p++;
 

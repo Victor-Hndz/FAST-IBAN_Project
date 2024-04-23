@@ -81,11 +81,14 @@ def obtain_csv_files(date: str) -> str:
     for archivo in os.listdir(directory):
         if archivo.endswith(".csv"):
             # Obtener la fecha del archivo actual
-            partes = archivo.split("_")
-            fecha_archivo = partes[4] + "_" + partes[5]
-            # Verificar si la fecha del archivo coincide con la fecha proporcionada
-            if fecha_archivo == fecha:
-                archivos_coincidentes.append(archivo)
+            try:
+                partes = archivo.split("_")
+                fecha_archivo = partes[4] + "_" + partes[5]
+                # Verificar si la fecha del archivo coincide con la fecha proporcionada
+                if fecha_archivo == fecha:
+                    archivos_coincidentes.append(archivo)
+            except:
+                pass
                 
     #si hay mas de 3 archivos, eliminar todos menos los 3 más recientes
     while len(archivos_coincidentes) > 3:
@@ -118,15 +121,12 @@ def obtain_csv_files(date: str) -> str:
 
         # Encontrar el archivo con la segunda fecha más cercana a la fecha actual
         archivo_mas_cercano = min(diferencias_de_tiempo, key=diferencias_de_tiempo.get)
-
-        
-
-        # Imprimir el nombre del archivo seleccionado
-        # print("Archivo CSV seleccionado:", archivo_mas_cercano)
+        return archivo_mas_cercano
     else:
         print("No se encontraron archivos CSV para la fecha proporcionada.")
+        return None
     
-    return archivo_mas_cercano
+    
 
 
 def extract_date(fecha: str, tiempo: int) -> str:

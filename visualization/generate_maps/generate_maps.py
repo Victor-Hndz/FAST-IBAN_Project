@@ -1,22 +1,24 @@
 import netCDF4 as nc
 import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
 import matplotlib.patheffects as path_effects
 import cartopy.crs as ccrs 
 import cartopy as cartopy 
 import numpy as np
 import pandas as pd
+import sys
+sys.path.append('../../')
 from utils.map_utils import *
 
 
 g_0 = 9.80665 # m/s^2
 dist = 1000 # km
 lat_km = 111.32 # km/deg
+R = 6371 # km
 
 files_dir = "config/out/"
 
 
-def generate_contour_map(file, es_max, time, levels, lat_range, lon_range, file_format):
+def generate_contour_map(file, time, levels, lat_range, lon_range, file_format):
     #Extraer la fecha del archivo
     dates = date_from_nc(file)
     fecha = from_nc_to_date(str(dates[time]))
@@ -42,8 +44,11 @@ def generate_contour_map(file, es_max, time, levels, lat_range, lon_range, file_
     #configurar el mapa
     fig, ax = config_map(lat_range, lon_range)
     
+     #Valor entre los contornos
+    cont_levels = np.arange(np.ceil(np.min(z)/10)*10, np.max(z), levels)
+    
     # Plotea los contornos en el mapa
-    co = ax.contour(lon, lat, z, levels=levels, cmap='jet', 
+    co = ax.contour(lon, lat, z, levels=cont_levels, cmap='jet', 
                     transform=ccrs.PlateCarree(), linewidths=0.3)
     
     #valores de contorno
@@ -65,13 +70,14 @@ def generate_contour_map(file, es_max, time, levels, lat_range, lon_range, file_
     save_file(nombre_base, extension)
     
 
-def generate_scatter_map(file, es_max, time, levels, lat_range, lon_range, file_format):
+def generate_scatter_map(file, es_max, time, lat_range, lon_range, file_format):
     #Extraer la fecha del archivo
-    dates = date_from_nc(file)
-    fecha = from_nc_to_date(str(dates[time]))
+    # dates = date_from_nc(file)
+    # fecha = from_nc_to_date(str(dates[time]))
     
     #obtener solo los datos del tiempo seleccionado
-    data = pd.read_csv(files_dir+obtain_csv_files(file))
+    # data = pd.read_csv(files_dir+obtain_csv_files(file))
+    data = pd.read_csv(file)
     data = data[data['time'] == time]
     latitudes = data['latitude'].copy()
     longitudes = data['longitude'].copy()
@@ -91,20 +97,20 @@ def generate_scatter_map(file, es_max, time, levels, lat_range, lon_range, file_
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=7)
     
     #Decide si es max o min
-    if(es_max == 'comb'):
-        tipo = 'max-min'
-    elif(es_max == 'max'):
-        tipo = 'max'
-        data = data[data['type'] == tipo.upper()]
-    elif(es_max == 'min'):
-        tipo = 'min'
-        data = data[data['type'] == tipo.upper()]
-    else:
-        tipo = 'max' if es_max else 'min'
-    data = data[data['type'] == tipo.upper()]
+    # if(es_max == 'comb'):
+    #     tipo = 'max-min'
+    # elif(es_max == 'max'):
+    #     tipo = 'max'
+    #     data = data[data['type'] == tipo.upper()]
+    # elif(es_max == 'min'):
+    #     tipo = 'min'
+    #     data = data[data['type'] == tipo.upper()]
+    # else:
+    #     tipo = 'max' if es_max else 'min'
+    # data = data[data['type'] == tipo.upper()]
     
     #Añade títulos, etiquetas y colorbar
-    visual_adds(fig, ax, sc, fecha, lat_range, lon_range, None, tipo)
+    visual_adds(fig, ax, sc, 1, lat_range, lon_range, None, "max")
     
     # Muestra la figura
     # plt.show()
@@ -112,7 +118,7 @@ def generate_scatter_map(file, es_max, time, levels, lat_range, lon_range, file_
     print("Mapa generado. Guardando mapa...")
     
     # Guardar con el nombre original
-    nombre_base = f"out/mapa_geopotencial_puntos_{tipo}_{fecha}"
+    nombre_base = f"../../out/mapa_geopotencial_puntos_max_{1}"
     extension = f".{file_format}"
 
     # Guardar la figura en la ubicación especificada
@@ -134,10 +140,12 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
     elif(es_max == 'min'):
         tipo = 'min'
         data = data[data['type'] == tipo.upper()]
-    else:
-        tipo = 'max' if es_max else 'min'
+    elif(es_max == 'both'):
+        tipo = 'min'
         data = data[data['type'] == tipo.upper()]
-    
+        generate_combined_map(file, "max", time, levels, lat_range, lon_range, file_format)
+    else:
+        print("Error en el tipo de archivo")
     
     # obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == time]
@@ -172,6 +180,9 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
     
     cent = np.array(cent)
     
+    #Valor entre los contornos
+    cont_levels = np.arange(np.ceil(np.min(z)/10)*10, np.max(z), levels)
+    
     #configurar el mapa
     fig, ax = config_map(lat_range, lon_range)
 
@@ -185,9 +196,28 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
                 path_effects=[path_effects.Stroke(linewidth=0.3, foreground='white'), path_effects.Normal()])
 
     # Agregar contornos al mapa
-    co = ax.contour(lon, lat, z, levels=levels, cmap='jet',
+    co = ax.contour(lon, lat, z, levels=cont_levels, cmap='jet',
                     transform=ccrs.PlateCarree(), linewidths=0.5, vmax=variable.max(), vmin=variable.min())
     
+    #Establecer el color del borde para el contorno con valor 5740
+    # for coll, level in zip(co.collections, co.levels):
+    #     if level == 5400 or level == 5420 or level == 5460:
+    #         for contour_path in coll.get_paths():
+    #             # Obtener los vértices del contorno actual
+    #             vertices = contour_path.vertices
+
+    #             # Filtrar los vértices que están dentro de la región de interés
+    #             filtered_vertices = []
+    #             for lon, lat in vertices:
+    #                 if -25 <= lon <= 45:
+    #                     filtered_vertices.append((lon, lat))
+
+    #             # Si hay vértices dentro de la región, pintar el borde en negro
+    #             if filtered_vertices:
+    #                 # Crear un nuevo polígono solo con los vértices filtrados
+    #                 poly = Polygon(filtered_vertices, closed=False, edgecolor='black', facecolor='none')
+    #                 ax.add_patch(poly)
+
     # valores de contorno
     cont_txt = plt.clabel(co, inline=True, fontsize=4)
     cont_txt = plt.setp(cont_txt, path_effects=[path_effects.Stroke(linewidth=0.5, foreground='white'), path_effects.Normal()])
@@ -210,11 +240,10 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
     save_file(nombre_base, extension)
      
     
-def generate_combined_map_circle(file, es_max, time, levels, lat_range, lon_range, file_format):    
+def generate_combined_map_circle(file, es_max, time, lat_range, lon_range, file_format):    
     #Extraer la fecha del archivo
     dates = date_from_nc(file)
     fecha = from_nc_to_date(str(dates[time]))
-    
     data = pd.read_csv(files_dir+obtain_csv_files(file))
     
     #Decide si es max o min
@@ -231,10 +260,11 @@ def generate_combined_map_circle(file, es_max, time, levels, lat_range, lon_rang
         data = data[data['type'] == tipo.upper()]
     
     #obtener solo los datos del tiempo seleccionado
-    data = data[data['time'] == fecha]
+    data = data[data['time'] == time]
     latitudes = data['latitude'].copy()
     longitudes = data['longitude'].copy()
     variable = data['z'].copy()
+    cent = data['group'].copy()
     
     # Abrir el archivo NetCDF
     archivo_nc = nc.Dataset(file, 'r')
@@ -260,6 +290,8 @@ def generate_combined_map_circle(file, es_max, time, levels, lat_range, lon_rang
     lat, lon, z = filt_data(lat, lon, z, lat_range, lon_range)
     latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
     
+    
+    
     #configurar el mapa
     fig, ax = config_map(lat_range, lon_range)
     
@@ -267,18 +299,23 @@ def generate_combined_map_circle(file, es_max, time, levels, lat_range, lon_rang
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', 
                     transform=ccrs.PlateCarree(), s=7)
     
+    #print the cent number for each point
+    # for i in range(len(cent)):
+    #     ax.annotate(cent[i], (longitudes[i], latitudes[i]), fontsize=1, ha='center', va='center', 
+    #             path_effects=[path_effects.Stroke(linewidth=0.3, foreground='white'), path_effects.Normal()])
+
+    
     # Agregar círculos alrededor de cada punto
     for i in range(len(latitudes)):
         # Convertir la distancia en kilómetros a grados de longitud (aproximado)
         delta_lon = dist / (lat_km * np.cos(np.radians(latitudes[i])))
     
-
         circle = plt.Circle((longitudes[i], latitudes[i]), radius=delta_lon, color='black', fill=False, linestyle='dashed', linewidth=0.5)
         ax.add_patch(circle)
     
     
     # Añade títulos, colorbar y etiquetas
-    visual_adds(fig, ax, sc, fecha, lat_range, lon_range, levels, tipo)
+    visual_adds(fig, ax, sc, fecha, lat_range, lon_range, None, tipo)
 
     # Muestra la figura
     # plt.show()
@@ -286,9 +323,10 @@ def generate_combined_map_circle(file, es_max, time, levels, lat_range, lon_rang
     print("Mapa generado. Guardando mapa...")
 
     # Definir el nombre base del archivo y la extensión 
-    nombre_base = f"out/mapa_geopotencial_contornos_puntos_circles_{levels}l_{tipo}_{fecha}"
+    nombre_base = f"out/mapa_geopotencial_contornos_puntos_circles_{tipo}_{fecha}"
     extension = f".{file_format}"
     
     #Guardar la figura en la ubicación especificada
     save_file(nombre_base, extension)
 
+# generate_scatter_map("../../config/out/sobel_filtered.csv", "max", 0, [25, 90], [-180, 180], "png")

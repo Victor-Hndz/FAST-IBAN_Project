@@ -75,8 +75,18 @@ parser.add_argument('-i', '--instant', nargs="+", type=check_instants, required=
 parser.add_argument('-la', '--latrange', nargs=2, type=check_lat, required=False, help="Rango de latitud")
 parser.add_argument('-lo', '--lonrange', nargs=2, type=check_lon, required=False, help="Rango de longitud")
 parser.add_argument('-f', '--format', type=str, choices=[f.value for f in DataFormat], required=False, help="Formato de datos")
-parser.add_argument('--all', action='store_true', required=False, help="Todos los instantes de tiempo")
 parser.add_argument('-o', '--out', type=check_out, required=False, help="Ruta de salida del archivo")
+parser.add_argument('--debug', action='store_true', required=False, help="Debug mode del código en C")
+parser.add_argument('-nc', '--no-compile', action='store_true', required=False, help="No compilar")
+parser.add_argument('-ne', '--no-execute', action='store_true', required=False, help="No ejecutar")
+parser.add_argument('-nce', '--no-compile-execute', action='store_true', required=False, help="No compilar y no ejecutar")
+parser.add_argument('-nm', '--no-maps', action='store_true', required=False, help="No generar mapas")
+
+parser.add_argument('--all', action='store_true', required=False, help="Todos los instantes de tiempo")
+# parser.add_argument('-nde', '--no-delete-execution', action='store_true', required=False, help="No borrar los archivos de ejecución ya generados")
+# parser.add_argument('-ndm', '--no-delete-maps', action='store_true', required=False, help="No borrar los archivos de mapas ya generados")
+
+
 
 # Parsear los argumentos
 args = parser.parse_args()
@@ -84,6 +94,10 @@ args = parser.parse_args()
 # Verificar que no se use -i junto con --all
 if args.all and args.instant:
     parser.error("El argumento --all no se puede usar junto con -i")
+
+if args.no_compile_execute:
+    args.no_compile = True
+    args.no_execute = True
     
     
 # Convertir args.data a una lista plana de cadenas de texto
@@ -113,6 +127,10 @@ configuration = {
     "levels": args.levels if args.levels else None,
     "file_format": args.format if args.format else None,
     "output": args.out if args.out else None,
+    "debug": args.debug,
+    "no_compile": args.no_compile,
+    "no_execute": args.no_execute,
+    "no_maps": args.no_maps,
 }
 
 #clear the output folder

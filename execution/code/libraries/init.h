@@ -4,7 +4,7 @@
 #include "lib.h"
 #include <limits.h>
 
-void process_args(int argc, char *argv[]);
+void process_entry(int argc, char *argv[]);
 void init_files(char* filename, char* long_name);
 void check_coords(short (*z_in)[NLAT][NLON], float lats[NLAT], float lons[NLON]);
 void extract_nc_data(int ncid);
