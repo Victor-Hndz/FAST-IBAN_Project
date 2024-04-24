@@ -232,6 +232,9 @@ void search_formation(selected_point* points, int size, short (*z_in)[NLON], flo
                                             break; 
                                             
                                         if(abs(points[j].point.lat-lats[index_lat2+index2]) < dist_contour_der) {
+                                            if(points[j].point.lat > contour_der.lat && contour_der.lat != -1)
+                                                break;
+
                                             dist_contour_der = abs(points[j].point.lat-lats[index_lat2+index2]);
                                             contour_der = points[j].point;
                                         } else if(abs(points[j].point.lat-lats[index_lat2+index2]) == dist_contour_der && abs(points[i].point.lon-lons[index_lon2]) < abs(points[i].point.lon-contour_der.lon))
@@ -284,6 +287,9 @@ void search_formation(selected_point* points, int size, short (*z_in)[NLON], flo
                                             break; 
 
                                         if(abs(points[j].point.lat-lats[index_lat2+index2]) < dist_contour_izq) {
+                                            if(points[j].point.lat > contour_izq.lat && contour_izq.lat != -1)
+                                                break;
+
                                             dist_contour_izq = abs(points[j].point.lat-lats[index_lat2+index2]);
                                             contour_izq = points[j].point;
                                         } else if(abs(points[j].point.lat-lats[index_lat2+index2]) == dist_contour_izq && abs(points[i].point.lon-lons[index_lon2]) < abs(points[i].point.lon-contour_izq.lon))

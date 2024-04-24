@@ -5,67 +5,67 @@
 #include <omp.h>
 
 
-/// @brief Función que sirve para seleccionar en qué tipo borde de pixel se está.
-/// @param m Matriz a filtrar.
-/// @param pi Índice del pixel a filtrar -1 (x).
-/// @param pj Índice del pixel a filtrar -1 (y).
-/// @param rows Total de filas de la matriz.
-/// @param cols Total de columnas de la matriz.
-/// @return El pixel correcto del borde a que corresponda.
-unsigned char selectPixel(short (*m)[NLON], int pi, int pj, int rows, int cols)
-{
-    //esquinas 
-    if(pi==-1 && pj==-1)
-        return m[pi+2][pj+2];
-    else if(pi==-1 && pj==cols)
-        return m[pi+2][pj-2];
-    else if(pi==rows && pj==-1)
-        return m[pi-2][pj+2];
-    else if(pi==rows && pj==cols)
-        return m[pi-2][pj-2];
-    else //bordes
-    {
-        if(pi==-1)
-            return m[pi+2][pj];
-        else if(pi==rows)
-            return m[pi-2][pj];
-        else if(pj==-1)
-            return m[pi][pj+2];
-        else
-            return m[pi][pj-2];
-    }
-}
+// /// @brief Función que sirve para seleccionar en qué tipo borde de pixel se está.
+// /// @param m Matriz a filtrar.
+// /// @param pi Índice del pixel a filtrar -1 (x).
+// /// @param pj Índice del pixel a filtrar -1 (y).
+// /// @param rows Total de filas de la matriz.
+// /// @param cols Total de columnas de la matriz.
+// /// @return El pixel correcto del borde a que corresponda.
+// unsigned char selectPixel(short (*m)[NLON], int pi, int pj, int rows, int cols)
+// {
+//     //esquinas 
+//     if(pi==-1 && pj==-1)
+//         return m[pi+2][pj+2];
+//     else if(pi==-1 && pj==cols)
+//         return m[pi+2][pj-2];
+//     else if(pi==rows && pj==-1)
+//         return m[pi-2][pj+2];
+//     else if(pi==rows && pj==cols)
+//         return m[pi-2][pj-2];
+//     else //bordes
+//     {
+//         if(pi==-1)
+//             return m[pi+2][pj];
+//         else if(pi==rows)
+//             return m[pi-2][pj];
+//         else if(pj==-1)
+//             return m[pi][pj+2];
+//         else
+//             return m[pi][pj-2];
+//     }
+// }
 
 
-/// @brief Filtrado de Pixel por Sobel.
-/// @param pi Índice del pixel a filtrar -1 (x).
-/// @param pj Índice del pixel a filtrar -1 (y).
-/// @param m Matriz a filtrar.
-/// @param tamfilt Tamaño del lado de la matriz de filtración (3x3).
-/// @param rows Total de filas de la matriz.
-/// @param cols Total de columnas de la matriz.
-/// @return Pixel filtrado.
-unsigned char sobel(int pi, int pj, short (*m)[NLON], int tamfilt, int rows, int cols)
-{
-    int F[][3] = {-1,0,1,-2,0,2,-1,0,1}, C[][3] = {-1,-2,-1,0,0,0,1,2,1}, sumF=0, sumC=0;
+// /// @brief Filtrado de Pixel por Sobel.
+// /// @param pi Índice del pixel a filtrar -1 (x).
+// /// @param pj Índice del pixel a filtrar -1 (y).
+// /// @param m Matriz a filtrar.
+// /// @param tamfilt Tamaño del lado de la matriz de filtración (3x3).
+// /// @param rows Total de filas de la matriz.
+// /// @param cols Total de columnas de la matriz.
+// /// @return Pixel filtrado.
+// unsigned char sobel(int pi, int pj, short (*m)[NLON], int tamfilt, int rows, int cols)
+// {
+//     int F[][3] = {-1,0,1,-2,0,2,-1,0,1}, C[][3] = {-1,-2,-1,0,0,0,1,2,1}, sumF=0, sumC=0;
 
-    for(int i=0;i<tamfilt;i++)
-    {
-        for(int j=0;j<tamfilt;j++)
-        {
-            //Si la matriz a filtrar tiene algún pixel en el borde, se selecciona, se corrige y luego se suma.
-            if(pi+i==-1 || pj+j==-1 || pi+i==rows || pj+j==cols) {
-                sumC += (selectPixel(m, pi+i, pj+j, rows, cols)*C[i][j]);
-                sumF += (selectPixel(m, pi+i, pj+j, rows, cols)*F[i][j]);
-            } else {
-                //si no, se suma el pixel y se sigue.
-                sumC += (m[i+pi][j+pj]*C[i][j]);
-                sumF += (m[i+pi][j+pj]*F[i][j]);
-            }
-        }
-    }
-    return sqrt((pow(sumC,2))+pow(sumF,2));
-}
+//     for(int i=0;i<tamfilt;i++)
+//     {
+//         for(int j=0;j<tamfilt;j++)
+//         {
+//             //Si la matriz a filtrar tiene algún pixel en el borde, se selecciona, se corrige y luego se suma.
+//             if(pi+i==-1 || pj+j==-1 || pi+i==rows || pj+j==cols) {
+//                 sumC += (selectPixel(m, pi+i, pj+j, rows, cols)*C[i][j]);
+//                 sumF += (selectPixel(m, pi+i, pj+j, rows, cols)*F[i][j]);
+//             } else {
+//                 //si no, se suma el pixel y se sigue.
+//                 sumC += (m[i+pi][j+pj]*C[i][j]);
+//                 sumF += (m[i+pi][j+pj]*F[i][j]);
+//             }
+//         }
+//     }
+//     return sqrt((pow(sumC,2))+pow(sumF,2));
+// }
 
 
 int main(int argc, char *argv[]) {
@@ -123,10 +123,6 @@ int main(int argc, char *argv[]) {
 
     init_files(filename, long_name);
 
-    short **mat = malloc(sizeof(short*)*FILT_LAT(LAT_LIM_MIN));
-    for(i=0;i<FILT_LAT(LAT_LIM_MIN);i++)
-        mat[i] = malloc(sizeof(short)*NLON);
-
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
     for (int time=0; time<NTIME; time++) { 
         prev_id = -1;
@@ -140,10 +136,6 @@ int main(int argc, char *argv[]) {
                 cont2 = 0;
                 is_equal = 0;
                 bearing_count = 0;
-                
-                if(time==0) {
-                    mat[lat][lon] = sobel(lat-1, lon-1, z_in[time], 3, FILT_LAT(LAT_LIM_MIN)-1, NLON);
-                }
 
                 for(i=lat-1; i<=lat+1; i++) {
                     for(j=lon-1; j<=lon+1; j++) {
@@ -210,71 +202,36 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-        for(i=0; i<selected_size; i++) {
-            // printf("Point %d\n", i);
-            group_points(selected_points[time], selected_points[time][i], selected_size, z_in[time], lats, lons, scale_factor, offset);
-        }
-        order_ids(selected_points[time], selected_size);
-        
-        selected_point* aux_selec = malloc(sizeof(selected_point));
-        bool selected = false;
-        int aux_cont=0;
-
         for(int x=0; x<selected_size;x++) {
-            for(int y=0;y<aux_cont;y++) {
-                if(selected_points[time][x].group == aux_selec[y].group) {
-                    selected = true;
-
-                    if(selected_points[time][x].z > aux_selec[y].z) {
-                        aux_selec[y] = selected_points[time][x];
+            //Maximos delante de minimos en el array
+            if(selected_points[time][x].type == MIN) {
+                for(int y=x+1; y<selected_size;y++) {
+                    if(selected_points[time][y].type == MAX) {
+                        selected_point aux = selected_points[time][x];
+                        selected_points[time][x] = selected_points[time][y];
+                        selected_points[time][y] = aux;
+                        break;
+                    } else {
+                        //los mínimos con lat menor, delante
+                        if(selected_points[time][x].point.lat > selected_points[time][y].point.lat) {
+                            selected_point aux = selected_points[time][x];
+                            selected_points[time][x] = selected_points[time][y];
+                            selected_points[time][y] = aux;
+                        }
                     }
                 }
             }
-            if(selected == false) {
-                aux_selec[aux_cont] = selected_points[time][x];
-                aux_cont++;
-                aux_selec = realloc(aux_selec, (aux_cont+1)*sizeof(selected_point));
-            }
-            selected = false;
         }
-        // for(int y=0;y<aux_cont;y++) 
-        //     printf("Point %d: (%.2f, %.2f) - %d\n", aux_selec[y].group, aux_selec[y].point.lat, aux_selec[y].point.lon, aux_selec[y].z);
-
-        if(time == 0)
-            search_formation(selected_points[time], selected_size, z_in[time], lats, lons, scale_factor, offset);
-        free(aux_selec);
+        search_formation(selected_points[time], selected_size, z_in[time], lats, lons, scale_factor, offset);
         export_selected_points_to_csv(selected_points[time], selected_size, filename, offset, scale_factor, time);
         free(selected_points[time]);
 
         printf("Tiempo %d procesado.\n", time);
     }
     t_fin = omp_get_wtime();
-
-    FILE *fp = fopen("config/out/sobel_filtered.csv", "a");
-    fprintf(fp, "time,latitude,longitude,z\n");
-    for(int i=0; i<FILT_LAT(LAT_LIM_MIN)-1; i++) {
-        for(int j=0; j<NLON; j++) {
-            fprintf(fp, "%d,%.2f,%.2f,%.1f\n", 0, lats[i], lons[j], ((mat[i][j]*scale_factor)+offset)/g_0);
-        }
-        fprintf(fp, "\n");
-    }
-
-    for(i=0;i<FILT_LAT(LAT_LIM_MIN);i++)
-        free(mat[i]);
-    free(mat);
     
     printf("#2. Máximos y mínimos seleccionados con éxito: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
-    
-    float z_avg = 0;
-    for (int lat=0; lat<FILT_LAT(LAT_LIM_MIN)-1; lat++) 
-        for (int lon=0; lon<NLON; lon++) 
-            z_avg += z_in[0][lat][lon];
-
-    z_avg /= (FILT_LAT(LAT_LIM_MIN)-1)*NLON;
-    printf("Z average: %.2f\n", ((z_avg*scale_factor)+offset)/g_0);
-
-
 
     free(z_in);
     free(selected_points);
