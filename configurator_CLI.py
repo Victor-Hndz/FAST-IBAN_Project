@@ -134,10 +134,11 @@ configuration = {
 }
 
 #clear the output folder
-if os.path.exists("out/"):
-    for file in os.listdir("out/"):
-        os.remove("out/"+file)
-    print("Carpeta de salida limpia exitosamente.")
+if(args.no_execute == False):
+    if os.path.exists("out/"):
+        for file in os.listdir("out/"):
+            os.remove("out/"+file)
+        print("Carpeta de salida limpia exitosamente.")
 
 
 # Escribir el archivo de configuración según el sistema operativo
@@ -157,5 +158,5 @@ else:
     print("Archivo de configuración .yaml creado exitosamente.")
 
 
-exec(open("config_executor.py").read())
 print("Configuración ejecutada exitosamente.")
+exec(open("config_executor.py").read())
