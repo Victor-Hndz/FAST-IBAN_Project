@@ -9,6 +9,7 @@ int main(int argc, char **argv) {
     int ncid, retval, i, j, cont, cont2, is_equal, selected_size, bearing_count, prev_id;
     double scale_factor, offset, z_calculated1, z_calculated2, t_ini, t_fin, t_total;
     short z_aux, z_aux_selected;
+    short ***z_in;
     char long_name[NC_MAX_NAME+1] = "";
     enum Tipo_form tipo;
     selected_point** selected_points;
@@ -18,8 +19,8 @@ int main(int argc, char **argv) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
-
     
+
     t_ini = omp_get_wtime();
 
     //Process the entry arguments.
@@ -29,16 +30,17 @@ int main(int argc, char **argv) {
     if ((retval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
         ERR(retval)
 
-
     //Extract the names and limits of the variables from the netcdf file.
     extract_nc_data(ncid);
     
+
     float lats[NLAT], lons[NLON];
     bool procesado[NLAT][NLON];
 
     selected_points = malloc(NTIME*sizeof(selected_point*));
 
-    short ***z_in = malloc(NTIME*sizeof(short**));
+    //Allocate contiguous memory for the data.
+    z_in = malloc(NTIME*sizeof(short**));
     z_in[0] = malloc(NTIME*NLAT*sizeof(short*));
     z_in[0][0] = malloc(NTIME*NLAT*NLON*sizeof(short));
     
@@ -48,12 +50,12 @@ int main(int argc, char **argv) {
     for(int i = 0; i < NTIME * NLAT; i++) 
         z_in[0][i] = z_in[0][0] + i * NLON;
     
-    // short (*z_in)[NLAT][NLON] = calloc(NTIME, sizeof(*z_in));
     
     if (z_in == NULL || selected_points == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
+
 
     //Extract the data from the netcdf file.
     init_nc_variables(ncid, z_in, lats, lons, &scale_factor, &offset, long_name);    
@@ -62,13 +64,13 @@ int main(int argc, char **argv) {
     if ((retval = nc_close(ncid)))
         ERR(retval)
 
-
     //Check the coordinates and correct them if necessary.
     check_coords(z_in, lats, lons);
 
     //Initialize the output files.
     init_files(filename, long_name);
     
+
     t_fin = omp_get_wtime();
     printf("#1. Datos leídos e inicializados con éxito: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
@@ -181,6 +183,7 @@ int main(int argc, char **argv) {
 
         printf("Tiempo %d procesado.\n", time);
     }
+    
     t_fin = omp_get_wtime();
     
     printf("#2. Máximos y mínimos seleccionados con éxito: %.6f s.\n", t_fin-t_ini);
