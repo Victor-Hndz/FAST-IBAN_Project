@@ -15,7 +15,7 @@ dist = 1000 # km
 lat_km = 111.32 # km/deg
 R = 6371 # km
 
-files_dir = "config/out/"
+files_dir = "out/"
 
 
 def generate_contour_map(file, time, levels, lat_range, lon_range, file_format):

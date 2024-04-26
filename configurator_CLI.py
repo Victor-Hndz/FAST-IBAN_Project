@@ -149,14 +149,13 @@ if os.name == "nt":
     with open('config/config.conf', 'w') as configfile:
         config.write(configfile)
     print("Archivo de configuración .conf creado exitosamente.")
-elif os.name == "posix":
+else:
     configuration = {'MAP': configuration}
     # Escribir un archivo .yaml
     with open('config/config.yaml', 'w') as yamlfile:
         yaml.dump(configuration, yamlfile, default_flow_style=False, sort_keys=False)
     print("Archivo de configuración .yaml creado exitosamente.")
-else:
-    print("No se pudo detectar el sistema operativo.")
+
 
 exec(open("config_executor.py").read())
 print("Configuración ejecutada exitosamente.")

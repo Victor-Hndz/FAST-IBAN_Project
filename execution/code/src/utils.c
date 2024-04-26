@@ -8,15 +8,15 @@ void export_z_to_csv(short (*z_mat)[NLAT][NLON], char *long_name, int control, f
     char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
 
     if (control == 1) 
-        sprintf(filename, "%s/%s_max.csv", DIR_NAME, long_name);
+        sprintf(filename, "%s/%s_max.csv", OUT_DIR_NAME, long_name);
     else if(control == -1) 
-        sprintf(filename, "%s/%s_min.csv", DIR_NAME, long_name);
+        sprintf(filename, "%s/%s_min.csv", OUT_DIR_NAME, long_name);
     else if(control == 2) 
-        sprintf(filename, "%s/%s_selected_max.csv", DIR_NAME, long_name);
+        sprintf(filename, "%s/%s_selected_max.csv", OUT_DIR_NAME, long_name);
     else if(control == -2) 
-        sprintf(filename, "%s/%s_selected_min.csv", DIR_NAME, long_name);
+        sprintf(filename, "%s/%s_selected_min.csv", OUT_DIR_NAME, long_name);
     else 
-        sprintf(filename, "%s/%s_all.csv", DIR_NAME, long_name);
+        sprintf(filename, "%s/%s_all.csv", OUT_DIR_NAME, long_name);
 
     fp = fopen(filename, "w");
     fprintf(fp, "time,latitude,longitude,z\n");

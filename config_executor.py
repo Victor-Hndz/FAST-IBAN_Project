@@ -64,6 +64,7 @@ if no_compile == False:
     
 #Execute the C code for each file
 for file in files:
+    return_code = None
     if(no_execute == False):
         cmd = [exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1])]
         debug_cmd = ["gdb", "--args", exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1])]
@@ -76,7 +77,7 @@ for file in files:
     [int(lat) for lat in lat_range]
     [int(lon) for lon in lon_range]
     
-    if return_code == 0:
+    if return_code == 0 or no_execute == True:
         print("Ejecución completada exitosamente.")
         if(no_maps == False):
             for m in maps:

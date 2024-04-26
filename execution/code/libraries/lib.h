@@ -40,7 +40,11 @@ extern char* FILE_NAME;
 #define OFFSET "add_offset"
 #define LONG_NAME "long_name"
 
-#define DIR_NAME "config/out"
+#define OUT_DIR_NAME "out/"
+#define CONFIG_DIR_NAME "config/"
+#define CONFIG_FILE_NAME_LIN "config.yaml"
+#define CONFIG_FILE_NAME_WIN "config.conf"
+#define ACTUAL_DIR "execution"
 #define DIR_PERMS 0777
 
 

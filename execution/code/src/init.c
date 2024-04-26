@@ -1,15 +1,29 @@
 #include "../libraries/init.h"
+#include <unistd.h>
+#include <sys/utsname.h>
 
 int LAT_LIM_MIN, LAT_LIM_MAX, LON_LIM_MIN, LON_LIM_MAX;
 char* FILE_NAME;
 
 
 //Function to process the arguments
-void process_entry(int argc, char *argv[]) {
+void process_entry(int argc, char **argv) {
+    char cwd[NC_MAX_CHAR];
+    char file_path[NC_MAX_CHAR];
+    getcwd(cwd, sizeof(cwd));
+
+    //extract the last part of the path
+    char *p = strrchr(cwd, '/');
+    p == NULL ? p = cwd : p++;
+    if(strcmp(p, ACTUAL_DIR) == 0) {
+        chdir("..");
+        getcwd(cwd, sizeof(cwd));
+    }
+
     if (argc != 6) {
-        //FILE_NAME = "data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc";
-        //FILE_NAME = "data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc";
-        FILE_NAME = "../config/data/geopot_500hPa_2022-03-14_00-06-12-18UTC.nc";
+        //FILE_NAME = "config/data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc";
+        //FILE_NAME = "config/data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc";
+        FILE_NAME = "config/data/geopot_500hPa_2022-03-14_00-06-12-18UTC.nc";
         LAT_LIM_MIN = 25;
         LAT_LIM_MAX = 90;
         LON_LIM_MIN = -180;
@@ -41,19 +55,38 @@ void process_entry(int argc, char *argv[]) {
 
 //Initialize and create files and folders
 void init_files(char* filename, char* long_name) {
-    // Create the directory for the output file.
-    if (!mkdir(DIR_NAME, DIR_PERMS)) 
+    char cwd[NC_MAX_CHAR];
+    char file_path[NC_MAX_CHAR];
+    getcwd(cwd, sizeof(cwd));
+
+    //extract the last part of the path
+    char *p = strrchr(cwd, '/');
+    p == NULL ? p = cwd : p++;
+    if(strcmp(p, ACTUAL_DIR) == 0) {
+        chdir("..");
+        getcwd(cwd, sizeof(cwd));
+    }
+    // printf("Current working directory: %s\n", cwd);
+
+    snprintf(file_path, sizeof(cwd)+sizeof(OUT_DIR_NAME), "%s/%s", cwd, OUT_DIR_NAME);
+    printf("Out file path: %s\n", file_path);
+
+    if (!mkdir(file_path, DIR_PERMS)) 
         printf("Carpeta creada con éxito.\n");
     else 
         printf("La carpeta ya existe.\n");
 
     // FILE_NAME extract the last part of the path
-    char *p = strrchr(FILE_NAME, '/');
+    p = strrchr(FILE_NAME, '/');
     p == NULL ? p = FILE_NAME : p++;
 
+    printf("File name: %s\n", p);
+    char temp[NC_MAX_CHAR];
+    strcpy(temp, p);
+
     //delete the extension from p
-    char *dot = strrchr(p, '.');
-    if (dot != NULL) *dot = '\0';
+    char *dot = strrchr(temp, '.');
+    if (dot) *dot = '\0';
 
 
     // Get the current date and time.
@@ -63,7 +96,7 @@ void init_files(char* filename, char* long_name) {
     char fecha[20];
     sprintf(fecha, "%02d-%02d-%04d_%02d-%02d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min);
 
-    sprintf(filename, "%s/%s_selected_%s_%s.csv", DIR_NAME, long_name, p, fecha);
+    sprintf(filename, "%s%s_selected_%s_%sUTC.csv", file_path, long_name, temp, fecha);
     FILE *fp = fopen(filename, "w");
     fprintf(fp, "time,latitude,longitude,z,group,type\n");
     fclose(fp);

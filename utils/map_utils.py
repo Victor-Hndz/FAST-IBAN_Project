@@ -72,7 +72,7 @@ def obtain_csv_files(date: str) -> str:
         str: Cadena con los archivos CSV correspondientes.
     """
     fecha_actual = pd.Timestamp.now()
-    directory = "config/out/"
+    directory = "out/"
     fecha = re.search(patron_fecha, date).group()
     
     # Lista para almacenar los archivos CSV que coinciden con la fecha proporcionada
