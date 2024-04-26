@@ -188,16 +188,19 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
 
     # Agregar puntos de dispersión
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', 
-                    transform=ccrs.PlateCarree(), s=8, edgecolors='black', linewidths=0.2)
+                    transform=ccrs.PlateCarree(), s=8, edgecolors='black', linewidths=0.3)
     
     #print the cent number for each point
-    for i in range(len(cent)):
-        ax.annotate(cent[i], (longitudes[i], latitudes[i]), fontsize=1, ha='center', va='center', 
-                path_effects=[path_effects.Stroke(linewidth=0.3, foreground='white'), path_effects.Normal()])
+    # for i in range(len(cent)):
+    #     ax.annotate(cent[i], (longitudes[i], latitudes[i]), fontsize=1, ha='center', va='center', 
+    #             path_effects=[path_effects.Stroke(linewidth=0.3, foreground='white'), path_effects.Normal()])
 
     # Agregar contornos al mapa
     co = ax.contour(lon, lat, z, levels=cont_levels, cmap='jet',
                     transform=ccrs.PlateCarree(), linewidths=0.5, vmax=variable.max(), vmin=variable.min())
+    # valores de contorno
+    cont_txt = plt.clabel(co, inline=True, fontsize=4)
+    cont_txt = plt.setp(cont_txt, path_effects=[path_effects.Stroke(linewidth=0.5, foreground='white'), path_effects.Normal()])
     
     #Establecer el color del borde para el contorno con valor 5740
     # for coll, level in zip(co.collections, co.levels):
@@ -217,10 +220,6 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
     #                 # Crear un nuevo polígono solo con los vértices filtrados
     #                 poly = Polygon(filtered_vertices, closed=False, edgecolor='black', facecolor='none')
     #                 ax.add_patch(poly)
-
-    # valores de contorno
-    cont_txt = plt.clabel(co, inline=True, fontsize=4)
-    cont_txt = plt.setp(cont_txt, path_effects=[path_effects.Stroke(linewidth=0.5, foreground='white'), path_effects.Normal()])
     
     
     # Añade títulos, colorbar y etiquetas
