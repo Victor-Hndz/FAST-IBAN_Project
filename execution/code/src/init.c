@@ -69,18 +69,17 @@ void init_files(char* filename, char* long_name) {
     // printf("Current working directory: %s\n", cwd);
 
     snprintf(file_path, sizeof(cwd)+sizeof(OUT_DIR_NAME), "%s/%s", cwd, OUT_DIR_NAME);
-    printf("Out file path: %s\n", file_path);
+    // printf("Out file path: %s\n", file_path);
 
     if (!mkdir(file_path, DIR_PERMS)) 
         printf("Carpeta creada con éxito.\n");
-    else 
-        printf("La carpeta ya existe.\n");
+    else {/*printf("La carpeta ya existe.\n");*/}
 
     // FILE_NAME extract the last part of the path
     p = strrchr(FILE_NAME, '/');
     p == NULL ? p = FILE_NAME : p++;
 
-    printf("File name: %s\n", p);
+    // printf("File name: %s\n", p);
     char temp[NC_MAX_CHAR];
     strcpy(temp, p);
 

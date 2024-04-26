@@ -323,8 +323,8 @@ void search_formation(selected_point* points, int size, short** z_in, float *lat
                 index++;
             }
             if(selected_izq.lat != -1 && selected_izq.lon != -1 && selected_der.lat != -1 && selected_der.lon != -1) {
-                printf("Los puntos:\n-MAX: (%.2f, %.2f)\n-MIN1: (%.2f, %.2f)\n-MIN2: (%.2f, %.2f)\n\n", points[i].point.lat, points[i].point.lon, selected_izq.lat, selected_izq.lon, selected_der.lat, selected_der.lon);
-                printf("Se encuentran en la formación del contorno %d\n\n", selected_contour);
+                printf("\nLos puntos:\n-MAX: (%.2f, %.2f)\n-MIN1: (%.2f, %.2f)\n-MIN2: (%.2f, %.2f)\n", points[i].point.lat, points[i].point.lon, selected_izq.lat, selected_izq.lon, selected_der.lat, selected_der.lon);
+                printf("Forman una Omega en el contorno %d\n\n", selected_contour);
             }
             // else
                 // printf("No se ha encontrado formación para el MAX: (%.2f, %.2f)\n\n", points[i].point.lat, points[i].point.lon);

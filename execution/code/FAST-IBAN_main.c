@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     
 
     t_fin = omp_get_wtime();
-    printf("#1. Datos leídos e inicializados con éxito: %.6f s.\n", t_fin-t_ini);
+    printf("\n#1. Datos leídos e inicializados con éxito: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
 
     
@@ -157,43 +157,53 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        // for(int x=0; x<selected_size;x++) {
-        //     //Maximos delante de minimos en el array
-        //     if(selected_points[time][x].type == MIN) {
-        //         for(int y=x+1; y<selected_size;y++) {
-        //             if(selected_points[time][y].type == MAX) {
-        //                 selected_point aux = selected_points[time][x];
-        //                 selected_points[time][x] = selected_points[time][y];
-        //                 selected_points[time][y] = aux;
-        //                 break;
-        //             } else {
-        //                 //los mínimos con lat menor, delante
-        //                 if(selected_points[time][x].point.lat > selected_points[time][y].point.lat) {
-        //                     selected_point aux = selected_points[time][x];
-        //                     selected_points[time][x] = selected_points[time][y];
-        //                     selected_points[time][y] = aux;
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-        // search_formation(selected_points[time], selected_size, z_in[time], lats, lons, scale_factor, offset);
+        t_fin = omp_get_wtime();
+        printf("\n#2-%d. Filtrado y selección de máximos y mínimos realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
+        t_total += (t_fin-t_ini);
+        
+        t_ini = omp_get_wtime();
+
+        for(int x=0; x<selected_size;x++) {
+            //Maximos delante de minimos en el array
+            if(selected_points[time][x].type == MIN) {
+                for(int y=x+1; y<selected_size;y++) {
+                    if(selected_points[time][y].type == MAX) {
+                        selected_point aux = selected_points[time][x];
+                        selected_points[time][x] = selected_points[time][y];
+                        selected_points[time][y] = aux;
+                        break;
+                    } else {
+                        //los mínimos con lat menor, delante
+                        if(selected_points[time][x].point.lat > selected_points[time][y].point.lat) {
+                            selected_point aux = selected_points[time][x];
+                            selected_points[time][x] = selected_points[time][y];
+                            selected_points[time][y] = aux;
+                        }
+                    }
+                }
+            }
+        }
+        search_formation(selected_points[time], selected_size, z_in[time], lats, lons, scale_factor, offset);
+        
+        t_fin = omp_get_wtime();
+        printf("\n#3-%d. Búsqueda de formaciones realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
+        t_total += (t_fin-t_ini);
+        
+        t_ini = omp_get_wtime();
         export_selected_points_to_csv(selected_points[time], selected_size, filename, offset, scale_factor, time);
         free(selected_points[time]);
 
         printf("Tiempo %d procesado.\n", time);
     }
-    
-    t_fin = omp_get_wtime();
-    
-    printf("#2. Máximos y mínimos seleccionados con éxito: %.6f s.\n", t_fin-t_ini);
-    t_total += (t_fin-t_ini);
 
     free(z_in[0][0]);
     free(z_in[0]);
     free(z_in);
     free(selected_points);
     free(filename);
+
+    t_fin = omp_get_wtime();
+    t_total += (t_fin-t_ini);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, OUT_DIR_NAME);
     printf("\n## Tiempo total de la ejecución: %.6f s.\n\n", t_total);
