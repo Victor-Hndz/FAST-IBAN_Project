@@ -104,7 +104,7 @@ void init_files(char* filename, char* long_name) {
 
 
 //Function to check the coordinates of the netcdf file and fix them if necessary.
-void check_coords(short (*z_in)[NLAT][NLON], float lats[NLAT], float lons[NLON]) {
+void check_coords(short*** z_in, float lats[NLAT], float lons[NLON]) {
     // Check if the longitudes are in the range [-180, 180] or [0, 360] and correct them if necessary.
     if(lons[NLON-1] > 180) {
         float aux1;
@@ -136,7 +136,7 @@ void check_coords(short (*z_in)[NLAT][NLON], float lats[NLAT], float lons[NLON])
 
 
 //Function to initialize the netcdf variables.
-void init_nc_variables(int ncid, short (*z_in)[NLAT][NLON], float lats[NLAT], float lons[NLON], double *scale_factor, double *offset, char *long_name) {
+void init_nc_variables(int ncid, short*** z_in, float lats[NLAT], float lons[NLON], double *scale_factor, double *offset, char *long_name) {
     int retval, lat_varid, lon_varid, z_varid;
 
     

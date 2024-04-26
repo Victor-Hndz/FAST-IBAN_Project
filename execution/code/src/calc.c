@@ -1,5 +1,6 @@
 #include "../libraries/calc.h"
 
+
 coord_point coord_from_great_circle(coord_point initial, double dist, double bearing) {
     coord_point final = {0, 0};
     double Ad = dist / R;
@@ -20,6 +21,7 @@ coord_point coord_from_great_circle(coord_point initial, double dist, double bea
     return final;
 }
 
+
 double bearing_from_points(coord_point a, coord_point b) {
     double dlon = (b.lon - a.lon) * M_PI / 180;
     double lat1 = a.lat * M_PI / 180;
@@ -32,7 +34,8 @@ double bearing_from_points(coord_point a, coord_point b) {
 
 }
 
-short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, float* lons) {
+
+short bilinear_interpolation(coord_point p, short** z_mat, float* lats, float* lons) {
     double z, z1, z2, z3, z4;
     
     //Calculate the 4 points of the square.
@@ -83,7 +86,8 @@ short bilinear_interpolation(coord_point p, short (*z_mat)[NLON], float* lats, f
     return (short)round(z);
 }
 
-void group_points(selected_point* points, selected_point candidate, int size, short (*z_in)[NLON], float *lats, float *lons, double scale_factor, double offset) {
+
+void group_points(selected_point* points, selected_point candidate, int size, short** z_in, float *lats, float *lons, double scale_factor, double offset) {
     int contour, aux_cont, contour_cont, candidate_index;
     double bearing, dist_pointer, dist_between_points;
     float dist;
@@ -139,7 +143,7 @@ void group_points(selected_point* points, selected_point candidate, int size, sh
 }
 
 
-void search_formation(selected_point* points, int size, short (*z_in)[NLON], float *lats, float *lons, double scale_factor, double offset) {
+void search_formation(selected_point* points, int size, short** z_in, float *lats, float *lons, double scale_factor, double offset) {
     int index_lat=-1, index_lon=-1, index_lat2=-1, index_lon2=-1, cont, contour, contour_aux, index, index2, index3, dist_contour_der, dist_contour_izq, selected_contour;
     coord_point contour_der, contour_izq, selected_izq, selected_der;
     bool same_c, found, contour_exit;
@@ -349,6 +353,7 @@ double point_distance(coord_point p1, coord_point p2) {
     return d;
 }
 
+
 //Función para calcular la distancia cuadrática media.
 double calculate_rmsd(selected_point* points, int size) {
     double sum_squared_distance = 0.0, dist = 0;
@@ -364,6 +369,7 @@ double calculate_rmsd(selected_point* points, int size) {
     
     return sqrt(sum_squared_distance / (size * size));
 }
+
 
 void from_latlon_to_xyz(float* xyz, float lat, float lon) {
     xyz[0] = cos(lat) * cos(lon);

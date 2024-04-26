@@ -10,54 +10,71 @@ int main(int argc, char **argv) {
     double scale_factor, offset, z_calculated1, z_calculated2, t_ini, t_fin, t_total;
     short z_aux, z_aux_selected;
     char long_name[NC_MAX_NAME+1] = "";
-    char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
     enum Tipo_form tipo;
+    selected_point** selected_points;
+    char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
 
-    process_entry(argc, argv);
-    
     if(filename == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
 
-
+    
     t_ini = omp_get_wtime();
 
-    // Open the file.
+    //Process the entry arguments.
+    process_entry(argc, argv);
+
+    //Open the file.
     if ((retval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
         ERR(retval)
 
+
+    //Extract the names and limits of the variables from the netcdf file.
     extract_nc_data(ncid);
     
     float lats[NLAT], lons[NLON];
     bool procesado[NLAT][NLON];
 
-    // Program variable to hold the data we will read.
-    selected_point** selected_points = malloc(NTIME*sizeof(selected_point*));
+    selected_points = malloc(NTIME*sizeof(selected_point*));
 
-    short (*z_in)[NLAT][NLON] = calloc(NTIME, sizeof(*z_in));
+    short ***z_in = malloc(NTIME*sizeof(short**));
+    z_in[0] = malloc(NTIME*NLAT*sizeof(short*));
+    z_in[0][0] = malloc(NTIME*NLAT*NLON*sizeof(short));
+    
+    for(int i = 0; i < NTIME; i++) 
+        z_in[i] = z_in[0] + i * NLAT;
+    
+    for(int i = 0; i < NTIME * NLAT; i++) 
+        z_in[0][i] = z_in[0][0] + i * NLON;
+    
+    // short (*z_in)[NLAT][NLON] = calloc(NTIME, sizeof(*z_in));
     
     if (z_in == NULL || selected_points == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
 
+    //Extract the data from the netcdf file.
     init_nc_variables(ncid, z_in, lats, lons, &scale_factor, &offset, long_name);    
 
     // Close the file.
     if ((retval = nc_close(ncid)))
         ERR(retval)
 
+
+    //Check the coordinates and correct them if necessary.
     check_coords(z_in, lats, lons);
 
-
+    //Initialize the output files.
+    init_files(filename, long_name);
+    
     t_fin = omp_get_wtime();
     printf("#1. Datos leídos e inicializados con éxito: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
 
+    
     t_ini = omp_get_wtime();
-
-    init_files(filename, long_name);
 
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
     for (int time=0; time<NTIME; time++) { 
@@ -169,6 +186,8 @@ int main(int argc, char **argv) {
     printf("#2. Máximos y mínimos seleccionados con éxito: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
 
+    free(z_in[0][0]);
+    free(z_in[0]);
     free(z_in);
     free(selected_points);
     free(filename);
