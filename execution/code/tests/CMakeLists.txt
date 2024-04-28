@@ -8,6 +8,7 @@ project(TESTS)
 # add_executable(TEST_point_dist test_point_distance.c)
 # add_executable(TEST_contours test_contours.c)
 # add_executable(TEST_bearing test_bearing_points.c)
+add_executable(TEST_lines test_line_between_points.c)
 
 
 # target_link_libraries(TEST_coordpoint LIB)
@@ -27,6 +28,7 @@ project(TESTS)
 
 # target_link_libraries(TEST_bearing LIB CALC UTILS INIT)
 # target_link_libraries(TEST_bearing m)
+target_link_libraries(TEST_lines LIB)
 
 
 
@@ -36,3 +38,4 @@ project(TESTS)
 # add_test(NAME test_point_dist COMMAND TEST_point_dist)
 # add_test(NAME test_contours COMMAND TEST_contours)
 # add_test(NAME test_bearing COMMAND TEST_bearing)
+add_test(NAME test_lines COMMAND TEST_lines)

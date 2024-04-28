@@ -146,7 +146,7 @@ void group_points(selected_point* points, selected_point candidate, int size, sh
 void search_formation(selected_point* points, int size, short** z_in, float *lats, float *lons, double scale_factor, double offset) {
     int index_lat=-1, index_lon=-1, index_lat2=-1, index_lon2=-1, cont, contour, contour_aux, index, index2, index3, dist_contour_der, dist_contour_izq, selected_contour;
     coord_point contour_der, contour_izq, selected_izq, selected_der;
-    bool same_c, found, contour_exit;
+    bool same_c, found, contour_exit, line_exit;
 
     int max_lat = FILT_LAT(LAT_LIM_MIN)-1;
     int contours_max[max_lat];
@@ -194,6 +194,7 @@ void search_formation(selected_point* points, int size, short** z_in, float *lat
                             if(points[j].point.lon > points[i].point.lon) {
                                 found = false;
                                 contour_exit = false;
+                                line_exit = false;
                                 index2 = 1;
                                 index_lat2 = findIndex(lats, NLAT, points[j].point.lat);
                                 index_lon2 = findIndex(lons, NLON, points[j].point.lon);
@@ -207,9 +208,6 @@ void search_formation(selected_point* points, int size, short** z_in, float *lat
 
                                     contour = (((z_in[index_lat2+index2][index_lon2]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat2+index2][index_lon2]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
 
-                                    if(lats[index_lat2+index2] > points[i].point.lat)
-                                        break;
-
                                     if(contour > contours_max[cont])
                                         break;
 
@@ -217,24 +215,60 @@ void search_formation(selected_point* points, int size, short** z_in, float *lat
                                         found = true;
                                         index3 = 1;
 
-                                        while(contour_exit == false) {
-                                            if(index_lon2-index3 > NLON-1)
-                                                break;
-
-                                            contour = (((z_in[index_lat2][index_lon2-index3]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat2][index_lon2-index3]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
-                                            
-                                            // if(contour-CONTOUR_STEP > contours_max[cont])
-                                            //     break;
-
-                                            if(lons[index_lon2-index3] == points[i].point.lon) {
-                                                contour_exit = true;
-                                                break;
-                                            }
-                                            index3++;
+                                        //Y = mX + c (point[j], point[i])
+                                        // printf("DER: MAX: Index lat: %d, Index lon: %d\n", index_lat, index_lon);
+                                        // printf("DER: MIN: Index lat: %d, Index lon: %d\n", index_lat2, index_lon2);
+                                        float m,c;
+                                        if(index_lat - index_lat2 == 0) {
+                                            m=0;
+                                            c = index_lat2;
+                                        } else {
+                                            m = (float)(index_lon - index_lon2) / (index_lat - index_lat2);
+                                            c = (float)index_lon2 - m * index_lat2;
                                         }
-                                        if(contour_exit == false)
-                                            break; 
-                                            
+                                        // printf("m: %.2f, c: %.2f\n", m, c);
+                                        
+                                        if(index_lat - index_lat2 >= index_lon - index_lon2 && index_lat-index_lat2 != 0 || index_lon - index_lon2 == 0) {
+                                            for(int x=index_lat2;x>=index_lat;x--) {
+                                                int y = round(m * x + c);
+                                                //  printf("Lat: %d, Lon: %d\n", lats[x], lons[y]);
+                                                if((((z_in[x][y]*scale_factor) + offset)/g_0) < (((z_in[index_lat2][index_lon2]*scale_factor) + offset)/g_0)) {
+                                                    line_exit = true;
+                                                    // printf("Line exit\n");
+                                                    break;
+                                                }
+                                                if((((z_in[x][y]*scale_factor) + offset)/g_0) > (((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0)) {
+                                                    line_exit = true;
+                                                    // printf("Line exit\n");
+                                                    break;
+                                                }
+                                            }
+                                        } else {
+                                            for(int y=index_lon2;y>=index_lon;y--) {
+                                                int x;
+                                                if(index_lat-index_lat2 == 0)
+                                                    x = index_lat2;
+                                                else
+                                                    x = round((y - c) / m);
+                                                // printf("Lat: %d, Lon: %d\n", lats[x], lons[y]);
+                                                if((((z_in[x][y]*scale_factor) + offset)/g_0) < (((z_in[index_lat2][index_lon2]*scale_factor) + offset)/g_0)) {
+                                                    line_exit = true;
+                                                    // printf("Line exit\n");
+                                                    break;
+                                                }
+                                                if((((z_in[x][y]*scale_factor) + offset)/g_0) > (((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0)) {
+                                                    line_exit = true;
+                                                    // printf("Line exit\n");
+                                                    break;
+                                                }
+                                            }
+                                        } 
+
+                                        if(line_exit == true) 
+                                            break;
+                                        line_exit = false;
+                                        // printf("End\n");
+
                                         if(abs(points[j].point.lat-lats[index_lat2+index2]) < dist_contour_der) {
                                             if(points[j].point.lat > contour_der.lat && contour_der.lat != -1)
                                                 break;
@@ -272,23 +306,59 @@ void search_formation(selected_point* points, int size, short** z_in, float *lat
                                         found = true;
                                         index3 = 1;
 
-                                        while(contour_exit == false) {
-                                            if(index_lon2+index3 > NLON-1)
-                                                break;
 
-                                            contour = (((z_in[index_lat2][index_lon2+index3]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat2][index_lon2+index3]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
-                                            
-                                            // if(contour-CONTOUR_STEP > contours_max[cont])
-                                            //     break;
-
-                                            if(lons[index_lon2+index3] == points[i].point.lon) {
-                                                contour_exit = true;
-                                                break;
-                                            }
-                                            index3++;
+                                        //Y = mX + c (point[j], point[i])
+                                        // printf("IZQ: MAX: Index lat: %d, Index lon: %d\n", index_lat, index_lon);
+                                        // printf("IZQ: MIN: Index lat: %d, Index lon: %d\n", index_lat2, index_lon2);
+                                        float m,c;
+                                        if(index_lat - index_lat2 == 0) {
+                                            m=0;
+                                            c = index_lat2;
+                                        } else {
+                                            m = (float)(index_lon - index_lon2) / (index_lat - index_lat2);
+                                            c = (float)index_lon2 - m * index_lat2;
                                         }
-                                        if(contour_exit == false)
-                                            break; 
+                                        
+                                        if(index_lat - index_lat2 >= index_lon - index_lon2 && index_lat-index_lat2 != 0 || index_lon - index_lon2 == 0) {
+                                            for(int x=index_lat2;x>=index_lat;x--) {
+                                                int y = round(m * x + c);
+                                                // printf("Lat: %d, Lon: %d\n", lats[x], lons[y]);
+                                                if((((z_in[x][y]*scale_factor) + offset)/g_0) < (((z_in[index_lat2][index_lon2]*scale_factor) + offset)/g_0)) {
+                                                    line_exit = true;
+                                                    // printf("Line exit\n");
+                                                    break;
+                                                }
+                                                if((((z_in[x][y]*scale_factor) + offset)/g_0) > (((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0)) {
+                                                    line_exit = true;
+                                                    // printf("Line exit\n");
+                                                    break;
+                                                }
+                                            }
+                                        } else {
+                                            for(int y=index_lon2;y<=index_lon;y++) {
+                                                int x;
+                                                if(index_lat-index_lat2 == 0)
+                                                    x = index_lat2;
+                                                else
+                                                    x = round((y - c) / m);
+                                                // printf("Lat: %d, Lon: %d\n", lats[x], lons[y]);
+                                                if((((z_in[x][y]*scale_factor) + offset)/g_0) < (((z_in[index_lat2][index_lon2]*scale_factor) + offset)/g_0)) {
+                                                    line_exit = true;
+                                                    // printf("Line exit\n");
+                                                    break;
+                                                }
+                                                if((((z_in[x][y]*scale_factor) + offset)/g_0) > (((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0)) {
+                                                    line_exit = true;
+                                                    // printf("Line exit\n");
+                                                    break;
+                                                }
+                                            }
+                                        } 
+
+                                        if(line_exit == true) 
+                                            break;
+                                        line_exit = false;
+                                        // printf("End\n");
 
                                         if(abs(points[j].point.lat-lats[index_lat2+index2]) < dist_contour_izq) {
                                             if(points[j].point.lat > contour_izq.lat && contour_izq.lat != -1)
