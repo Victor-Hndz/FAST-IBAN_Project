@@ -23,7 +23,7 @@ def create_gif(png_files, output_gif):
 
 def svg_to_gif_folder(input_folder, output_gif):
     # Carpeta temporal para archivos PNG
-    temp_folder = os.path.join(input_folder, "temp_png")
+    temp_folder = os.path.join(input_folder, "gif/temp_png")
     # Verifica si existe la carpeta temporal
     if not os.path.exists(temp_folder):
         os.makedirs(temp_folder)
@@ -56,5 +56,5 @@ def svg_to_gif_folder(input_folder, output_gif):
 
 # Uso del código
 input_folder = "../out/"
-output_gif = "../out/gif.gif"
+output_gif = "../out/gif/gif.gif"
 svg_to_gif_folder(input_folder, output_gif)
