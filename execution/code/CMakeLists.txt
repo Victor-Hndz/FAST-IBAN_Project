@@ -12,6 +12,9 @@ project(FAST-IBAN
 #OpenMP
 find_package(OpenMP REQUIRED)
 
+#MPI
+find_package(MPI REQUIRED)
+
 # Agregar los flags de OpenMP al compilador
 set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS})
 
@@ -37,6 +40,7 @@ add_executable(FAST-IBAN FAST-IBAN_main.c)
 target_link_libraries(LIB PRIVATE m)
 target_link_libraries(FAST-IBAN PRIVATE netcdf)
 target_link_libraries(FAST-IBAN PRIVATE OpenMP::OpenMP_C)
+target_link_libraries(FAST-IBAN PRIVATE MPI::MPI_C)
 
 target_link_libraries(FAST-IBAN PRIVATE UTILS)
 target_link_libraries(FAST-IBAN PRIVATE CALC)
