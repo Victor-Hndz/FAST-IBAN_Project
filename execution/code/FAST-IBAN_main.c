@@ -201,6 +201,7 @@ int main(int argc, char **argv) {
     free(z_in);
     free(selected_points);
     free(filename);
+    free(filename2);
 
     t_fin = omp_get_wtime();
     t_total += (t_fin-t_ini);
