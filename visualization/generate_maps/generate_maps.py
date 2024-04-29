@@ -152,7 +152,6 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
     latitudes = data['latitude'].copy()
     longitudes = data['longitude'].copy()
     variable = data['z'].copy()
-    cent = data['group'].copy()
     
     # Abrir el archivo NetCDF
     archivo_nc = nc.Dataset(file, 'r')
@@ -178,7 +177,6 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
     latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
     lat, lon, z = filt_data(lat, lon, z, lat_range, lon_range)
     
-    cent = np.array(cent)
     
     #Valor entre los contornos
     cont_levels = np.arange(np.ceil(np.min(z)/10)*10, np.max(z), levels)
@@ -189,11 +187,6 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
     # Agregar puntos de dispersión
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', 
                     transform=ccrs.PlateCarree(), s=8, edgecolors='black', linewidths=0.3)
-    
-    #print the cent number for each point
-    # for i in range(len(cent)):
-    #     ax.annotate(cent[i], (longitudes[i], latitudes[i]), fontsize=1, ha='center', va='center', 
-    #             path_effects=[path_effects.Stroke(linewidth=0.3, foreground='white'), path_effects.Normal()])
 
     # Agregar contornos al mapa
     co = ax.contour(lon, lat, z, levels=cont_levels, cmap='jet',
@@ -263,7 +256,6 @@ def generate_combined_map_circle(file, es_max, time, lat_range, lon_range, file_
     latitudes = data['latitude'].copy()
     longitudes = data['longitude'].copy()
     variable = data['z'].copy()
-    cent = data['group'].copy()
     
     # Abrir el archivo NetCDF
     archivo_nc = nc.Dataset(file, 'r')
@@ -298,10 +290,7 @@ def generate_combined_map_circle(file, es_max, time, lat_range, lon_range, file_
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', 
                     transform=ccrs.PlateCarree(), s=7)
     
-    #print the cent number for each point
-    # for i in range(len(cent)):
-    #     ax.annotate(cent[i], (longitudes[i], latitudes[i]), fontsize=1, ha='center', va='center', 
-    #             path_effects=[path_effects.Stroke(linewidth=0.3, foreground='white'), path_effects.Normal()])
+
 
     
     # Agregar círculos alrededor de cada punto
@@ -327,5 +316,3 @@ def generate_combined_map_circle(file, es_max, time, lat_range, lon_range, file_
     
     #Guardar la figura en la ubicación especificada
     save_file(nombre_base, extension)
-
-# generate_scatter_map("../../config/out/sobel_filtered.csv", "max", 0, [25, 90], [-180, 180], "png")

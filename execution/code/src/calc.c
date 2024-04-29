@@ -87,62 +87,6 @@ short bilinear_interpolation(coord_point p, short** z_mat, float* lats, float* l
 }
 
 
-void group_points(selected_point* points, selected_point candidate, int size, short** z_in, float *lats, float *lons, double scale_factor, double offset) {
-    int contour, aux_cont, contour_cont, candidate_index;
-    double bearing, dist_pointer, dist_between_points;
-    float dist;
-    short z_aux_selected;
-    coord_point point_aux;
-    
-    contour = (((candidate.z*scale_factor) + offset)/g_0) - ((int)(((candidate.z*scale_factor) + offset)/g_0) % CONTOUR_STEP);
-
-    // if(points[size-1].point.lat == 38.5 && points[size-1].point.lon == 36.25) 
-    //     printf("Point %d: %f %f\n", points[size-1].group, points[size-1].point.lat, points[size-1].point.lon);
-    
-    for(int i=0;i<size-1;i++) {
-        if(selected_points_equal(points[i], candidate)) {
-            candidate_index = i;
-            continue;
-        }
-        
-        if(points[i].type == candidate.type) {
-            if((((points[i].z*scale_factor) + offset)/g_0) >= contour-CONTOUR_STEP && (((points[i].z*scale_factor) + offset)/g_0) < contour+2*CONTOUR_STEP) {
-                dist_between_points = point_distance(points[i].point, candidate.point);
-                if(dist_between_points <= DIST) {
-                    bearing = bearing_from_points(points[i].point, candidate.point);
-                    point_aux = candidate.point;
-                    dist_pointer = 0;
-                    contour_cont = 0;
-                    // printf("i Point %d: %f %f\n", points[i].group, points[i].point.lat, points[i].point.lon);
-                    // printf("size-1 Point %d: %f %f\n", points[size-1].group, points[size-1].point.lat, points[size-1].point.lon);
-
-                    while(dist_pointer < point_distance(points[i].point, candidate.point)) {
-                        // printf("Dist: %f\n", dist_pointer);
-                        dist = R*cos(point_aux.lat* M_PI / 180)*(RES*M_PI / 180);
-                        point_aux = coord_from_great_circle(point_aux, dist, bearing);
-                        // printf("Aux Point %f %f\n", point_aux.lat, point_aux.lon);
-                        z_aux_selected = bilinear_interpolation(point_aux, z_in, lats, lons);
-
-                        if(z_aux_selected == -1)
-                            break;
-                        
-                        aux_cont = (((z_aux_selected*scale_factor) + offset)/g_0) - ((int)(((z_aux_selected*scale_factor) + offset)/g_0) % CONTOUR_STEP);
-                        if(aux_cont > contour+CONTOUR_STEP || aux_cont < contour) {
-                            contour_cont++;
-                            contour = aux_cont;
-                        }
-                        dist_pointer += dist;
-                    }
-
-                    if(contour_cont <= 2) 
-                        points[i].group = candidate.group;
-                }
-            }
-        }
-    }
-}
-
-
 void search_formation(selected_point* points, int size, short** z_in, float *lats, float *lons, double scale_factor, double offset) {
     int index_lat=-1, index_lon=-1, index_lat2=-1, index_lon2=-1, cont, contour, contour_aux, index, index2, index3, dist_contour_der, dist_contour_izq, selected_contour;
     coord_point contour_der, contour_izq, selected_izq, selected_der;

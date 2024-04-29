@@ -72,14 +72,13 @@ typedef struct point{
 typedef struct selected_point_list {
     coord_point point;
     short z;
-    int group;
     enum Tipo_form type;
 } selected_point;
 
 
 // Functions
 coord_point create_point(double lat, double lon);
-selected_point create_selected_point(coord_point point, short z, int group, enum Tipo_form type);
+selected_point create_selected_point(coord_point point, short z, enum Tipo_form type);
 int compare_points(coord_point a, coord_point b);
 
 #endif // LIB

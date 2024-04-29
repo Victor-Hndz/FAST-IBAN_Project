@@ -8,8 +8,8 @@ coord_point create_point(double lat, double lon) {
 }
 
 // Function to create a selected_point struct.
-selected_point create_selected_point(coord_point point, short z, int group, enum Tipo_form type) {
-    selected_point new_point = {point, z, group, type};
+selected_point create_selected_point(coord_point point, short z, enum Tipo_form type) {
+    selected_point new_point = {point, z, type};
     return new_point;
 }
 

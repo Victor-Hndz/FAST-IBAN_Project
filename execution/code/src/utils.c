@@ -44,47 +44,13 @@ void export_selected_points_to_csv(selected_point *selected_points, int size, ch
     FILE *fp = fopen(filename, "a");
 
     for(int i=0; i<size; i++) 
-        fprintf(fp, "%d,%.2f,%.2f,%.1f,%d,%s\n", time, selected_points[i].point.lat, selected_points[i].point.lon, ((selected_points[i].z*scale_factor)+offset)/g_0, selected_points[i].group, selected_points[i].type == MAX ? "MAX" : "MIN");
+        fprintf(fp, "%d,%.2f,%.2f,%.1f,%s\n", time, selected_points[i].point.lat, selected_points[i].point.lon, ((selected_points[i].z*scale_factor)+offset)/g_0, selected_points[i].type == MAX ? "MAX" : "MIN");
     fclose(fp);
-}
-
-// Function to order the ids of the selected points.
-void order_ids(selected_point *points, int size) {
-    int i, j;
-    selected_point aux;
-
-    // Ordenamiento por el método de burbuja basado en el grupo
-    for(i = 0; i < size - 1; i++) {
-        for(j = i + 1; j < size; j++) {
-            if(points[i].group > points[j].group) {
-                aux = points[i];
-                points[i] = points[j];
-                points[j] = aux;
-            }
-        }
-    }
-
-    // Reasignación de IDs
-    int correct_id = 0; // Iniciar el ID correcto en 1
-    int prev_id = points[0].group; // Asignar el primer ID
-    points[0].group = correct_id; // Asignar el primer ID
-
-    // Recorrer desde el segundo elemento hasta el último
-    for(i = 1; i < size; i++) {
-        // Si el grupo actual es igual al grupo anterior, asignar el mismo ID
-        if(points[i].group == prev_id) {
-            points[i].group = correct_id;
-        } else { // Si no, incrementar el ID y asignarlo
-            correct_id++;
-            prev_id = points[i].group; // Actualizar el grupo anterior
-            points[i].group = correct_id;
-        }
-    }
 }
 
 
 bool selected_points_equal(selected_point a, selected_point b) {
-    if(a.point.lat == b.point.lat && a.point.lon == b.point.lon && a.z == b.z && a.group == b.group && a.type == b.type)
+    if(a.point.lat == b.point.lat && a.point.lon == b.point.lon && a.z == b.z && a.type == b.type)
         return true;
     return false;
 }

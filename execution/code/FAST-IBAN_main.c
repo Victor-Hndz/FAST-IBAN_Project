@@ -7,7 +7,7 @@
 
 
 int main(int argc, char **argv) {
-    int ncid, retval, i, j, cont, cont2, is_equal, selected_size, bearing_count, prev_id;
+    int ncid, retval, i, j, cont, cont2, is_equal, selected_size, bearing_count;
     double scale_factor, offset, z_calculated1, z_calculated2, t_ini, t_fin, t_total;
     short z_aux, z_aux_selected;
     short ***z_in;
@@ -15,8 +15,9 @@ int main(int argc, char **argv) {
     enum Tipo_form tipo;
     selected_point** selected_points;
     char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
+    char *filename2 = malloc(sizeof(char)*(NC_MAX_NAME+1));
 
-    if(filename == NULL) {
+    if(filename == NULL || filename2 == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
@@ -69,7 +70,7 @@ int main(int argc, char **argv) {
     check_coords(z_in, lats, lons);
 
     //Initialize the output files.
-    init_files(filename, long_name);
+    init_files(filename, filename2, long_name);
     
 
     t_fin = omp_get_wtime();
@@ -81,7 +82,6 @@ int main(int argc, char **argv) {
 
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
     for (int time=0; time<NTIME; time++) { 
-        prev_id = -1;
         selected_size = 0;
         selected_points[time] = malloc(sizeof(selected_point));
         memset(procesado, false, sizeof(procesado));
@@ -149,9 +149,8 @@ int main(int argc, char **argv) {
                 }
 
                 if(bearing_count >= (N_BEARINGS-1)*2) {
-                    prev_id++;
                     // printf("Point: (%.2f, %.2f) - %d\n", lats[lat], lons[lon], z_in[time][lat][lon]);
-                    selected_points[time][selected_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], prev_id, tipo);
+                    selected_points[time][selected_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], tipo);
                     // printf("Point selected: (%.2f, %.2f) - %d\n", selected_points[time][selected_size].point.lat, selected_points[time][selected_size].point.lon, selected_points[time][selected_size].z);
                     selected_size++;
                     selected_points[time] = realloc(selected_points[time], (selected_size+1)*sizeof(selected_point));

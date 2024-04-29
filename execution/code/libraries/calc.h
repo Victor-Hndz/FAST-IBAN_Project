@@ -8,7 +8,6 @@
 coord_point coord_from_great_circle(coord_point initial, double dist, double bearing);
 double bearing_from_points(coord_point a, coord_point b);
 short bilinear_interpolation(coord_point p, short** z_mat, float* lats, float* lons);
-void group_points(selected_point* points, selected_point candidate, int size, short** z_in, float *lats, float *lons, double scale_factor, double offset);
 void search_formation(selected_point* points, int size, short** z_in, float *lats, float *lons, double scale_factor, double offset);
 double point_distance(coord_point a, coord_point b);
 double calculate_rmsd(selected_point* points, int size);
