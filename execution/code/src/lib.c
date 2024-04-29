@@ -13,10 +13,13 @@ selected_point create_selected_point(coord_point point, short z, enum Tipo_form 
     return new_point;
 }
 
+// Function to create a formation struct.
+formation create_formation(int id, coord_point max, coord_point min1, coord_point min2, enum Tipo_block type) {
+    formation new_formation = {id, max, min1, min2, type};
+    return new_formation;
+}
+
 // Function to compare two points. Returns 1 if they are the same, 0 otherwise.
 int compare_points(coord_point a, coord_point b) {
-    if(a.lat == b.lat && a.lon == b.lon) 
-        return 1;
-    else 
-        return 0;
+    a.lat == b.lat && a.lon == b.lon ? 1 : 0;
 }

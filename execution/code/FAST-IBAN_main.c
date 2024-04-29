@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        search_formation(selected_points[time], selected_size, z_in[time], lats, lons, scale_factor, offset);
+        search_formation(time, selected_points[time], selected_size, z_in[time], lats, lons, filename2, scale_factor, offset);
         
         t_fin = omp_get_wtime();
         printf("\n#3-%d. Búsqueda de formaciones realizada con éxito: %.6f s.\n", time, t_fin-t_ini);

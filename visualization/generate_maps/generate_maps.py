@@ -129,7 +129,7 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
     #Extraer la fecha del archivo
     dates = date_from_nc(file)
     fecha = from_nc_to_date(str(dates[time]))
-    data = pd.read_csv(files_dir+obtain_csv_files(file))
+    data = pd.read_csv(files_dir+obtain_csv_files(file, "selected"))
     
     #Decide si es max o min
     if(es_max == 'comb'):
@@ -236,7 +236,7 @@ def generate_combined_map_circle(file, es_max, time, lat_range, lon_range, file_
     #Extraer la fecha del archivo
     dates = date_from_nc(file)
     fecha = from_nc_to_date(str(dates[time]))
-    data = pd.read_csv(files_dir+obtain_csv_files(file))
+    data = pd.read_csv(files_dir+obtain_csv_files(file, "selected"))
     
     #Decide si es max o min
     if(es_max == 'comb'):
@@ -289,8 +289,6 @@ def generate_combined_map_circle(file, es_max, time, lat_range, lon_range, file_
     #agregar puntos de dispersión
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', 
                     transform=ccrs.PlateCarree(), s=7)
-    
-
 
     
     # Agregar círculos alrededor de cada punto

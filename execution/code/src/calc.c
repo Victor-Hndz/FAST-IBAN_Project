@@ -87,10 +87,11 @@ short bilinear_interpolation(coord_point p, short** z_mat, float* lats, float* l
 }
 
 
-void search_formation(selected_point* points, int size, short** z_in, float *lats, float *lons, double scale_factor, double offset) {
-    int index_lat=-1, index_lon=-1, index_lat2=-1, index_lon2=-1, cont, contour, contour_aux, index, index2, index3, dist_contour_der, dist_contour_izq, selected_contour;
+void search_formation(int time, selected_point* points, int size, short** z_in, float *lats, float *lons, char* filename, double scale_factor, double offset) {
+    int id=0, index_lat=-1, index_lon=-1, index_lat2=-1, index_lon2=-1, cont, contour, contour_aux, index, index2, index3, dist_contour_der, dist_contour_izq, selected_contour;
     coord_point contour_der, contour_izq, selected_izq, selected_der;
     bool same_c, found, contour_exit, line_exit;
+    formation* formations = malloc(sizeof(formation));
 
     int max_lat = FILT_LAT(LAT_LIM_MIN)-1;
     int contours_max[max_lat];
@@ -339,11 +340,14 @@ void search_formation(selected_point* points, int size, short** z_in, float *lat
             if(selected_izq.lat != -1 && selected_izq.lon != -1 && selected_der.lat != -1 && selected_der.lon != -1) {
                 printf("\nLos puntos:\n-MAX: (%.2f, %.2f)\n-MIN1: (%.2f, %.2f)\n-MIN2: (%.2f, %.2f)\n", points[i].point.lat, points[i].point.lon, selected_izq.lat, selected_izq.lon, selected_der.lat, selected_der.lon);
                 printf("Forman una Omega en el contorno %d\n\n", selected_contour);
+                formations[id] = create_formation(id, points[i].point, selected_izq, selected_der, OMEGA);
+                id++;
+                formations = realloc(formations, sizeof(formation) * (id+1));
             }
-            // else
-                // printf("No se ha encontrado formación para el MAX: (%.2f, %.2f)\n\n", points[i].point.lat, points[i].point.lon);
         }
     }
+    export_formation_to_csv(formations, id, filename, offset, scale_factor, time);
+    free(formations);
 }
 
 

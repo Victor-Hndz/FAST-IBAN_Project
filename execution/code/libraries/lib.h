@@ -61,6 +61,7 @@ extern char* FILE_NAME;
 
 /*STRUCTS*/
 enum Tipo_form{MAX, MIN};
+enum Tipo_block{OMEGA, REX};
 
 //Struct that holds a point (lat, lon).
 typedef struct point{
@@ -75,10 +76,17 @@ typedef struct selected_point_list {
     enum Tipo_form type;
 } selected_point;
 
+typedef struct formation_list {
+    int id;
+    coord_point max, min1, min2;
+    enum Tipo_block type;
+} formation;
+
 
 // Functions
 coord_point create_point(double lat, double lon);
 selected_point create_selected_point(coord_point point, short z, enum Tipo_form type);
+formation create_formation(int id, coord_point max, coord_point min1, coord_point min2, enum Tipo_block type);
 int compare_points(coord_point a, coord_point b);
 
 #endif // LIB

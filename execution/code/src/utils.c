@@ -49,6 +49,21 @@ void export_selected_points_to_csv(selected_point *selected_points, int size, ch
 }
 
 
+// Function to export the data of the formations to a csv file.
+void export_formation_to_csv(formation *formations, int size, char *filename, double offset, double scale_factor, int time) {
+    FILE *fp = fopen(filename, "a");
+
+    for(int i=0; i<size; i++) {
+        fprintf(fp, "%d,%.2f,%.2f,%.1f,%d,%s\n", time, formations[i].max.lat, formations[i].max.lon, formations[i].id, formations[i].type == OMEGA ? "OMEGA" : "REX");
+        fprintf(fp, "%d,%.2f,%.2f,%.1f,%d,%s\n", time, formations[i].min1.lat, formations[i].min1.lon, formations[i].id, formations[i].type == OMEGA ? "OMEGA" : "REX");
+        
+        if(formations[i].type == OMEGA)
+            fprintf(fp, "%d,%.2f,%.2f,%.1f,%d,%s\n", time, formations[i].min2.lat, formations[i].min2.lon, formations[i].id, formations[i].type == OMEGA ? "OMEGA" : "REX");
+    }
+    fclose(fp);
+}
+
+
 bool selected_points_equal(selected_point a, selected_point b) {
     if(a.point.lat == b.point.lat && a.point.lon == b.point.lon && a.z == b.z && a.type == b.type)
         return true;

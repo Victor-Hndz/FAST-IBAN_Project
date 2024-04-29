@@ -62,11 +62,12 @@ def from_nc_to_date(date: str) -> str:
     return fecha_datetime.strftime("%Y-%m-%d_%HUTC")
 
 
-def obtain_csv_files(date: str) -> str:
+def obtain_csv_files(date: str, file: str) -> str:
     """Obtiene los archivos CSV correspondientes a una fecha específica.
 
     Args:
         date (str): Cadena con la fecha específica.
+        file (str): Archivo a imprimir.
 
     Returns:
         str: Cadena con los archivos CSV correspondientes.
@@ -79,7 +80,7 @@ def obtain_csv_files(date: str) -> str:
     archivos_coincidentes = []
     
     for archivo in os.listdir(directory):
-        if archivo.endswith(".csv"):
+        if archivo.endswith(".csv") and file in archivo:
             # Obtener la fecha del archivo actual
             try:
                 partes = archivo.split("_")
