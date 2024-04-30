@@ -163,26 +163,7 @@ int main(int argc, char **argv) {
         
         t_ini = omp_get_wtime();
 
-        for(int x=0; x<selected_size;x++) {
-            //Maximos delante de minimos en el array
-            if(selected_points[time][x].type == MIN) {
-                for(int y=x+1; y<selected_size;y++) {
-                    if(selected_points[time][y].type == MAX) {
-                        selected_point aux = selected_points[time][x];
-                        selected_points[time][x] = selected_points[time][y];
-                        selected_points[time][y] = aux;
-                        break;
-                    } else {
-                        //los mínimos con lat menor, delante
-                        if(selected_points[time][x].point.lat > selected_points[time][y].point.lat) {
-                            selected_point aux = selected_points[time][x];
-                            selected_points[time][x] = selected_points[time][y];
-                            selected_points[time][y] = aux;
-                        }
-                    }
-                }
-            }
-        }
+        order_selected_points(selected_points[time], selected_size);
         search_formation(time, selected_points[time], selected_size, z_in[time], lats, lons, filename2, scale_factor, offset);
         
         t_fin = omp_get_wtime();

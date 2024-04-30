@@ -38,6 +38,30 @@ int findIndex(float *arr, int n, double target) {
     return -1;
 }
 
+//Order the selected points.
+void order_selected_points(selected_point *points, int size) {
+    for(int x=0; x<size;x++) {
+        //Maximos delante de minimos en el array
+        if(points[x].type == MIN) {
+            for(int y=x+1; y<size;y++) {
+                if(points[y].type == MAX) {
+                    selected_point aux = points[x];
+                    points[x] = points[y];
+                    points[y] = aux;
+                    break;
+                } else {
+                    //los mínimos con lat menor, delante
+                    if(points[x].point.lat > points[y].point.lat) {
+                        selected_point aux = points[x];
+                        points[x] = points[y];
+                        points[y] = aux;
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 // Function to export the data of the selected points to a csv file.
 void export_selected_points_to_csv(selected_point *selected_points, int size, char *filename, double offset, double scale_factor, int time) {
