@@ -55,6 +55,6 @@ def svg_to_gif_folder(input_folder, output_gif):
     # Se mantiene la carpeta temporal para futuras conversiones
 
 # Uso del código
-input_folder = "../out/"
-output_gif = "../out/gif/gif.gif"
+input_folder = "../out/geopot_2003"
+output_gif = "../out/geopot_2003/gif/gif.gif"
 svg_to_gif_folder(input_folder, output_gif)
