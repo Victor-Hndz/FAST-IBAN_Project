@@ -338,8 +338,8 @@ void search_formation(int time, selected_point* points, int size, short** z_in, 
                 index++;
             }
             if(selected_izq.lat != -1 && selected_izq.lon != -1 && selected_der.lat != -1 && selected_der.lon != -1) {
-                printf("\nLos puntos:\n-MAX: (%.2f, %.2f)\n-MIN1: (%.2f, %.2f)\n-MIN2: (%.2f, %.2f)\n", points[i].point.lat, points[i].point.lon, selected_izq.lat, selected_izq.lon, selected_der.lat, selected_der.lon);
-                printf("Forman una Omega en el contorno %d\n\n", selected_contour);
+                // printf("\nLos puntos:\n-MAX: (%.2f, %.2f)\n-MIN1: (%.2f, %.2f)\n-MIN2: (%.2f, %.2f)\n", points[i].point.lat, points[i].point.lon, selected_izq.lat, selected_izq.lon, selected_der.lat, selected_der.lon);
+                // printf("Forman una Omega en el contorno %d\n\n", selected_contour);
                 formations[id] = create_formation(id, points[i].point, selected_izq, selected_der, OMEGA);
                 id++;
                 formations = realloc(formations, sizeof(formation) * (id+1));
