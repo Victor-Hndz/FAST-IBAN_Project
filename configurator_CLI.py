@@ -99,10 +99,17 @@ if args.no_compile_execute:
     args.no_compile = True
     args.no_execute = True
     
-    
 # Convertir args.data a una lista plana de cadenas de texto
 args.data = [data_file[0] for data_file in args.data] if args.data else None
 args.instant = [int(instant[0]) for instant in args.instant] if args.instant else None
+print(args.data)
+    
+if args.all and not args.instant:
+    for file in args.data:
+        dates = date_from_nc(file)
+        args.instant = list(range(len(dates)))
+        print(f"Se han seleccionado los instantes de tiempo {args.instant} para el archivo {file}")
+    
 
 #Validar los instantes de tiempo
 for file in args.data:

@@ -102,7 +102,7 @@ void init_files(char* filename, char* filename2, char* long_name) {
 
     sprintf(filename2, "%s%s_formations_%s_%sUTC.csv", file_path, long_name, temp, fecha);
     fp = fopen(filename2, "w");
-    fprintf(fp, "time,latitude,longitude,z,group,type\n");
+    fprintf(fp, "time,latitude,longitude,group,type\n");
     fclose(fp);
 }
 
