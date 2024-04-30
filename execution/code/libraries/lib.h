@@ -20,14 +20,7 @@
 // Handle errors by printing an error message and exiting with a non-zero status.
 #define ERR(e) {if (e != NC_NOERR) {fprintf(stderr, "Error: %s\n", nc_strerror(e)); exit(EXIT_FAILURE);}}
 
-// #define FILE_NAME "data/geopot_500hPa_2022-03-14_00-06-12-18UTC_HN.nc"
-// #define FILE_NAME "data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc"
-// #define FILE_NAME "data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc"
-
 #define RES 0.25 // Resolution of the map in degrees
-
-extern int NTIME, NLAT, NLON, LAT_LIM_MIN, LAT_LIM_MAX, LON_LIM_MIN, LON_LIM_MAX;
-extern char* FILE_NAME;
 
 // #define LAT_LIM 25
 #define FILT_LAT(g) (360-(g) / RES)
@@ -58,6 +51,9 @@ extern char* FILE_NAME;
 #define CONTOUR_STEP 20
 #define INF (1.0E+30)
 #define MAX_K 10
+
+extern int NTIME, NLAT, NLON, LAT_LIM_MIN, LAT_LIM_MAX, LON_LIM_MIN, LON_LIM_MAX;
+extern char* FILE_NAME;
 
 /*STRUCTS*/
 enum Tipo_form{MAX, MIN};

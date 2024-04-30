@@ -22,19 +22,6 @@ coord_point coord_from_great_circle(coord_point initial, double dist, double bea
 }
 
 
-double bearing_from_points(coord_point a, coord_point b) {
-    double dlon = (b.lon - a.lon) * M_PI / 180;
-    double lat1 = a.lat * M_PI / 180;
-    double lat2 = b.lat * M_PI / 180;
-
-    double y = sin(dlon) * cos(lat2);
-    double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dlon);
-    //si da negativo, se suma 360 para que esté en el rango [0, 360]
-    return fmod(atan2(y, x) * 180 / M_PI + 360, 360);
-
-}
-
-
 short bilinear_interpolation(coord_point p, short** z_mat, float* lats, float* lons) {
     double z, z1, z2, z3, z4;
     
@@ -369,33 +356,4 @@ double point_distance(coord_point p1, coord_point p2) {
     d = R * c;
 
     return d;
-}
-
-
-//Función para calcular la distancia cuadrática media.
-double calculate_rmsd(selected_point* points, int size) {
-    double sum_squared_distance = 0.0, dist = 0;
-
-    if(size == 2)
-        return point_distance(points[0].point, points[1].point);
-
-    for (int i = 0; i < size; i++) 
-        for (int j = i+1; j < size; j++) {
-            dist = point_distance(points[i].point, points[j].point);
-            sum_squared_distance += dist * dist;
-        }
-    
-    return sqrt(sum_squared_distance / (size * size));
-}
-
-
-void from_latlon_to_xyz(float* xyz, float lat, float lon) {
-    xyz[0] = cos(lat) * cos(lon);
-    xyz[1] = cos(lat) * sin(lon);
-    xyz[2] = sin(lat);
-}
-
-void from_xyz_to_latlon(float* latlon, float x, float y, float z) {
-    latlon[0] = atan2(y, x);
-    latlon[1] = atan2(z, sqrt(x*x + y*y));
 }

@@ -3,6 +3,8 @@
 
 #include "lib.h"
 #include <limits.h>
+#include <unistd.h>
+#include <sys/utsname.h>
 
 void process_entry(int argc, char **argv);
 void init_files(char* filename, char* filename2, char* long_name);

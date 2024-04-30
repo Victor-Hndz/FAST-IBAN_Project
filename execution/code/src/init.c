@@ -1,6 +1,4 @@
 #include "../libraries/init.h"
-#include <unistd.h>
-#include <sys/utsname.h>
 
 int LAT_LIM_MIN, LAT_LIM_MAX, LON_LIM_MIN, LON_LIM_MAX;
 char* FILE_NAME;
@@ -22,7 +20,7 @@ void process_entry(int argc, char **argv) {
 
     if (argc != 6) {
         //FILE_NAME = "config/data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc";
-        //FILE_NAME = "config/data/geopot_500hPa_2003-08-01_15_00-06-12-18UTC.nc";
+        //FILE_NAME = "config/data/geopot_500hPa_2003-08-(01-15)_00-06-12-18UTC.nc";
         FILE_NAME = "config/data/geopot_500hPa_2022-03-14_00-06-12-18UTC.nc";
         LAT_LIM_MIN = 25;
         LAT_LIM_MAX = 90;
@@ -66,14 +64,11 @@ void init_files(char* filename, char* filename2, char* long_name) {
         chdir("..");
         getcwd(cwd, sizeof(cwd));
     }
-    // printf("Current working directory: %s\n", cwd);
 
     snprintf(file_path, sizeof(cwd)+sizeof(OUT_DIR_NAME), "%s/%s", cwd, OUT_DIR_NAME);
-    // printf("Out file path: %s\n", file_path);
 
     if (!mkdir(file_path, DIR_PERMS)) 
         printf("Carpeta creada con éxito.\n");
-    else {/*printf("La carpeta ya existe.\n");*/}
 
     // FILE_NAME extract the last part of the path
     p = strrchr(FILE_NAME, '/');
@@ -191,8 +186,6 @@ void extract_nc_data(int ncid) {
         return;
     }
 
-    //printf("Número de variables: %d\n", num_vars);
-
     // Iterar sobre todas las variables y obtener información sobre cada una
     for (varid = 0; varid < num_vars; varid++) {
         // Obtener información sobre la variable
@@ -227,8 +220,5 @@ void extract_nc_data(int ncid) {
             printf("Error: Variable %d: Nombre=%s, Tipo=%d, Número de dimensiones=%d, Tamaño=%zu\n", varid, varname, vartype, ndims, var_size);
             return;
         }
-
-        // Imprimir información sobre la variable
-        // printf("Variable %d: Nombre=%s, Tipo=%d, Número de dimensiones=%d, Tamaño=%zu\n", varid, varname, vartype, ndims, var_size);
     }
 }

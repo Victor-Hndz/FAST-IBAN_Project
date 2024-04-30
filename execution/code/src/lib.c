@@ -18,8 +18,3 @@ formation create_formation(int id, coord_point max, coord_point min1, coord_poin
     formation new_formation = {id, max, min1, min2, type};
     return new_formation;
 }
-
-// Function to compare two points. Returns 1 if they are the same, 0 otherwise.
-int compare_points(coord_point a, coord_point b) {
-    a.lat == b.lat && a.lon == b.lon ? 1 : 0;
-}
