@@ -17,7 +17,7 @@ def create_gif(png_files, output_gif):
         images.append(imageio.imread(png_file))
 
     # Crea el GIF
-    imageio.mimsave(output_gif, images, duration=300, loop=0)
+    imageio.mimsave(output_gif, images, duration=500, loop=2)
 
     print("GIF creado exitosamente en:", output_gif)
 
@@ -55,6 +55,6 @@ def svg_to_gif_folder(input_folder, output_gif):
     # Se mantiene la carpeta temporal para futuras conversiones
 
 # Uso del código
-input_folder = "../out/geopot_2003"
-output_gif = "../out/geopot_2003/gif/gif.gif"
+input_folder = "../out/"
+output_gif = "../out//gif/gif.gif"
 svg_to_gif_folder(input_folder, output_gif)

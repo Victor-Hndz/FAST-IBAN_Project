@@ -43,21 +43,20 @@
 
 #define g_0 9.80665 // Standard gravity in m/s^2
 #define R 6371 // Earth's radius in km
-#define N_BEARINGS 8 // Number of bearings to use in the great circle method
-#define DIST 1000 // Distance in km to use in the great circle method
-#define BEARING_STEP 22.5 // Bearing step in degrees to use in the great circle method
+#define NEIGHBOUR_LATERAL 2 // Number of lateral neighbours to use in the local max/min method
+#define N_BEARINGS 32 // Number of bearings to use in the great circle method
+#define DIST 500 // Distance in km to use in the great circle method
+#define BEARING_STEP (360/(N_BEARINGS*2)) // Bearing step in degrees to use in the great circle method
 #define BEARING_START (-180) // Bearing start in degrees to use in the great circle method
-#define BEARING_LIMIT 40
 #define CONTOUR_STEP 20
 #define INF (1.0E+30)
-#define MAX_K 10
 
 extern int NTIME, NLAT, NLON, LAT_LIM_MIN, LAT_LIM_MAX, LON_LIM_MIN, LON_LIM_MAX;
 extern char* FILE_NAME;
 
 /*STRUCTS*/
-enum Tipo_form{MAX, MIN};
-enum Tipo_block{OMEGA, REX};
+enum Tipo_form{MAX, MIN, NO_TYPE};
+enum Tipo_block{OMEGA, REX, NO_BLOCK};
 
 //Struct that holds a point (lat, lon).
 typedef struct point{
@@ -70,19 +69,30 @@ typedef struct selected_point_list {
     coord_point point;
     short z;
     enum Tipo_form type;
+    int cluster;
 } selected_point;
 
 typedef struct formation_list {
-    int id;
-    coord_point max, min1, min2;
+    int id, max_id, min1_id, min2_id;
     enum Tipo_block type;
 } formation;
+
+typedef struct cluster {
+    int id, n_points, contour;
+    coord_point center;
+    selected_point *points;
+    selected_point point_izq, point_der, point_sup, point_inf;
+    enum Tipo_form type;
+} points_cluster;
 
 
 // Functions
 coord_point create_point(double lat, double lon);
-selected_point create_selected_point(coord_point point, short z, enum Tipo_form type);
-formation create_formation(int id, coord_point max, coord_point min1, coord_point min2, enum Tipo_block type);
-int compare_points(coord_point a, coord_point b);
+selected_point create_selected_point(coord_point point, short z, enum Tipo_form type, int cluster);
+formation create_formation(int id, int max_id, int min1_id, int min2_id, enum Tipo_block type);
+points_cluster create_cluster(int id, int n_points, int contour, coord_point center, selected_point *points, selected_point point_izq, selected_point point_der, selected_point point_sup, selected_point point_inf, enum Tipo_form type);
+points_cluster *fill_clusters(selected_point **points, int size_x, int size_y, int n_clusters, double offset, double scale_factor);
+int compare_selected_points_lat(const void *a, const void *b);
+int compare_selected_points_lon(const void *a, const void *b);
 
 #endif // LIB

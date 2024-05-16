@@ -52,7 +52,7 @@ void process_entry(int argc, char **argv) {
 
 
 //Initialize and create files and folders
-void init_files(char* filename, char* filename2, char* long_name) {
+void init_files(char* filename, char* long_name) {
     char cwd[NC_MAX_CHAR];
     char file_path[NC_MAX_CHAR];
     getcwd(cwd, sizeof(cwd));
@@ -92,13 +92,13 @@ void init_files(char* filename, char* filename2, char* long_name) {
 
     sprintf(filename, "%s%s_selected_%s_%sUTC.csv", file_path, long_name, temp, fecha);
     FILE *fp = fopen(filename, "w");
-    fprintf(fp, "time,latitude,longitude,z,type\n");
+    fprintf(fp, "time,latitude,longitude,z,type,cluster\n");
     fclose(fp);
 
-    sprintf(filename2, "%s%s_formations_%s_%sUTC.csv", file_path, long_name, temp, fecha);
-    fp = fopen(filename2, "w");
-    fprintf(fp, "time,latitude,longitude,group,type\n");
-    fclose(fp);
+    // sprintf(filename2, "%s%s_formations_%s_%sUTC.csv", file_path, long_name, temp, fecha);
+    // fp = fopen(filename2, "w");
+    // fprintf(fp, "time,latitude,longitude,group,type\n");
+    // fclose(fp);
 }
 
 

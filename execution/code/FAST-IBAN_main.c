@@ -7,15 +7,15 @@
 
 
 int main(int argc, char **argv) {
-    int ncid, retval, i, j, cont, cont2, is_equal, selected_size, bearing_count;
-    double scale_factor, offset, z_calculated1, z_calculated2, t_ini, t_fin, t_total;
-    short z_aux, z_aux_selected;
+    int ncid, retval, i, j, size_x, size_y, step, cont, cont2, is_equal, candidates_size, contour_aux, contour_z, lat_aux, lon_aux;
+    double scale_factor, offset, t_ini, t_fin, t_total, mean_z;
+    short z_aux;
     short ***z_in;
     char long_name[NC_MAX_NAME+1] = "";
-    enum Tipo_form tipo;
-    selected_point** selected_points;
+    selected_point **selected_points, **filtered_points;
     char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
     char *filename2 = malloc(sizeof(char)*(NC_MAX_NAME+1));
+    bool exit_loop;
 
     if(filename == NULL || filename2 == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
@@ -39,8 +39,6 @@ int main(int argc, char **argv) {
     float lats[NLAT], lons[NLON];
     bool procesado[NLAT][NLON];
 
-    selected_points = malloc(NTIME*sizeof(selected_point*));
-
     //Allocate contiguous memory for the data.
     z_in = malloc(NTIME*sizeof(short**));
     z_in[0] = malloc(NTIME*NLAT*sizeof(short*));
@@ -51,9 +49,24 @@ int main(int argc, char **argv) {
     
     for(int i = 0; i < NTIME * NLAT; i++) 
         z_in[0][i] = z_in[0][0] + i * NLON;
+
+    step = ((2*NEIGHBOUR_LATERAL)+1);
+    size_x = (int)((FILT_LAT(LAT_LIM_MIN))/step)+1;
+    size_y = (int)((NLON)/step);
+
+    selected_points = malloc((size_x)*sizeof(selected_point*));
+    selected_points[0] = malloc((size_x*size_y)*sizeof(selected_point));
     
-    
-    if (z_in == NULL || selected_points == NULL) {
+    filtered_points = calloc(size_x, sizeof(selected_point*));
+    filtered_points[0] = calloc(size_x*size_y, sizeof(selected_point));
+
+    for(int i = 0; i < size_x; i++) {
+        selected_points[i] = selected_points[0] + i * size_y;
+        filtered_points[i] = filtered_points[0] + i * size_y;
+    }
+
+
+    if (z_in == NULL || z_in[0] == NULL || z_in[0][0] == NULL || selected_points == NULL || selected_points[0] == NULL || filtered_points == NULL || filtered_points[0] == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
         return 2;
     }
@@ -70,69 +83,28 @@ int main(int argc, char **argv) {
     check_coords(z_in, lats, lons);
 
     //Initialize the output files.
-    init_files(filename, filename2, long_name);
+    init_files(filename, long_name);
     
-
+    int bearing_count, bearing_count2, id;
+    short z_aux_selected;
+    double z_calculated1, z_calculated2;
     t_fin = omp_get_wtime();
     printf("\n#1. Datos leídos e inicializados con éxito: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
 
-    
-    t_ini = omp_get_wtime();
-
     //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
     for (int time=0; time<NTIME; time++) { 
-        selected_size = 0;
-        selected_points[time] = malloc(sizeof(selected_point));
+        t_ini = omp_get_wtime();
         memset(procesado, false, sizeof(procesado));
 
-        for (int lat=0; lat<FILT_LAT(LAT_LIM_MIN)-1; lat++) {
-            for (int lon=0; lon<NLON; lon++) {
-                cont = 0;
-                cont2 = 0;
-                is_equal = 0;
-                bearing_count = 0;
-
-                for(i=lat-1; i<=lat+1; i++) {
-                    for(j=lon-1; j<=lon+1; j++) {
-                        if(i == lat && j == lon) 
-                            continue;
-
-                        if (i<0) 
-                            continue;
-                        else if (j<0)
-                            z_aux = z_in[time][i][NLON-1];
-                        else if (j>NLON-1) 
-                            z_aux = z_in[time][i][0];
-                        else
-                            z_aux = z_in[time][i][j];
-
-                        if(!procesado[i][j]) {
-                            if (z_in[time][lat][lon] > z_aux)
-                                cont++;
-                            if (z_in[time][lat][lon] < z_aux)
-                                cont2++;
-                            if (z_in[time][lat][lon] == z_aux) 
-                                is_equal = 1;
-                        }
-                    }
-                }
-                cont += is_equal;
-                cont2 += is_equal;
-
-                if(cont == 8) 
-                    tipo = MAX;
-                else if(cont2 == 8)
-                    tipo = MIN;
-                else
-                    continue;
-
-                for(i=lat-1; i<=lat+1; i++) 
-                    for(j=lon-1; j<=lon+1; j++) 
-                        procesado[i][j] = true;
+        for(int lat=0;lat<size_x;lat++) {
+            printf("Processing time %d, lat %d\n", time, lat);
+            for(int lon=0;lon<size_y;lon++) {
+                bearing_count = 0, bearing_count2 = 0;
+                selected_points[lat][lon] = create_selected_point(create_point(lats[lat*step], lons[lon*step]), z_in[time][lat*step][lon*step], NO_TYPE, -1);
 
                 for(i=0; i<N_BEARINGS*2;i++) {
-                    coord_point p = create_point(lats[lat], lons[lon]);
+                    coord_point p = create_point(lats[lat*step], lons[lon*step]);
                     z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_in[time], lats, lons);
                     
                     //Si se sale de la zona delimitada por los límites de latitud y longitud , no se tiene en cuenta.
@@ -141,50 +113,69 @@ int main(int argc, char **argv) {
                         continue;
                     }
 
-                    z_calculated1 = (((z_in[time][lat][lon] * scale_factor) + offset)/g_0) - ((int)(((z_in[time][lat][lon] * scale_factor) + offset)/g_0) % CONTOUR_STEP);
-                    z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % CONTOUR_STEP);                        
+                    // z_calculated1 = (((z_in[time][lat*step][lon*step] * scale_factor) + offset)/g_0) - ((int)(((z_in[time][lat*step][lon*step] * scale_factor) + offset)/g_0) % CONTOUR_STEP) + CONTOUR_STEP;
+                    z_calculated1 = (((z_in[time][lat*step][lon*step] * scale_factor) + offset)/g_0);
+                    // z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % CONTOUR_STEP) + CONTOUR_STEP;      
+                    z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0);      
 
-                    if(z_calculated1 >= z_calculated2 && tipo == MAX || z_calculated1 <= z_calculated2 && tipo == MIN)
+                    if(z_calculated1 >= z_calculated2)
                         bearing_count++;
+                    if(z_calculated1 <= z_calculated2)
+                        bearing_count2++;                 
                 }
 
-                if(bearing_count >= (N_BEARINGS-1)*2) {
-                    // printf("Point: (%.2f, %.2f) - %d\n", lats[lat], lons[lon], z_in[time][lat][lon]);
-                    selected_points[time][selected_size] = create_selected_point(create_point(lats[lat], lons[lon]), z_in[time][lat][lon], tipo);
-                    // printf("Point selected: (%.2f, %.2f) - %d\n", selected_points[time][selected_size].point.lat, selected_points[time][selected_size].point.lon, selected_points[time][selected_size].z);
-                    selected_size++;
-                    selected_points[time] = realloc(selected_points[time], (selected_size+1)*sizeof(selected_point));
+                if(bearing_count >= (int)(N_BEARINGS*2*0.9)) {
+                    selected_points[lat][lon].type = MAX;
+                    filtered_points[lat][lon] = selected_points[lat][lon];
+                } else if(bearing_count2 >= (int)(N_BEARINGS*2*0.9)) {
+                    selected_points[lat][lon].type = MIN;
+                    filtered_points[lat][lon] = selected_points[lat][lon];
+                } else
+                    filtered_points[lat][lon] = create_selected_point(create_point(lats[lat*step], lons[lon*step]), z_in[time][lat*step][lon*step], NO_TYPE, -1);
+            }
+        }
+        
+        id=0;
+        for(i=0; i<size_x;i++) {
+            for(j=0; j< size_y;j++) {
+                if(filtered_points[i][j].cluster == -1 && filtered_points[i][j].type != NO_TYPE) {
+                    filtered_points[i][j].cluster = id;
+                    expandCluster(filtered_points, size_x, size_y, i, j, id, RES*step);
+                    id++;
                 }
             }
         }
+
+        points_cluster *clusters = fill_clusters(filtered_points, size_x, size_y, id, offset, scale_factor);
+
+        export_clusters_to_csv(clusters, id, filename, offset, scale_factor, time);
+
         t_fin = omp_get_wtime();
         printf("\n#2-%d. Filtrado y selección de máximos y mínimos realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
         t_total += (t_fin-t_ini);
         
         t_ini = omp_get_wtime();
-
-        order_selected_points(selected_points[time], selected_size);
-        search_formation(time, selected_points[time], selected_size, z_in[time], lats, lons, filename2, scale_factor, offset);
         
+        search_formation(clusters, id, z_in[time], lats, lons, scale_factor, offset);
+
         t_fin = omp_get_wtime();
         printf("\n#3-%d. Búsqueda de formaciones realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
         t_total += (t_fin-t_ini);
         
-        t_ini = omp_get_wtime();
-        export_selected_points_to_csv(selected_points[time], selected_size, filename, offset, scale_factor, time);
-        free(selected_points[time]);
-
         printf("Tiempo %d procesado.\n", time);
+        free(clusters);
     }
 
     free(z_in[0][0]);
     free(z_in[0]);
-    free(z_in);
+    free(selected_points[0]);
     free(selected_points);
+    free(filtered_points[0]);
+    free(filtered_points);
+    free(z_in);
     free(filename);
     free(filename2);
 
-    t_fin = omp_get_wtime();
     t_total += (t_fin-t_ini);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, OUT_DIR_NAME);

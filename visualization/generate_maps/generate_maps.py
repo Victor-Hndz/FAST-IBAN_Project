@@ -146,12 +146,19 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
         generate_combined_map(file, "max", time, levels, lat_range, lon_range, file_format)
     else:
         print("Error en el tipo de archivo")
+        
+    # Calcular el tamaño acumulado de los datos de tiempos anteriores
+    last_size = 0
+    if time > 0:
+        for t in range(time):
+            last_size += len(data[data['time'] == t])
     
     # obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == time]
     latitudes = data['latitude'].copy()
     longitudes = data['longitude'].copy()
     variable = data['z'].copy()
+    cluster = data['cluster'].copy()
     
     # Abrir el archivo NetCDF
     archivo_nc = nc.Dataset(file, 'r')
@@ -172,11 +179,13 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
         
     if max(longitudes) > 180:
         longitudes, variable = adjust_lon(longitudes, variable)
+    
+    # print(latitudes.shape, longitudes.shape, variable.shape)
         
     #filtrar los valores para que z, la latitud y la longitud se encuentren en el rango correcto
-    latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
+    # latitudes, longitudes, variable = filt_data(latitudes, longitudes, variable, lat_range, lon_range)
     lat, lon, z = filt_data(lat, lon, z, lat_range, lon_range)
-    
+
     
     #Valor entre los contornos
     cont_levels = np.arange(np.ceil(np.min(z)/10)*10, np.max(z), levels)
@@ -187,6 +196,10 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
     # Agregar puntos de dispersión
     sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', 
                     transform=ccrs.PlateCarree(), s=8, edgecolors='black', linewidths=0.3)
+
+    for i, txt in enumerate(cluster):
+        ax.annotate(txt, (longitudes[i+last_size], latitudes[i+last_size]), fontsize=1, color='white')
+        
 
     # Agregar contornos al mapa
     co = ax.contour(lon, lat, z, levels=cont_levels, cmap='jet',
