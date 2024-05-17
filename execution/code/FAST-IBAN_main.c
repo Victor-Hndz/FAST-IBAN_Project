@@ -146,9 +146,26 @@ int main(int argc, char **argv) {
             }
         }
 
-        points_cluster *clusters = fill_clusters(filtered_points, size_x, size_y, id, offset, scale_factor);
+        points_cluster *clusters_aux = fill_clusters(filtered_points, size_x, size_y, id, offset, scale_factor);
+        int clusters_cont=0;
+        for(i=0;i<id;i++) {
+            if(clusters_aux[i].point_sup.point.lat == 90.00)
+                clusters_cont++;
+        }
+        points_cluster *clusters = malloc((id-clusters_cont)*sizeof(points_cluster));
+        for(i=0, j=0;i<id;i++) {
+            if(clusters_aux[i].point_sup.point.lat != 90.00) {
+                clusters[j] = clusters_aux[i];
+                clusters[j].id = j;
+                for(int k=0;k<clusters[j].n_points;k++) {
+                    clusters[j].points[k].cluster = j;
+                }
+                j++;
+            }
+        }
+        free(clusters_aux);
 
-        export_clusters_to_csv(clusters, id, filename, offset, scale_factor, time);
+        export_clusters_to_csv(clusters, j, filename, offset, scale_factor, time);
 
         t_fin = omp_get_wtime();
         printf("\n#2-%d. Filtrado y selección de máximos y mínimos realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
@@ -156,7 +173,7 @@ int main(int argc, char **argv) {
         
         t_ini = omp_get_wtime();
         
-        search_formation(clusters, id, z_in[time], lats, lons, scale_factor, offset);
+        search_formation(clusters, j, z_in[time], lats, lons, scale_factor, offset);
 
         t_fin = omp_get_wtime();
         printf("\n#3-%d. Búsqueda de formaciones realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
