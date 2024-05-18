@@ -81,6 +81,7 @@ parser.add_argument('-nc', '--no-compile', action='store_true', required=False, 
 parser.add_argument('-ne', '--no-execute', action='store_true', required=False, help="No ejecutar")
 parser.add_argument('-nce', '--no-compile-execute', action='store_true', required=False, help="No compilar y no ejecutar")
 parser.add_argument('-nm', '--no-maps', action='store_true', required=False, help="No generar mapas")
+parser.add_argument('-a', '--animation', action='store_true', required=False, help="Generar animación de los mapas")
 
 parser.add_argument('--all', action='store_true', required=False, help="Todos los instantes de tiempo")
 # parser.add_argument('-nde', '--no-delete-execution', action='store_true', required=False, help="No borrar los archivos de ejecución ya generados")
@@ -138,6 +139,7 @@ configuration = {
     "no_compile": args.no_compile,
     "no_execute": args.no_execute,
     "no_maps": args.no_maps,
+    "animation": args.animation,
 }
 
 #clear the output folder

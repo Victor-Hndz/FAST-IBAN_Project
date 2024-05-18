@@ -5,6 +5,7 @@ import yaml
 import os
 from utils.enums import *
 from utils.map_utils import date_from_nc
+from utils.gif_generator import svg_to_gif_folder
 
 execution_path = "execution/code/build/"
 exec_file = "execution/FAST-IBAN"
@@ -35,6 +36,7 @@ def init():
     no_compile = config["MAP"]["no_compile"]
     no_execute = config["MAP"]["no_execute"]
     no_maps = config["MAP"]["no_maps"]
+    animation = config["MAP"]["animation"]
 
     # If the files are not in config/data, move them there.
     if not os.path.exists("config/data"):
@@ -63,7 +65,7 @@ def init():
             print("Error al ejecutar el build:")
             exit(1)
 
-    return files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps
+    return files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps, animation
 
 def process_file(file):
     return_code = None
@@ -96,10 +98,18 @@ def generate_map(file, es_max, max_times, levels, lat_range, lon_range, file_for
                     if t >= max_times:
                         break
                     DataType_map[DataType(m)](file, e, t, levels, lat_range, lon_range, file_format)
+
                     
 
 if __name__ == "__main__":
-    files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps = init()
+    files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps, animation = init()
     
     for file in files:
         process_file(file)
+    
+    if(animation):
+        print("Generando animación...")
+        # Generate the animation
+        input_gif_folder = "out/"
+        out_gif_folder = "out/gif/gif.gif"
+        svg_to_gif_folder(input_gif_folder, out_gif_folder)
