@@ -46,6 +46,7 @@
 #define NEIGHBOUR_LATERAL 2 // Number of lateral neighbours to use in the local max/min method
 #define N_BEARINGS 32 // Number of bearings to use in the great circle method
 #define DIST 500 // Distance in km to use in the great circle method
+#define PASS_PERCENT 0.9 // Percentage of points to pass in the bearing method
 #define BEARING_STEP (360/(N_BEARINGS*2)) // Bearing step in degrees to use in the great circle method
 #define BEARING_START (-180) // Bearing start in degrees to use in the great circle method
 #define CONTOUR_STEP 20
@@ -73,7 +74,7 @@ typedef struct selected_point_list {
 } selected_point;
 
 typedef struct formation_list {
-    int id, max_id, min1_id, min2_id;
+    int max_id, min1_id, min2_id;
     enum Tipo_block type;
 } formation;
 
@@ -89,7 +90,7 @@ typedef struct cluster {
 // Functions
 coord_point create_point(double lat, double lon);
 selected_point create_selected_point(coord_point point, short z, enum Tipo_form type, int cluster);
-formation create_formation(int id, int max_id, int min1_id, int min2_id, enum Tipo_block type);
+formation create_formation(int max_id, int min1_id, int min2_id, enum Tipo_block type);
 points_cluster create_cluster(int id, int n_points, int contour, coord_point center, selected_point *points, selected_point point_izq, selected_point point_der, selected_point point_sup, selected_point point_inf, enum Tipo_form type);
 points_cluster *fill_clusters(selected_point **points, int size_x, int size_y, int n_clusters, double offset, double scale_factor);
 int compare_selected_points_lat(const void *a, const void *b);

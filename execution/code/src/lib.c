@@ -14,8 +14,8 @@ selected_point create_selected_point(coord_point point, short z, enum Tipo_form 
 }
 
 // Function to create a formation struct.
-formation create_formation(int id, int max, int min1, int min2, enum Tipo_block type) {
-    formation new_formation = {id, max, min1, min2, type};
+formation create_formation(int max, int min1, int min2, enum Tipo_block type) {
+    formation new_formation = {max, min1, min2, type};
     return new_formation;
 }
 

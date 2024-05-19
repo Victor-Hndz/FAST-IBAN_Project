@@ -7,15 +7,14 @@
 
 
 int main(int argc, char **argv) {
-    int ncid, retval, i, j, size_x, size_y, step, cont, cont2, is_equal, candidates_size, contour_aux, contour_z, lat_aux, lon_aux;
-    double scale_factor, offset, t_ini, t_fin, t_total, mean_z;
-    short z_aux;
+    int ncid, retval, i, j, size_x, size_y, step, bearing_count, bearing_count2, id;
+    double scale_factor, offset, t_ini, t_fin, t_total;
+    short z_aux_selected;
     short ***z_in;
     char long_name[NC_MAX_NAME+1] = "";
     selected_point **selected_points, **filtered_points;
     char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
     char *filename2 = malloc(sizeof(char)*(NC_MAX_NAME+1));
-    bool exit_loop;
 
     if(filename == NULL || filename2 == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
@@ -85,14 +84,12 @@ int main(int argc, char **argv) {
     //Initialize the output files.
     init_files(filename, long_name);
     
-    int bearing_count, bearing_count2, id;
-    short z_aux_selected;
-    double z_calculated1, z_calculated2;
+
     t_fin = omp_get_wtime();
     printf("\n#1. Datos leídos e inicializados con éxito: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
 
-    //Loop for every z value and save the local max and min values comparing them with the 8 neighbours.
+    //Loop for every z value.
     for (int time=0; time<NTIME; time++) { 
         t_ini = omp_get_wtime();
         memset(procesado, false, sizeof(procesado));
@@ -104,8 +101,7 @@ int main(int argc, char **argv) {
                 selected_points[lat][lon] = create_selected_point(create_point(lats[lat*step], lons[lon*step]), z_in[time][lat*step][lon*step], NO_TYPE, -1);
 
                 for(i=0; i<N_BEARINGS*2;i++) {
-                    coord_point p = create_point(lats[lat*step], lons[lon*step]);
-                    z_aux_selected = bilinear_interpolation(coord_from_great_circle(p, DIST, BEARING_START + i*BEARING_STEP), z_in[time], lats, lons);
+                    z_aux_selected = bilinear_interpolation(coord_from_great_circle(create_point(lats[lat*step], lons[lon*step]), DIST, BEARING_START + i*BEARING_STEP), z_in[time], lats, lons);
                     
                     //Si se sale de la zona delimitada por los límites de latitud y longitud , no se tiene en cuenta.
                     if(z_aux_selected == -1) {
@@ -113,27 +109,23 @@ int main(int argc, char **argv) {
                         continue;
                     }
 
-                    // z_calculated1 = (((z_in[time][lat*step][lon*step] * scale_factor) + offset)/g_0) - ((int)(((z_in[time][lat*step][lon*step] * scale_factor) + offset)/g_0) % CONTOUR_STEP) + CONTOUR_STEP;
-                    z_calculated1 = (((z_in[time][lat*step][lon*step] * scale_factor) + offset)/g_0);
-                    // z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0) - ((int)(((z_aux_selected * scale_factor) + offset)/g_0) % CONTOUR_STEP) + CONTOUR_STEP;      
-                    z_calculated2 = (((z_aux_selected * scale_factor) + offset)/g_0);      
-
-                    if(z_calculated1 >= z_calculated2)
+                    if((((z_in[time][lat*step][lon*step] * scale_factor) + offset)/g_0) >= (((z_aux_selected * scale_factor) + offset)/g_0))
                         bearing_count++;
-                    if(z_calculated1 <= z_calculated2)
+                    if((((z_in[time][lat*step][lon*step] * scale_factor) + offset)/g_0) <= (((z_aux_selected * scale_factor) + offset)/g_0))
                         bearing_count2++;                 
                 }
-
-                if(bearing_count >= (int)(N_BEARINGS*2*0.9)) {
+                if(bearing_count >= (int)(N_BEARINGS*2*PASS_PERCENT)) 
                     selected_points[lat][lon].type = MAX;
-                    filtered_points[lat][lon] = selected_points[lat][lon];
-                } else if(bearing_count2 >= (int)(N_BEARINGS*2*0.9)) {
+                else if(bearing_count2 >= (int)(N_BEARINGS*2*PASS_PERCENT)) 
                     selected_points[lat][lon].type = MIN;
-                    filtered_points[lat][lon] = selected_points[lat][lon];
-                } else
-                    filtered_points[lat][lon] = create_selected_point(create_point(lats[lat*step], lons[lon*step]), z_in[time][lat*step][lon*step], NO_TYPE, -1);
+                filtered_points[lat][lon] = selected_points[lat][lon];
             }
         }
+
+        t_fin = omp_get_wtime();
+        printf("\n#2-%d. Filtrado y selección de máximos y mínimos realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
+        t_total += (t_fin-t_ini);
+        t_ini = omp_get_wtime();
         
         id=0;
         for(i=0; i<size_x;i++) {
@@ -148,35 +140,41 @@ int main(int argc, char **argv) {
 
         points_cluster *clusters_aux = fill_clusters(filtered_points, size_x, size_y, id, offset, scale_factor);
         int clusters_cont=0;
-        for(i=0;i<id;i++) {
+        for(i=0;i<id;i++) 
             if(clusters_aux[i].point_sup.point.lat == 90.00)
                 clusters_cont++;
-        }
+
         points_cluster *clusters = malloc((id-clusters_cont)*sizeof(points_cluster));
         for(i=0, j=0;i<id;i++) {
             if(clusters_aux[i].point_sup.point.lat != 90.00) {
                 clusters[j] = clusters_aux[i];
                 clusters[j].id = j;
-                for(int k=0;k<clusters[j].n_points;k++) {
+                
+                for(int k=0;k<clusters[j].n_points;k++) 
                     clusters[j].points[k].cluster = j;
-                }
                 j++;
             }
         }
         free(clusters_aux);
 
-        export_clusters_to_csv(clusters, j, filename, offset, scale_factor, time);
-
         t_fin = omp_get_wtime();
-        printf("\n#2-%d. Filtrado y selección de máximos y mínimos realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
+        printf("\n#3-%d.Clusters generados y agrupados con éxito: %.6f s.\n", time, t_fin-t_ini);
+        t_total += (t_fin-t_ini);
+        t_ini = omp_get_wtime();
+        
+        search_formation(clusters, j, z_in[time], lats, lons, scale_factor, offset);
+    
+        t_fin = omp_get_wtime();
+        printf("\n#4-%d. Búsqueda de formaciones realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
         t_total += (t_fin-t_ini);
         
         t_ini = omp_get_wtime();
         
-        search_formation(clusters, j, z_in[time], lats, lons, scale_factor, offset);
-
+        export_clusters_to_csv(clusters, j, filename, offset, scale_factor, time);
+        // export_clusters_to_csv(clusters, j, filename, offset, scale_factor, time);
+        
         t_fin = omp_get_wtime();
-        printf("\n#3-%d. Búsqueda de formaciones realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
+        printf("\n#5-%d. Archivo escrito con éxito: %.6f s.\n", time, t_fin-t_ini);
         t_total += (t_fin-t_ini);
         
         printf("Tiempo %d procesado.\n", time);
@@ -192,8 +190,6 @@ int main(int argc, char **argv) {
     free(z_in);
     free(filename);
     free(filename2);
-
-    t_total += (t_fin-t_ini);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, OUT_DIR_NAME);
     printf("\n## Tiempo total de la ejecución: %.6f s.\n\n", t_total);
