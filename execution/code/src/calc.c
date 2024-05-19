@@ -209,7 +209,7 @@ void search_formation(points_cluster *clusters, int size, short **z_in, double *
                         }
                         if(found && lats[index_lat] < better_lat) {
                             better_lat = lats[index_lat];
-                             min_der = clusters[j];
+                            min_der = clusters[j];
                         }
                     }
                 }
