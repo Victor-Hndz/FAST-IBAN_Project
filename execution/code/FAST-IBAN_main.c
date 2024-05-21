@@ -7,7 +7,7 @@
 
 
 int main(int argc, char **argv) {
-    int ncid, retval, i, j, size_x, size_y, step, bearing_count, bearing_count2, id;
+    int ncid, retval, i, j, k, time, lat, lon, size_x, size_y, step, bearing_count, bearing_count2, id;
     double scale_factor, offset, t_ini, t_fin, t_total;
     short z_aux_selected;
     short ***z_in;
@@ -43,10 +43,10 @@ int main(int argc, char **argv) {
     z_in[0] = malloc(NTIME*NLAT*sizeof(short*));
     z_in[0][0] = malloc(NTIME*NLAT*NLON*sizeof(short));
     
-    for(int i = 0; i < NTIME; i++) 
+    for(i = 0; i < NTIME; i++) 
         z_in[i] = z_in[0] + i * NLAT;
     
-    for(int i = 0; i < NTIME * NLAT; i++) 
+    for(i = 0; i < NTIME * NLAT; i++) 
         z_in[0][i] = z_in[0][0] + i * NLON;
 
     step = ((2*NEIGHBOUR_LATERAL)+1);
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     filtered_points = calloc(size_x, sizeof(selected_point*));
     filtered_points[0] = calloc(size_x*size_y, sizeof(selected_point));
 
-    for(int i = 0; i < size_x; i++) {
+    for(i = 0; i < size_x; i++) {
         selected_points[i] = selected_points[0] + i * size_y;
         filtered_points[i] = filtered_points[0] + i * size_y;
     }
@@ -90,13 +90,13 @@ int main(int argc, char **argv) {
     t_total += (t_fin-t_ini);
 
     //Loop for every z value.
-    for (int time=0; time<NTIME; time++) { 
+    for (time=0; time<NTIME; time++) { 
         t_ini = omp_get_wtime();
         memset(procesado, false, sizeof(procesado));
 
-        for(int lat=0;lat<size_x;lat++) {
+        for(lat=0;lat<size_x;lat++) {
             printf("Processing time %d, lat %d\n", time, lat);
-            for(int lon=0;lon<size_y;lon++) {
+            for(lon=0;lon<size_y;lon++) {
                 bearing_count = 0, bearing_count2 = 0;
                 selected_points[lat][lon] = create_selected_point(create_point(lats[lat*step], lons[lon*step]), z_in[time][lat*step][lon*step], NO_TYPE, -1);
 
@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
                 clusters[j] = clusters_aux[i];
                 clusters[j].id = j;
                 
-                for(int k=0;k<clusters[j].n_points;k++) 
+                for(k=0;k<clusters[j].n_points;k++) 
                     clusters[j].points[k].cluster = j;
                 j++;
             }
@@ -161,7 +161,8 @@ int main(int argc, char **argv) {
         printf("\n#3-%d.Clusters generados y agrupados con éxito: %.6f s.\n", time, t_fin-t_ini);
         t_total += (t_fin-t_ini);
         t_ini = omp_get_wtime();
-        
+
+
         search_formation(clusters, j, z_in[time], lats, lons, scale_factor, offset);
     
         t_fin = omp_get_wtime();

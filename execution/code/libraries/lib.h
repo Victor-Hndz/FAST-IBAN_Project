@@ -61,8 +61,8 @@ enum Tipo_block{OMEGA, REX, NO_BLOCK};
 
 //Struct that holds a point (lat, lon).
 typedef struct point{
-    double lat;
-    double lon;
+    float lat;
+    float lon;
 } coord_point;
 
 //Struct that holds a selected point.
@@ -88,7 +88,7 @@ typedef struct cluster {
 
 
 // Functions
-coord_point create_point(double lat, double lon);
+coord_point create_point(float lat, float lon);
 selected_point create_selected_point(coord_point point, short z, enum Tipo_form type, int cluster);
 formation create_formation(int max_id, int min1_id, int min2_id, enum Tipo_block type);
 points_cluster create_cluster(int id, int n_points, int contour, coord_point center, selected_point *points, selected_point point_izq, selected_point point_der, selected_point point_sup, selected_point point_inf, enum Tipo_form type);

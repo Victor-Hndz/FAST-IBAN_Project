@@ -74,10 +74,10 @@ short bilinear_interpolation(coord_point p, short **z_mat, float *lats, float *l
 }
 
 
-void search_formation(points_cluster *clusters, int size, short **z_in, double *lats, double *lons, double scale_factor, double offset) {
-    int i,j, index_lat, index_lon, index_lat_max, index_lon_max, contour, contour_max, conts_size;
+void search_formation(points_cluster *clusters, int size, short **z_in, float *lats, float *lons, double scale_factor, double offset) {
+    int i,j,x, index_lat, index_lon, index_lat_max, index_lon_max, contour, contour_max, conts_size;
     int *visited_conts;
-    double better_lat, actual_dist_izq, actual_dist_der, actual_dist_rex;
+    double better_lat, actual_dist, actual_dist_rex;
     points_cluster min_izq, min_der, min_rex, selected_izq, selected_der, selected_rex;
     bool found, exit, visited;
 
@@ -85,8 +85,7 @@ void search_formation(points_cluster *clusters, int size, short **z_in, double *
         if(clusters[i].type == MAX) {
             index_lat_max = findIndex(lats, NLAT, clusters[i].point_sup.point.lat);
             index_lon_max = findIndex(lons, NLON, clusters[i].point_sup.point.lon);
-            actual_dist_izq = INF;
-            actual_dist_der = INF;
+            actual_dist = INF;
             actual_dist_rex = INF;
             exit = false;
             visited = false;
@@ -103,7 +102,7 @@ void search_formation(points_cluster *clusters, int size, short **z_in, double *
                 }
                 contour_max = (((z_in[index_lat_max][index_lon_max]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat_max][index_lon_max]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
                 index_lat_max--;
-                for(int x=0;x<conts_size;x++) {
+                for(x=0;x<conts_size;x++) {
                     if(visited_conts[x] == contour_max) {
                         visited = true;
                         break;
@@ -121,7 +120,7 @@ void search_formation(points_cluster *clusters, int size, short **z_in, double *
                 min_rex.center = create_point(INF, INF);
                 
                 for(j=0; j<size;j++) {
-                    if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && fabs(clusters[j].center.lon-clusters[i].center.lon) <= 5) {
+                    if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && fabs(clusters[j].center.lon-clusters[i].center.lon) <= 10) {
                         if(point_distance(clusters[j].center, clusters[i].center) > 4000)
                             continue;
                         index_lat = findIndex(lats, NLAT, clusters[j].point_inf.point.lat);
@@ -213,17 +212,16 @@ void search_formation(points_cluster *clusters, int size, short **z_in, double *
                         }
                     }
                 }
-                if(min_rex.contour < selected_rex.contour) {
+                if(min_rex.center.lat != INF && min_rex.contour < selected_rex.contour) {
                     actual_dist_rex = point_distance(min_rex.center, clusters[i].center);
                     selected_rex = min_rex;
-                }
-                if(point_distance(min_izq.center, clusters[i].center) < actual_dist_izq) {
-                    actual_dist_izq = point_distance(min_izq.center, clusters[i].center);
-                    selected_izq = min_izq;
-                }
-                if(point_distance(min_der.center, clusters[i].center) < actual_dist_der) {
-                    actual_dist_der = point_distance(min_der.center, clusters[i].center);
-                    selected_der = min_der;
+                } else if(min_izq.center.lat != INF && min_der.center.lat != INF) {
+                    int mean_dist_form = (point_distance(min_izq.center, clusters[i].center) + point_distance(min_der.center, clusters[i].center) + point_distance(min_izq.center, min_der.center))/3;
+                    if(mean_dist_form < actual_dist) {
+                        actual_dist = mean_dist_form;
+                        selected_izq = min_izq;
+                        selected_der = min_der;
+                    }
                 }
             }
             if(selected_rex.center.lat != INF) {

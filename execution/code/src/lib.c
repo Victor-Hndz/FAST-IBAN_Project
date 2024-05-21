@@ -2,7 +2,7 @@
 #include "../libraries/utils.h"
 
 // Function to create a coord_point struct from a latitude and longitude.
-coord_point create_point(double lat, double lon) {
+coord_point create_point(float lat, float lon) {
     coord_point point = {lat, lon};
     return point;
 }

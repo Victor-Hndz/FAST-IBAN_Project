@@ -104,6 +104,8 @@ void init_files(char* filename, char* long_name) {
 
 //Function to check the coordinates of the netcdf file and fix them if necessary.
 void check_coords(short*** z_in, float lats[NLAT], float lons[NLON]) {
+    int i,j,k;
+    
     // Check if the longitudes are in the range [-180, 180] or [0, 360] and correct them if necessary.
     if(lons[NLON-1] > 180) {
         float aux1;
@@ -111,21 +113,21 @@ void check_coords(short*** z_in, float lats[NLAT], float lons[NLON]) {
         
         printf("Corrigiendo longitudes...\n");
         
-        for(int i=0;i<NLON; i++) {
+        for(i=0;i<NLON; i++) {
             if(lons[i] >= 180)
                 lons[i] -= 360;
         }
 
         //intercambiar las dos mitades del array de longitudes.
-        for(int i=0;i<NLON/2; i++) {
+        for(i=0;i<NLON/2; i++) {
             aux1 = lons[i];
             lons[i] = lons[NLON/2+i];
             lons[NLON/2+i] = aux1;
         }
 
-        for(int i=0;i<NTIME;i++)
-            for(int j=0;j<NLAT;j++)
-                for(int k=0;k<NLON/2;k++) {
+        for(i=0;i<NTIME;i++)
+            for(j=0;j<NLAT;j++)
+                for(k=0;k<NLON/2;k++) {
                     aux2 = z_in[i][j][k];
                     z_in[i][j][k] = z_in[i][j][NLON/2+k];
                     z_in[i][j][NLON/2+k] = aux2;
@@ -174,7 +176,7 @@ void init_nc_variables(int ncid, short*** z_in, float lats[NLAT], float lons[NLO
 
 //Function to extract the data from the netcdf file
 void extract_nc_data(int ncid) {
-    int num_vars, varid, vartype, ndims, natts;
+    int i, num_vars, varid, vartype, ndims, natts;
     int dimids[NC_MAX_VAR_DIMS];
     size_t var_size;
     char varname[NC_MAX_NAME + 1];
@@ -197,7 +199,7 @@ void extract_nc_data(int ncid) {
 
         // Obtener el tamaño total de la variable multiplicando el tamaño de cada dimensión
         var_size = 1;
-        for (int i = 0; i < ndims; i++) {
+        for (i = 0; i < ndims; i++) {
             size_t dim_size;
             retval = nc_inq_dimlen(ncid, dimids[i], &dim_size);
             if (retval != NC_NOERR) {
