@@ -27,6 +27,7 @@ points_cluster create_cluster(int id, int n_points, int contour, coord_point cen
 
 points_cluster *fill_clusters(selected_point **points, int size_x, int size_y, int n_clusters, double offset, double scale_factor) {
     int i, j, cluster_id, aux_cont;
+    double x, y, z;
     points_cluster *clusters = (points_cluster *)malloc(n_clusters * sizeof(points_cluster));
     int *cluster_sizes = (int *)calloc(n_clusters, sizeof(int)), *cluster_indices = (int *)calloc(n_clusters, sizeof(int));
 
@@ -43,7 +44,6 @@ points_cluster *fill_clusters(selected_point **points, int size_x, int size_y, i
         clusters[i].n_points = cluster_sizes[i];
         clusters[i].points = malloc(cluster_sizes[i] * sizeof(selected_point));
         clusters[i].contour = NC_MAX_INT;
-        clusters[i].center = create_point(0, 0);
         clusters[i].type = NO_TYPE;
         clusters[i].point_izq = create_selected_point(create_point(INF, INF), -1, NO_TYPE, -1);
         clusters[i].point_der = create_selected_point(create_point(-INF, -INF), -1, NO_TYPE, -1);
@@ -73,24 +73,34 @@ points_cluster *fill_clusters(selected_point **points, int size_x, int size_y, i
 
                 //Actualizar el contorno del cluster
                 aux_cont = (((points[i][j].z * scale_factor) + offset)/g_0) - ((int)(((points[i][j].z * scale_factor) + offset)/g_0) % CONTOUR_STEP);
-                if(clusters[cluster_id].type == MAX) 
+                if(clusters[cluster_id].type == MAX) {
                     if(aux_cont < clusters[cluster_id].contour)
                         clusters[cluster_id].contour = aux_cont;
-                else
+                } else {
+                    if(clusters[cluster_id].contour == NC_MAX_INT)
+                        clusters[cluster_id].contour = -NC_MAX_INT;
                     if(aux_cont > clusters[cluster_id].contour)
                         clusters[cluster_id].contour = aux_cont;
-
-                //Actualizar el centro del cluster
-                clusters[cluster_id].center.lat += points[i][j].point.lat;
-                clusters[cluster_id].center.lon += points[i][j].point.lon;
+                }
             }
         }
     }
 
     //Calcular el centro de cada cluster
     for(i=0; i<n_clusters; i++) {
-        clusters[i].center.lat /= clusters[i].n_points;
-        clusters[i].center.lon /= clusters[i].n_points;
+        x = 0, y = 0, z = 0;
+
+        for(j=0; j<clusters[i].n_points; j++) {
+            x += cos(clusters[i].points[j].point.lat* M_PI / 180) * cos(clusters[i].points[j].point.lon* M_PI / 180);
+            y += cos(clusters[i].points[j].point.lat* M_PI / 180) * sin(clusters[i].points[j].point.lon* M_PI / 180);
+            z += sin(clusters[i].points[j].point.lat* M_PI / 180);
+        }
+        x /= clusters[i].n_points;
+        y /= clusters[i].n_points;
+        z /= clusters[i].n_points;
+
+        clusters[i].center.lat = round((atan2(z, sqrt(x*x + y*y)) * 180 / M_PI) / RES) * RES;
+        clusters[i].center.lon = round((atan2(y, x) * 180 / M_PI) / RES) * RES;
     }
 
     free(cluster_sizes);

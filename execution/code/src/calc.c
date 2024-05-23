@@ -73,37 +73,125 @@ short bilinear_interpolation(coord_point p, short **z_mat, float *lats, float *l
     return (short)round(z);
 }
 
+// Función para generar las direcciones
+void generateDirections(int x, int y, int *dx, int *dy, int n_dirs) {
+    int i, j, count = 0, distance = 1;
+
+    while (count < n_dirs) {
+        for (i = -distance; i <= distance && count < n_dirs; i++) {
+            for (j = -distance; j <= distance && count < n_dirs; j++) {
+                if ((i != 0 || j != 0) && x + i >= 0 && x + i < FILT_LAT(LAT_LIM_MIN) && y + j >= 0 && y + j < NLON) { // Excluir la dirección (0,0) y fuera de límites
+                    dx[count] = i;
+                    dy[count] = j;
+                    count++;
+                }
+            }
+        }
+        distance++;
+    }
+}
+
+bool check_closed_contour(points_cluster cluster, int contour, short **z_in, float *lats, float *lons, double scale_factor, double offset) {
+    int i, lat, lon, newX, newY, cont_aux, cont_counter = 0;
+    int *dx, *dy;
+    bool exit;
+
+    lat = findIndex(lats, NLAT, cluster.center.lat);
+    lon = findIndex(lons, NLON, cluster.center.lon);
+
+    dx = (int *)malloc(N_BEARINGS * sizeof(int));
+    dy = (int *)malloc(N_BEARINGS * sizeof(int));
+
+    generateDirections(lat, lon, dx, dy, N_BEARINGS);
+
+    for (i = 0; i < N_BEARINGS; i++) {
+        newX = lat, newY = lon;
+        exit = false;
+
+        while(!exit) {
+            newX += dx[i];
+            newY += dy[i];
+
+            if (newX < 0 || newX >= FILT_LAT(LAT_LIM_MIN)-1 || newY < 0 || newY >= NLON)
+                break;
+
+            cont_aux = (((z_in[newX][newY] * scale_factor) + offset) / g_0) - ((int)(((z_in[newX][newY] * scale_factor) + offset) / g_0) % CONTOUR_STEP);
+
+            if (cont_aux == contour) {
+                exit = true;
+                cont_counter++;
+                break;
+            }
+        }
+    }
+    free(dx);
+    free(dy);
+    
+    if(cont_counter == N_BEARINGS)
+        return true;
+    return false;
+}
+
+
+bool check_contour_dir(points_cluster cluster, int contour, int dir_lat, int dir_lon, short **z_in, float *lats, float *lons, double scale_factor, double offset) {
+    int i, j, lat, lon, contour_aux;
+    bool found = false;
+
+    lat = findIndex(lats, NLAT, cluster.center.lat);
+    lon = findIndex(lons, NLON, cluster.center.lon);
+    
+    while(!found) {
+        if(lat < 0 || lon < 0 || lat > FILT_LAT(LAT_LIM_MIN)-1 || lon > NLON-1)
+            break;
+
+        contour_aux = (((z_in[lat][lon]*scale_factor) + offset)/g_0) - ((int)(((z_in[lat][lon]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
+
+        lat += dir_lat;
+        lon += dir_lon;
+
+        if(contour_aux == contour) {
+            found = true;
+            break;
+        }
+    }
+    return found;
+}
+
 
 void search_formation(points_cluster *clusters, int size, short **z_in, float *lats, float *lons, double scale_factor, double offset) {
-    int i,j,x, index_lat, index_lon, index_lat_max, index_lon_max, contour, contour_max, conts_size;
+    int i, j, index_lat, index_lon, contour_top, visited_conts_size;
+    double mean_dist;
     int *visited_conts;
-    double better_lat, actual_dist, actual_dist_rex;
-    points_cluster min_izq, min_der, min_rex, selected_izq, selected_der, selected_rex;
-    bool found, exit, visited;
+    bool exit, visited, contour_top_aux, contour_bot, contour_izq, contour_der;
+    points_cluster selected_izq, selected_der, selected_rex;
 
     for(i=0; i<size;i++) {
         if(clusters[i].type == MAX) {
-            index_lat_max = findIndex(lats, NLAT, clusters[i].point_sup.point.lat);
-            index_lon_max = findIndex(lons, NLON, clusters[i].point_sup.point.lon);
-            actual_dist = INF;
-            actual_dist_rex = INF;
-            exit = false;
-            visited = false;
+            index_lat = findIndex(lats, NLAT, clusters[i].center.lat);
+            index_lon = findIndex(lons, NLON, clusters[i].center.lon);
+            exit = false, visited = false;
+            mean_dist = INF;
             visited_conts = malloc(sizeof(int));
-            conts_size = 0;
+            visited_conts_size = 0;
             selected_izq.center = create_point(INF, INF);
+            selected_izq.id = -1;
             selected_der.center = create_point(INF, INF);
+            selected_der.id = -1;
             selected_rex.center = create_point(INF, INF);
+            selected_rex.id = -1;
 
-            while (!exit) {
-                if(index_lon_max < 0 || index_lat_max < 0 || index_lat_max > FILT_LAT(LAT_LIM_MIN)-1 || index_lon_max > NLON-1){
+            while(!exit) {
+                if(index_lon < 0 || index_lat < 0 || index_lat > FILT_LAT(LAT_LIM_MIN)-1 || index_lon > NLON-1){
                     exit = true;
                     break;
                 }
-                contour_max = (((z_in[index_lat_max][index_lon_max]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat_max][index_lon_max]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
-                index_lat_max--;
-                for(x=0;x<conts_size;x++) {
-                    if(visited_conts[x] == contour_max) {
+                if(point_distance(clusters[i].center, create_point(lats[index_lat], lons[index_lon])) > 2000)
+                    break;
+                contour_top = (((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
+                index_lat--;
+
+                for(j=0;j<visited_conts_size;j++) {
+                    if(visited_conts[j] == contour_top) {
                         visited = true;
                         break;
                     }
@@ -112,128 +200,119 @@ void search_formation(points_cluster *clusters, int size, short **z_in, float *l
                     visited = false;
                     continue;
                 }
-                visited_conts[conts_size] = contour_max;
-                conts_size++;
-                visited_conts = realloc(visited_conts, (conts_size+1)*sizeof(int));
-                min_izq.center = create_point(INF, INF);
-                min_der.center = create_point(INF, INF);
-                min_rex.center = create_point(INF, INF);
+
+                visited_conts[visited_conts_size] = contour_top;
+                visited_conts_size++;
+                visited_conts = realloc(visited_conts, (visited_conts_size+1)*sizeof(int));
                 
-                for(j=0; j<size;j++) {
-                    if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && fabs(clusters[j].center.lon-clusters[i].center.lon) <= 10) {
+                if(check_closed_contour(clusters[i], contour_top, z_in, lats, lons, scale_factor, offset))
+                    continue;
+
+                contour_bot = check_contour_dir(clusters[i], contour_top, 1, 0, z_in, lats, lons, scale_factor, offset);   
+                contour_izq = check_contour_dir(clusters[i], contour_top, 0, -1, z_in, lats, lons, scale_factor, offset);
+                contour_der = check_contour_dir(clusters[i], contour_top, 0, 1, z_in, lats, lons, scale_factor, offset);
+
+                if(contour_der && contour_izq && !contour_bot) {
+                    contour_bot = false;
+                    contour_der = false;
+                    contour_izq = false;
+
+                    for(j=0; j<size; j++) {
                         if(point_distance(clusters[j].center, clusters[i].center) > 4000)
-                            continue;
-                        index_lat = findIndex(lats, NLAT, clusters[j].point_inf.point.lat);
-                        index_lon = findIndex(lons, NLON, clusters[j].point_inf.point.lon);
-                        found = false;
+                                continue;
+                        if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && clusters[j].center.lon < clusters[i].center.lon) {
+                            if(check_closed_contour(clusters[j], contour_top, z_in, lats, lons, scale_factor, offset))
+                                continue;
+                            
+                            if(clusters[i].contour == clusters[j].contour)
+                                continue;
 
-                        while (!found) {
-                            if(index_lon < 0 || index_lat < 0 || index_lat > FILT_LAT(LAT_LIM_MIN)-1 || index_lon > NLON-1)
-                                break;
-                            contour = (((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
+                            //izquierda.
+                            contour_bot = check_contour_dir(clusters[j], contour_top, 1, 0, z_in, lats, lons, scale_factor, offset);
+                            contour_der = check_contour_dir(clusters[j], contour_top, 0, 1, z_in, lats, lons, scale_factor, offset);
 
-                            if(contour > contour_max)
-                                break;
-
-                            if(contour == contour_max && lats[index_lat] <= clusters[i].point_inf.point.lat) 
-                                found = true;
-                            else
-                                index_lat++;
-                        }
-                        if(found) {
-                            found = false;  
-                            index_lat = findIndex(lats, NLAT, clusters[j].point_inf.point.lat);
-                            index_lon = findIndex(lons, NLON, clusters[j].point_inf.point.lon);
-                            while (!found) {
-                                if(index_lon < 0 || index_lat < 0 || index_lat > FILT_LAT(LAT_LIM_MIN)-1 || index_lon > NLON-1)
-                                    break;
-                                contour = (((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
-
-                                if(contour > contour_max)
-                                    break;
-
-                                if(contour == contour_max && lats[index_lat] <= clusters[i].point_inf.point.lat) 
-                                    found = true;
-                                else
-                                    index_lat--;
+                            if(contour_bot && contour_der) {
+                                if((point_distance(clusters[j].center, clusters[i].center)+point_distance(clusters[j].center, selected_der.center)+point_distance(selected_der.center, clusters[i].center))/3 < mean_dist) {
+                                    mean_dist = (point_distance(clusters[j].center, clusters[i].center)+point_distance(clusters[j].center, selected_der.center)+point_distance(selected_der.center, clusters[i].center))/3;
+                                    selected_izq = clusters[j];
+                                }
                             }
-                            if(found && clusters[j].contour < min_rex.contour) 
-                                min_rex = clusters[j];   
-                        }         
-                    }else if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && clusters[j].center.lon < clusters[i].center.lon) {
-                        if(point_distance(clusters[j].center, clusters[i].center) > 4000)
-                            continue;
-                        index_lat = findIndex(lats, NLAT, clusters[j].point_inf.point.lat);
-                        index_lon = findIndex(lons, NLON, clusters[j].point_inf.point.lon);
-                        found = false;
-                        better_lat = INF;
+                        } else if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && clusters[j].center.lon > clusters[i].center.lon) {
+                            if(check_closed_contour(clusters[j], contour_top, z_in, lats, lons, scale_factor, offset))
+                                continue;
 
-                        while (!found) {
-                            if(index_lon < 0 || index_lat < 0 || index_lat > FILT_LAT(LAT_LIM_MIN)-1 || index_lon > NLON-1)
-                                break;
-                            contour = (((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
+                            if(clusters[i].contour == clusters[j].contour)
+                                continue;
 
-                            if(contour > contour_max)
-                                break;
+                            //derecha.
+                            contour_bot = check_contour_dir(clusters[j], contour_top, 1, 0, z_in, lats, lons, scale_factor, offset);
+                            contour_izq = check_contour_dir(clusters[j], contour_top, 0, -1, z_in, lats, lons, scale_factor, offset);
 
-                            if(contour == contour_max && lats[index_lat] <= clusters[i].point_inf.point.lat) 
-                                found = true;
-                            else
-                                index_lat++;
-                        }
-                        if(found && lats[index_lat] < better_lat) {
-                            better_lat = lats[index_lat];     
-                            min_izq = clusters[j];
-                        }              
-                    } else if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && clusters[j].center.lon > clusters[i].center.lon) {
-                        if(point_distance(clusters[j].center, clusters[i].center) > 4000)
-                            continue;
-                        index_lat = findIndex(lats, NLAT, clusters[j].point_inf.point.lat);
-                        index_lon = findIndex(lons, NLON, clusters[j].point_inf.point.lon);
-                        found = false;
-                        better_lat = INF;
-
-                        while (!found) {
-                            if(index_lon < 0 || index_lat < 0 || index_lat > FILT_LAT(LAT_LIM_MIN)-1 || index_lon > NLON-1)
-                                break;
-                            contour = (((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0) - ((int)(((z_in[index_lat][index_lon]*scale_factor) + offset)/g_0) % CONTOUR_STEP);
-
-                            if(contour >contour_max)
-                                break;
-
-                            if(contour == contour_max && lats[index_lat] <= clusters[i].point_inf.point.lat) 
-                                found = true;
-                            else
-                                index_lat++;
-                        }
-                        if(found && lats[index_lat] < better_lat) {
-                            better_lat = lats[index_lat];
-                            min_der = clusters[j];
+                            if(contour_bot && contour_izq) {
+                                if((point_distance(clusters[j].center, clusters[i].center)+point_distance(clusters[j].center, selected_izq.center)+point_distance(selected_izq.center, clusters[i].center))/3 < mean_dist) {
+                                    mean_dist = (point_distance(clusters[j].center, clusters[i].center)+point_distance(clusters[j].center, selected_izq.center)+point_distance(selected_izq.center, clusters[i].center))/3;
+                                    selected_der = clusters[j];
+                                }
+                            }
                         }
                     }
-                }
-                if(min_rex.center.lat != INF && min_rex.contour < selected_rex.contour) {
-                    actual_dist_rex = point_distance(min_rex.center, clusters[i].center);
-                    selected_rex = min_rex;
-                } else if(min_izq.center.lat != INF && min_der.center.lat != INF) {
-                    int mean_dist_form = (point_distance(min_izq.center, clusters[i].center) + point_distance(min_der.center, clusters[i].center) + point_distance(min_izq.center, min_der.center))/3;
-                    if(mean_dist_form < actual_dist) {
-                        actual_dist = mean_dist_form;
-                        selected_izq = min_izq;
-                        selected_der = min_der;
-                    }
-                }
-            }
-            if(selected_rex.center.lat != INF) {
-                printf("Formación REX encontrada: %d, %d\n", clusters[i].id, selected_rex.id);
-                printf("Contorno: %d\n", clusters[i].contour);
-            }
+                } else if(contour_bot && contour_der) {
+                    contour_bot = false;
+                    contour_der = false;
+                    contour_izq = false;
+                    contour_top_aux = false;
 
-            if(selected_izq.center.lat != INF && selected_der.center.lat != INF) {
-                printf("Formación OMEGA encontrada: %d, %d, %d\n", clusters[i].id, selected_izq.id, selected_der.id);
-                printf("Contorno: %d\n", clusters[i].contour);
+                    for(j=0; j<size; j++) {
+                        if(point_distance(clusters[j].center, clusters[i].center) > 4000)
+                            continue;
+
+                        if(check_closed_contour(clusters[j], contour_top, z_in, lats, lons, scale_factor, offset))
+                            continue;
+
+                        if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && fabs(clusters[i].center.lon - clusters[j].center.lon) <= 10) {
+                            contour_bot = check_contour_dir(clusters[j], contour_top, 1, 0, z_in, lats, lons, scale_factor, offset);
+                            contour_izq = check_contour_dir(clusters[j], contour_top, 0, -1, z_in, lats, lons, scale_factor, offset);
+                            contour_top_aux = check_contour_dir(clusters[j], contour_top, -1, 0, z_in, lats, lons, scale_factor, offset);
+
+                            if(contour_bot && contour_izq && contour_top_aux) 
+                                if(point_distance(clusters[j].center, clusters[i].center) < point_distance(selected_rex.center, clusters[i].center)) 
+                                    selected_rex = clusters[j];
+                        }
+                    }
+
+                } 
+                // else if(contour_bot && contour_izq) {
+                //     contour_bot = false;
+                //     contour_der = false;
+                //     contour_izq = false;
+                //     contour_top_aux = false;
+
+                //     for(j=0; j<size; j++) {
+                //         if(point_distance(clusters[j].center, clusters[i].center) > 4000)
+                //             continue;
+                        
+                //         if(check_closed_contour(clusters[j], contour_top, z_in, lats, lons, scale_factor, offset))
+                //             continue;
+
+                //         if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && fabs(clusters[i].center.lon - clusters[j].center.lon) <= 10) {
+                //             contour_bot = check_contour_dir(clusters[j], contour_top, 1, 0, z_in, lats, lons, scale_factor, offset);
+                //             contour_der = check_contour_dir(clusters[j], contour_top, 0, -1, z_in, lats, lons, scale_factor, offset);
+                //             contour_top_aux = check_contour_dir(clusters[j], contour_top, -1, 0, z_in, lats, lons, scale_factor, offset);
+
+                //             if(contour_bot && contour_der && contour_top_aux) 
+                //                 if(point_distance(clusters[j].center, clusters[i].center) < point_distance(selected_rex.center, clusters[i].center)) 
+                //                     selected_rex = clusters[j];
+                //         }
+                //     }
+                // }    
             }
             free(visited_conts);
+
+            if(selected_rex.center.lat != INF && selected_rex.id != -1) 
+                printf("Formación REX encontrada: %d, %d\n", clusters[i].id, selected_rex.id);
+            else if(selected_izq.center.lat != INF && selected_der.center.lat != INF && selected_izq.id != -1 && selected_der.id != -1) 
+                printf("Formación OMEGA encontrada: %d, %d, %d\n", clusters[i].id, selected_izq.id, selected_der.id);   
+
         }
     }
 }

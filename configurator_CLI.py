@@ -31,10 +31,9 @@ def check_levels(levels):
 
 # Función para verificar si el número o números de instantes es válido
 def check_instants(instants):
+    instants = instants.split("\n")
     try:
-        instants = list(map(int, instants))
-        if any(instant < 0 for instant in instants):
-            raise argparse.ArgumentTypeError("Los instantes deben ser enteros positivos")
+        instants = [int(instant) for instant in instants]
         return instants
     except ValueError:
         raise argparse.ArgumentTypeError("Los instantes deben ser enteros")
@@ -103,8 +102,8 @@ if args.no_compile_execute:
 # Convertir args.data a una lista plana de cadenas de texto
 args.data = [data_file[0] for data_file in args.data] if args.data else None
 args.instant = [int(instant[0]) for instant in args.instant] if args.instant else None
-print(args.data)
-    
+
+
 if args.all and not args.instant:
     for file in args.data:
         dates = date_from_nc(file)
