@@ -73,6 +73,13 @@ void export_clusters_to_csv(points_cluster *clusters, int size, char *filename, 
     fclose(fp);
 }
 
+void export_formation_to_csv(formation formation, char *filename, int time) {
+    FILE *fp = fopen(filename, "a");
+
+    fprintf(fp, "%d,%d,%d,%d,%s\n", time, formation.max_id, formation.min1_id, formation.min2_id, formation.type == OMEGA ? "OMEGA" : "REX");
+    fclose(fp);
+}
+
 // Function to export the data of the formations to a csv file.
 // void export_formation_to_csv(formation *formations, int size, char *filename, double offset, double scale_factor, int time) {
 //     FILE *fp = fopen(filename, "a");

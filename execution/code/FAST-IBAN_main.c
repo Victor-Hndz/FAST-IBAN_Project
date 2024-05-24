@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
     check_coords(z_in, lats, lons);
 
     //Initialize the output files.
-    init_files(filename, long_name);
+    init_files(filename, filename2, long_name);
     
 
     t_fin = omp_get_wtime();
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
         t_ini = omp_get_wtime();
 
 
-        search_formation(clusters, j, z_in[time], lats, lons, scale_factor, offset);
+        search_formation(clusters, j, z_in[time], lats, lons, scale_factor, offset, filename2, time);
     
         t_fin = omp_get_wtime();
         printf("\n#4-%d. Búsqueda de formaciones realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
