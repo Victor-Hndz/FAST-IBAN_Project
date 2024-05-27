@@ -24,10 +24,10 @@ def check_levels(levels):
     try:
         levels = int(levels)
         if levels <= 0:
-            raise argparse.ArgumentTypeError("El número de niveles debe ser un entero positivo")
+            raise argparse.ArgumentTypeError("El número debe ser un entero positivo")
         return levels
     except ValueError:
-        raise argparse.ArgumentTypeError("El número de niveles debe ser un entero positivo")
+        raise argparse.ArgumentTypeError("El número debe ser un entero positivo")
 
 # Función para verificar si el número o números de instantes es válido
 def check_instants(instants):
@@ -81,6 +81,8 @@ parser.add_argument('-ne', '--no-execute', action='store_true', required=False, 
 parser.add_argument('-nce', '--no-compile-execute', action='store_true', required=False, help="No compilar y no ejecutar")
 parser.add_argument('-nm', '--no-maps', action='store_true', required=False, help="No generar mapas")
 parser.add_argument('-a', '--animation', action='store_true', required=False, help="Generar animación de los mapas")
+parser.add_argument('-omp', '--omp', action='store_true', required=False, help="Ejecutar usando OpenMP")
+parser.add_argument('-nt', '--n-threads', type=check_levels, required=False, help="Número de hilos para la ejecución paralela")
 
 parser.add_argument('--all', action='store_true', required=False, help="Todos los instantes de tiempo")
 # parser.add_argument('-nde', '--no-delete-execution', action='store_true', required=False, help="No borrar los archivos de ejecución ya generados")
@@ -94,6 +96,13 @@ args = parser.parse_args()
 # Verificar que no se use -i junto con --all
 if args.all and args.instant:
     parser.error("El argumento --all no se puede usar junto con -i")
+    
+#Verificar que si aparece -omp, aparezca también -nt con un valor válido
+if args.omp and not args.n_threads:
+    parser.error("El argumento -omp debe ser usado con -nt")
+    
+if not args.omp and args.n_threads:
+    parser.error("El argumento -nt debe ser usado con -omp")
 
 if args.no_compile_execute:
     args.no_compile = True
@@ -139,6 +148,8 @@ configuration = {
     "no_execute": args.no_execute,
     "no_maps": args.no_maps,
     "animation": args.animation,
+    "omp": args.omp,
+    "n_threads": args.n_threads if args.n_threads else None,
 }
 
 #clear the output folder
