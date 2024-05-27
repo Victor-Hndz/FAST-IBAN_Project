@@ -1,6 +1,6 @@
 #include "../libraries/init.h"
 
-int LAT_LIM_MIN, LAT_LIM_MAX, LON_LIM_MIN, LON_LIM_MAX;
+int LAT_LIM_MIN, LAT_LIM_MAX, LON_LIM_MIN, LON_LIM_MAX, N_THREADS;
 char* FILE_NAME;
 
 
@@ -18,20 +18,22 @@ void process_entry(int argc, char **argv) {
         getcwd(cwd, sizeof(cwd));
     }
 
-    if (argc != 6) {
+    if (argc != 7) {
         //FILE_NAME = "config/data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc";
         //FILE_NAME = "config/data/geopot_500hPa_2003-08-(01-15)_00-06-12-18UTC.nc";
         FILE_NAME = "config/data/geopot_500hPa_2022-03-14_00-06-12-18UTC.nc";
-        LAT_LIM_MIN = 25;
-        LAT_LIM_MAX = 90;
+        LAT_LIM_MIN = 30;
+        LAT_LIM_MAX = 85;
         LON_LIM_MIN = -180;
         LON_LIM_MAX = 180;
+        N_THREADS = 20;
     } else {
         FILE_NAME = argv[1];
         LAT_LIM_MIN = atoi(argv[2]);
         LAT_LIM_MAX = atoi(argv[3]);
         LON_LIM_MIN = atoi(argv[4]);
         LON_LIM_MAX = atoi(argv[5]);
+        N_THREADS = atoi(argv[6]);
 
         if(strlen(FILE_NAME) > 255) {
             printf("Error: El nombre del archivo es demasiado largo.\n");
@@ -45,6 +47,11 @@ void process_entry(int argc, char **argv) {
 
         if(LON_LIM_MIN < -180 || LON_LIM_MIN > 180 || LON_LIM_MAX < -180 || LON_LIM_MAX > 180 || LON_LIM_MIN > LON_LIM_MAX) {
             printf("Error: Los límites de longitud son incorrectos.\n");
+            exit(1);
+        }
+
+        if(N_THREADS <= 0) {
+            printf("Error: El número de hilos no puede ser menor de 1.\n");
             exit(1);
         }
     }
