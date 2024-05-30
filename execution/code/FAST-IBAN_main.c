@@ -12,9 +12,12 @@ int main(int argc, char **argv) {
     short z_aux_selected;
     short ***z_in;
     char long_name[NC_MAX_NAME+1] = "";
+    FILE *fp;
     selected_point **selected_points, **filtered_points;
     char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
     char *filename2 = malloc(sizeof(char)*(NC_MAX_NAME+1));
+    char *log_file = malloc(sizeof(char)*(NC_MAX_NAME+1));
+    char *speed_file = malloc(sizeof(char)*(NC_MAX_NAME+1));
 
     if(filename == NULL || filename2 == NULL) {
         perror("Error: Couldn't allocate memory for data. ");
@@ -82,12 +85,16 @@ int main(int argc, char **argv) {
     check_coords(z_in, lats, lons);
 
     //Initialize the output files.
-    init_files(filename, filename2, long_name);
+    init_files(filename, filename2, log_file, speed_file, long_name);
     
 
     t_fin = omp_get_wtime();
     printf("\n#1. Datos leídos e inicializados con éxito: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
+
+    fp = fopen(speed_file, "a");
+    fprintf(fp, "init,-1,%.3f\n", t_fin-t_ini);
+    fclose(fp);
 
     //Loop for every z value.
     for (time=0; time<NTIME; time++) { 
@@ -124,6 +131,9 @@ int main(int argc, char **argv) {
 
         t_fin = omp_get_wtime();
         printf("\n#2-%d. Filtrado y selección de máximos y mínimos realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
+        fp = fopen(speed_file, "a");
+           fprintf(fp, "1,%d,%.3f\n", time, t_fin-t_ini);
+        fclose(fp);
         t_total += (t_fin-t_ini);
         t_ini = omp_get_wtime();
         
@@ -162,7 +172,6 @@ int main(int argc, char **argv) {
         free(clusters_aux);
 
         t_fin = omp_get_wtime();
-        printf("\n#3-%d.Clusters generados y agrupados con éxito: %.6f s.\n", time, t_fin-t_ini);
         t_total += (t_fin-t_ini);
         t_ini = omp_get_wtime();
 
@@ -171,12 +180,14 @@ int main(int argc, char **argv) {
     
         t_fin = omp_get_wtime();
         printf("\n#4-%d. Búsqueda de formaciones realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
+        fp = fopen(speed_file, "a");
+           fprintf(fp, "2,%d,%.3f\n", time, t_fin-t_ini);
+        fclose(fp);
         t_total += (t_fin-t_ini);
         
         t_ini = omp_get_wtime();
         
         export_clusters_to_csv(clusters, j, filename, offset, scale_factor, time);
-        // export_clusters_to_csv(clusters, j, filename, offset, scale_factor, time);
         
         t_fin = omp_get_wtime();
         printf("\n#5-%d. Archivo escrito con éxito: %.6f s.\n", time, t_fin-t_ini);
@@ -185,6 +196,10 @@ int main(int argc, char **argv) {
         printf("Tiempo %d procesado.\n", time);
         free(clusters);
     }
+
+    fp = fopen(speed_file, "a");
+        fprintf(fp, "total,-1,%.3f\n", t_total);
+    fclose(fp);
 
     free(z_in[0][0]);
     free(z_in[0]);
