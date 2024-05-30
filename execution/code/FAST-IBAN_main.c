@@ -210,6 +210,8 @@ int main(int argc, char **argv) {
     free(z_in);
     free(filename);
     free(filename2);
+    free(speed_file);
+    free(log_file);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, OUT_DIR_NAME);
     printf("\n## Tiempo total de la ejecución: %.6f s.\n\n", t_total);
