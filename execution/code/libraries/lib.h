@@ -43,7 +43,7 @@
 
 #define g_0 9.80665 // Standard gravity in m/s^2
 #define R 6371 // Earth's radius in km
-#define NEIGHBOUR_LATERAL 2 // Number of lateral neighbours to use in the local max/min method
+#define STEP 5 // Number of neighbours to use in the res. change
 #define N_BEARINGS 32 // Number of bearings to use in the great circle method
 #define DIST 500 // Distance in km to use in the great circle method
 #define PASS_PERCENT 0.9 // Percentage of points to pass in the bearing method

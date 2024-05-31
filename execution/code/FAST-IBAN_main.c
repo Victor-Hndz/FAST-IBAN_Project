@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
     for(i = 0; i < NTIME * NLAT; i++) 
         z_in[0][i] = z_in[0][0] + i * NLON;
 
-    step = ((2*NEIGHBOUR_LATERAL)+1);
+    step = STEP;
     size_x = (int)((FILT_LAT(LAT_LIM_MIN))/step)+1;
     size_y = (int)((NLON)/step);
 
