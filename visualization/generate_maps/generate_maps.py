@@ -5,7 +5,6 @@ import cartopy.crs as ccrs
 import cartopy as cartopy 
 import numpy as np
 import pandas as pd
-from matplotlib.patches import Polygon
 import sys
 from collections import namedtuple
 
@@ -208,25 +207,6 @@ def generate_combined_map(file, es_max, time, levels, lat_range, lon_range, file
     # valores de contorno
     cont_txt = plt.clabel(co, inline=True, fontsize=4)
     cont_txt = plt.setp(cont_txt, path_effects=[path_effects.Stroke(linewidth=0.5, foreground='white'), path_effects.Normal()])
-    
-    #Establecer el color del borde para el contorno con valor 5740
-    # for coll, level in zip(co.collections, co.levels):
-    #     if level == 5400 or level == 5420 or level == 5460:
-    #         for contour_path in coll.get_paths():
-    #             # Obtener los vértices del contorno actual
-    #             vertices = contour_path.vertices
-
-    #             # Filtrar los vértices que están dentro de la región de interés
-    #             filtered_vertices = []
-    #             for lon, lat in vertices:
-    #                 if -25 <= lon <= 45:
-    #                     filtered_vertices.append((lon, lat))
-
-    #             # Si hay vértices dentro de la región, pintar el borde en negro
-    #             if filtered_vertices:
-    #                 # Crear un nuevo polígono solo con los vértices filtrados
-    #                 poly = Polygon(filtered_vertices, closed=False, edgecolor='black', facecolor='none')
-    #                 ax.add_patch(poly)
     
     
     # Añade títulos, colorbar y etiquetas
