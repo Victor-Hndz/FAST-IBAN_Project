@@ -72,18 +72,40 @@ def generate_contour_map(file, es_max, time, levels, lat_range, lon_range, file_
     save_file(nombre_base, extension)
     
 
-def generate_scatter_map(file, es_max, time, lat_range, lon_range, file_format):
+def generate_scatter_map(file, es_max, time, levels, lat_range, lon_range, file_format):
     #Extraer la fecha del archivo
-    # dates = date_from_nc(file)
-    # fecha = from_nc_to_date(str(dates[time]))
+    dates = date_from_nc(file)
+    fecha = from_nc_to_date(str(dates[time]))
+    data = pd.read_csv(files_dir+obtain_csv_files(file, "selected"))
     
-    #obtener solo los datos del tiempo seleccionado
-    # data = pd.read_csv(files_dir+obtain_csv_files(file))
-    data = pd.read_csv(file)
+    #Decide si es max o min
+    if(es_max == 'comb'):
+        tipo = 'max-min'
+    elif(es_max == 'max'):
+        tipo = 'max'
+        data = data[data['type'] == tipo.upper()]
+    elif(es_max == 'min'):
+        tipo = 'min'
+        data = data[data['type'] == tipo.upper()]
+    elif(es_max == 'both'):
+        tipo = 'min'
+        data = data[data['type'] == tipo.upper()]
+        generate_combined_map(file, "max", time, levels, lat_range, lon_range, file_format)
+    else:
+        print("Error en el tipo de archivo")
+        
+    # Calcular el tamaño acumulado de los datos de tiempos anteriores
+    last_size = 0
+    if time > 0:
+        for t in range(time):
+            last_size += len(data[data['time'] == t])
+    
+    # obtener solo los datos del tiempo seleccionado
     data = data[data['time'] == time]
     latitudes = data['latitude'].copy()
     longitudes = data['longitude'].copy()
     variable = data['z'].copy()
+    cluster = data['cluster'].copy()
     
     # Ajustar valores mayores a 180 restando 360
     if max(longitudes) > 180:
@@ -95,32 +117,24 @@ def generate_scatter_map(file, es_max, time, lat_range, lon_range, file_format):
     # Crear una figura para un mapa del mundo
     fig, ax = config_map(lat_range, lon_range)
 
-    # Scatter plot
-    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', transform=ccrs.PlateCarree(), s=7)
-    
-    #Decide si es max o min
-    # if(es_max == 'comb'):
-    #     tipo = 'max-min'
-    # elif(es_max == 'max'):
-    #     tipo = 'max'
-    #     data = data[data['type'] == tipo.upper()]
-    # elif(es_max == 'min'):
-    #     tipo = 'min'
-    #     data = data[data['type'] == tipo.upper()]
-    # else:
-    #     tipo = 'max' if es_max else 'min'
-    # data = data[data['type'] == tipo.upper()]
+    # Agregar puntos de dispersión
+    sc = ax.scatter(longitudes, latitudes, c=variable, cmap='jet', 
+                    transform=ccrs.PlateCarree(), s=8, edgecolors='black', linewidths=0.3)
+
+    for i, txt in enumerate(cluster):
+        ax.annotate(txt, (longitudes[i+last_size], latitudes[i+last_size]), fontsize=1, color='white')
+
     
     #Añade títulos, etiquetas y colorbar
-    visual_adds(fig, ax, sc, 1, lat_range, lon_range, None, "max")
+    visual_adds(fig, ax, sc, fecha, lat_range, lon_range, None, tipo)
     
     # Muestra la figura
     # plt.show()
 
     print("Mapa generado. Guardando mapa...")
     
-    # Guardar con el nombre original
-    nombre_base = f"../../out/mapa_geopotencial_puntos_max_{1}"
+    # Definir el nombre base del archivo y la extensión 
+    nombre_base = f"out/mapa_geopotencial_puntos_{levels}l_{tipo}_{fecha}"
     extension = f".{file_format}"
 
     # Guardar la figura en la ubicación especificada
