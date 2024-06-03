@@ -45,6 +45,9 @@ add_library(LIB src/lib.c libraries/lib.h)
 
 
 add_executable(FAST-IBAN FAST-IBAN_main.c)
+# add_executable(FAST-IBAN FAST-IBAN_main_mpi.c)
+# add_executable(FAST-IBAN FAST-IBAN_main_omp.c)
+# add_executable(FAST-IBAN FAST-IBAN_main_omp_mpi.c)
 
 
 target_link_libraries(LIB PRIVATE m)
