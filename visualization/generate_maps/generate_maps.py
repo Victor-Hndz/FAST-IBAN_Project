@@ -8,7 +8,6 @@ import pandas as pd
 import sys
 from collections import namedtuple
 from scipy.spatial import ConvexHull
-from matplotlib.patches import Polygon
 
 sys.path.append('../../')
 from utils.map_utils import *
