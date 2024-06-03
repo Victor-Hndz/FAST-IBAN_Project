@@ -9,6 +9,11 @@ project(FAST-IBAN
     DESCRIPTION "Project for detecting atmospheric blocks in the North Atlantic" 
     LANGUAGES C)
 
+# Especifica el estándar de C
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED True)
+
+
 #OpenMP
 find_package(OpenMP REQUIRED)
 
@@ -21,8 +26,13 @@ set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS})
 # Agregar la ruta de las cabeceras de OpenMP (si es necesario)
 include_directories(${OpenMP_C_INCLUDE_DIRS})
 
+#Release
+set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
+
+
 #Debbuging
-set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_BUILD_TYPE Debug)
 enable_testing()
 
 

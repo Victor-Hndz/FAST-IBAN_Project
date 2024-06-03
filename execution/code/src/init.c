@@ -8,14 +8,16 @@ char* FILE_NAME;
 void process_entry(int argc, char **argv) {
     char cwd[NC_MAX_CHAR];
     char file_path[NC_MAX_CHAR];
-    getcwd(cwd, sizeof(cwd));
+    char* error_catcher_char;
+    int error_catcher_int;
+    error_catcher_char = getcwd(cwd, sizeof(cwd));
 
     //extract the last part of the path
     char *p = strrchr(cwd, '/');
     p == NULL ? p = cwd : p++;
     if(strcmp(p, ACTUAL_DIR) == 0) {
-        chdir("..");
-        getcwd(cwd, sizeof(cwd));
+        error_catcher_int = chdir("..");
+        error_catcher_char = getcwd(cwd, sizeof(cwd));
     }
 
     if (argc != 7) {
@@ -62,17 +64,19 @@ void process_entry(int argc, char **argv) {
 void init_files(char* filename, char* filename2, char* log_file, char* speed_file, char* long_name) {
     char cwd[NC_MAX_CHAR];
     char file_path[NC_MAX_CHAR];
-    getcwd(cwd, sizeof(cwd));
+    char* error_catcher_char;
+    int error_catcher_int;
+    error_catcher_char = getcwd(cwd, sizeof(cwd));
 
     //extract the last part of the path
     char *p = strrchr(cwd, '/');
     p == NULL ? p = cwd : p++;
     if(strcmp(p, ACTUAL_DIR) == 0) {
-        chdir("..");
-        getcwd(cwd, sizeof(cwd));
+        error_catcher_int = chdir("..");
+        error_catcher_char = getcwd(cwd, sizeof(cwd));
     }
 
-    snprintf(file_path, sizeof(cwd)+sizeof(OUT_DIR_NAME), "%s/%s", cwd, OUT_DIR_NAME);
+    snprintf(file_path, sizeof(file_path), "%s/%s", cwd, OUT_DIR_NAME);
 
     if (!mkdir(file_path, DIR_PERMS)) 
         printf("Carpeta creada con éxito.\n");
