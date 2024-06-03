@@ -28,7 +28,7 @@ void process_entry(int argc, char **argv) {
         LAT_LIM_MAX = 85;
         LON_LIM_MIN = -180;
         LON_LIM_MAX = 180;
-        N_THREADS = 20;
+        N_THREADS = 40;
     } else {
         FILE_NAME = argv[1];
         LAT_LIM_MIN = atoi(argv[2]);
