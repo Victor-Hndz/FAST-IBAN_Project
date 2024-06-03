@@ -39,7 +39,6 @@ int main(int argc, char **argv) {
     
 
     float lats[NLAT], lons[NLON];
-    bool procesado[NLAT][NLON];
 
     //Allocate contiguous memory for the data.
     z_in = malloc(NTIME*sizeof(short**));
@@ -99,7 +98,6 @@ int main(int argc, char **argv) {
     //Loop for every z value.
     for (time=0; time<NTIME; time++) { 
         t_ini = omp_get_wtime();
-        memset(procesado, false, sizeof(procesado));
 
         for(lat=0;lat<size_x;lat++) {
             printf("Processing time %d, lat %d\n", time, lat);
