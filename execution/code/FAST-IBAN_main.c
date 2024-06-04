@@ -3,7 +3,6 @@
 #include "libraries/calc.h"
 #include "libraries/init.h"
 #include <omp.h>
-// #include <mpich/mpi.h>
 
 
 int main(int argc, char **argv) {

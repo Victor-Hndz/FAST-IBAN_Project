@@ -111,12 +111,12 @@ void init_files(char* filename, char* filename2, char* log_file, char* speed_fil
     fprintf(fp, "time,max_id,min1_id,min2_id,type\n");
     fclose(fp);
 
-    sprintf(log_file, "%slog_%sUTC.txt", file_path, fecha);
+    sprintf(log_file, "%slog_%s_%sUTC_%dhilos.txt", file_path, temp, fecha, N_THREADS);
     fp = fopen(log_file, "w");
     fprintf(fp, "Log prints and errors of the execution:\n");
     fclose(fp);
 
-    sprintf(speed_file, "%sspeed_%sUTC.csv", file_path, fecha);
+    sprintf(speed_file, "%sspeed_%s_%sUTC_%dhilos.csv", file_path, temp, fecha, N_THREADS);
     fp = fopen(speed_file, "w");
     fprintf(fp, "part,instant,time_elapsed\n");
     fclose(fp);
