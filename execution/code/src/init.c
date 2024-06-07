@@ -4,7 +4,12 @@ int LAT_LIM_MIN, LAT_LIM_MAX, LON_LIM_MIN, LON_LIM_MAX, N_THREADS;
 char* FILE_NAME;
 
 
-//Function to process the arguments
+/**
+ * @brief Procesar la entrada de argumentos de la línea de comandos.
+ * 
+ * @param argc Número de argumentos.
+ * @param argv Argumentos.
+ */
 void process_entry(int argc, char **argv) {
     char cwd[NC_MAX_CHAR];
     char file_path[NC_MAX_CHAR];
@@ -24,7 +29,7 @@ void process_entry(int argc, char **argv) {
         //FILE_NAME = "config/data/geopot_500hPa_2019-06-26_00-06-12-18UTC.nc";
         //FILE_NAME = "config/data/geopot_500hPa_2003-08-(01-15)_00-06-12-18UTC.nc";
         FILE_NAME = "config/data/geopot_500hPa_2022-03-14_00-06-12-18UTC.nc";
-        LAT_LIM_MIN = 30;
+        LAT_LIM_MIN = 25;
         LAT_LIM_MAX = 85;
         LON_LIM_MIN = -180;
         LON_LIM_MAX = 180;
@@ -60,7 +65,15 @@ void process_entry(int argc, char **argv) {
 }
 
 
-//Initialize and create files and folders
+/**
+ * @brief Inicializar los archivos de salida con nombre y cabecera correcta.
+ * 
+ * @param filename Archivo de salida de los puntos seleccionados.
+ * @param filename2 Archivo de salida de las formaciones.
+ * @param log_file Archivo de salida de los logs. Este será un .txt
+ * @param speed_file Archivo de salida de los tiempos de ejecución.
+ * @param long_name Nombre largo de la variable z. Proviene del NetCDF.
+ */
 void init_files(char* filename, char* filename2, char* log_file, char* speed_file, char* long_name) {
     char cwd[NC_MAX_CHAR];
     char file_path[NC_MAX_CHAR];
@@ -123,7 +136,13 @@ void init_files(char* filename, char* filename2, char* log_file, char* speed_fil
 }
 
 
-//Function to check the coordinates of the netcdf file and fix them if necessary.
+/**
+ * @brief Comprobar si las coordenadas están en el rango [-180, 180] o [0, 360] y corregirlas si es necesario.
+ * 
+ * @param z_in Matriz de alturas.
+ * @param lats 
+ * @param lons 
+ */
 void check_coords(short*** z_in, float lats[NLAT], float lons[NLON]) {
     int i,j,k;
     
