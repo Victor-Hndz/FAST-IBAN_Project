@@ -82,12 +82,11 @@ parser.add_argument('-nce', '--no-compile-execute', action='store_true', require
 parser.add_argument('-nm', '--no-maps', action='store_true', required=False, help="No generar mapas")
 parser.add_argument('-a', '--animation', action='store_true', required=False, help="Generar animación de los mapas")
 parser.add_argument('-omp', '--omp', action='store_true', required=False, help="Ejecutar usando OpenMP")
+parser.add_argument('-mpi', '--mpi', action='store_true', required=False, help="Ejecutar usando MPI")
 parser.add_argument('-nt', '--n-threads', type=check_levels, required=False, help="Número de hilos para la ejecución paralela")
+parser.add_argument('-np', '--n-proces', type=check_levels, required=False, help="Número de procesos para la ejecución paralela")
 
 parser.add_argument('--all', action='store_true', required=False, help="Todos los instantes de tiempo")
-# parser.add_argument('-nde', '--no-delete-execution', action='store_true', required=False, help="No borrar los archivos de ejecución ya generados")
-# parser.add_argument('-ndm', '--no-delete-maps', action='store_true', required=False, help="No borrar los archivos de mapas ya generados")
-
 
 
 # Parsear los argumentos
@@ -103,6 +102,12 @@ if args.omp and not args.n_threads:
     
 if not args.omp and args.n_threads:
     parser.error("El argumento -nt debe ser usado con -omp")
+    
+if not args.mpi and args.n_proces:
+    parser.error("El argumento -np debe ser usado con -mpi")
+    
+if args.mpi and not args.n_proces:
+    parser.error("El argumento -mpi debe ser usado con -np")
 
 if args.no_compile_execute:
     args.no_compile = True
@@ -149,7 +154,9 @@ configuration = {
     "no_maps": args.no_maps,
     "animation": args.animation,
     "omp": args.omp,
+    "mpi": args.mpi,
     "n_threads": args.n_threads if args.n_threads else None,
+    "n_proces": args.n_proces if args.n_proces else None,
 }
 
 #clear the output folder

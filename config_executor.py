@@ -38,7 +38,9 @@ def init():
     no_maps = config["MAP"]["no_maps"]
     animation = config["MAP"]["animation"]
     omp = config["MAP"]["omp"]
+    mpi = config["MAP"]["mpi"]
     n_threads = config["MAP"]["n_threads"]
+    n_processes = config["MAP"]["n_proces"]
 
     # If the files are not in config/data, move them there.
     if not os.path.exists("config/data"):
@@ -67,14 +69,20 @@ def init():
             print("Error al ejecutar el build:")
             exit(1)
 
-    return files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps, animation, omp, n_threads
+    return files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps, animation, omp, mpi, n_threads, n_processes
 
 def process_file(file):
     return_code = None
     if not no_execute:
-        if omp:
+        if omp and not mpi:
             cmd = [exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1]), n_threads]
             debug_cmd = ["gdb", "--args", exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1]), n_threads]
+        if mpi and not omp:
+            cmd = ["mpirun", "-n", n_processes, exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1]), "1"]
+            debug_cmd = ["gdb", "--args", "mpirun", "-n", n_processes, exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1]), "1"]    
+        if omp and mpi:
+            cmd = ["mpirun", "-n", n_processes, exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1]), n_threads]
+            debug_cmd = ["gdb", "--args", "mpirun", "-n", n_processes, exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1]), n_threads]
         else:
             cmd = [exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1]), "1"]
             debug_cmd = ["gdb", "--args", exec_file, file, str(lat_range[0]), str(lat_range[1]), str(lon_range[0]), str(lon_range[1]), "1"]
@@ -108,7 +116,7 @@ def generate_map(file, es_max, max_times, levels, lat_range, lon_range, file_for
                     
 
 if __name__ == "__main__":
-    files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps, animation, omp, n_threads = init()
+    files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps, animation, omp, mpi, n_threads, n_processes = init()
     
     for file in files:
         process_file(file)
