@@ -383,6 +383,8 @@ def generate_formations_map(file, es_max, time, levels, lat_range, lon_range, fi
 
     # Configurar el mapa
     fig, ax = config_map(lat_range, lon_range)
+    
+    co = None
 
     # Agregar puntos de dispersión y anotaciones
     for formacion in formaciones:
@@ -413,24 +415,47 @@ def generate_formations_map(file, es_max, time, levels, lat_range, lon_range, fi
                 plt.setp(num, path_effects=[path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
 
         if all_points:
-            lats, lons = zip(*all_points)
-            min_lat, max_lat = min(lats), max(lats)
-            min_lon, max_lon = min(lons), max(lons)
-            padding = 0.3
-            points = np.array(all_points)
-            hull = ConvexHull(points)
-            polygon_points = points[hull.vertices]
-            centroid = np.mean(polygon_points, axis=0)
-            polygon_points = polygon_points + padding * (polygon_points - centroid)
-            
-            # Trazar el polígono
-            ax.plot(polygon_points[:, 1], polygon_points[:, 0], color='black', linewidth=0.75, transform=ccrs.PlateCarree(), zorder=10)
-            ax.plot([polygon_points[0, 1], polygon_points[-1, 1]], [polygon_points[0, 0], polygon_points[-1, 0]], color='black', linewidth=0.75, transform=ccrs.PlateCarree(), zorder=10)
+            longitudes_points = [point[1] for point in all_points]
 
+            if abs(min(longitudes_points) - max(longitudes_points)) >= 180:
+                # Normalizar las longitudes al rango [0, 360)
+                norm_points = [(lat, lon + 360 if lon < 0 else lon) for lat, lon in all_points]
+                
+                lats, lons = zip(*norm_points)
+                min_lat, max_lat = min(lats), max(lats)
+                min_lon, max_lon = min(lons), max(lons)
+                padding = 0.3
+                points = np.array(norm_points)
+                    
+                hull = ConvexHull(points)
+                polygon_points = points[hull.vertices]
+                centroid = np.mean(polygon_points, axis=0)
+                polygon_points = polygon_points + padding * (polygon_points - centroid)
+                
+                # Trazar el polígono
+                ax.plot(polygon_points[:, 1], polygon_points[:, 0], color='black', linewidth=0.75, transform=ccrs.PlateCarree(), zorder=10)
+                ax.plot([polygon_points[0, 1], polygon_points[-1, 1]], [polygon_points[0, 0], polygon_points[-1, 0]], color='black', linewidth=0.75, transform=ccrs.PlateCarree(), zorder=10)
+            else:
+                lats, lons = zip(*all_points)
+                min_lat, max_lat = min(lats), max(lats)
+                min_lon, max_lon = min(lons), max(lons)
+                padding = 0.3
+                points = np.array(all_points)
+                hull = ConvexHull(points)
+                polygon_points = points[hull.vertices]
+                centroid = np.mean(polygon_points, axis=0)
+                polygon_points = polygon_points + padding * (polygon_points - centroid)
+                    
+                # Trazar el polígono
+                ax.plot(polygon_points[:, 1], polygon_points[:, 0], color='black', linewidth=0.75, transform=ccrs.PlateCarree(), zorder=10)
+                ax.plot([polygon_points[0, 1], polygon_points[-1, 1]], [polygon_points[0, 0], polygon_points[-1, 0]], color='black', linewidth=0.75, transform=ccrs.PlateCarree(), zorder=10)
 
             # Anotar el tipo de la formación en el mapa
             mid_lat = (min_lat + max_lat) / 2
             mid_lon = (min_lon + max_lon) / 2
+            
+            if mid_lon >= 170:
+                mid_lon = 170
             if formacion.type == 'OMEGA':
                 type_an = ax.annotate(formacion.type, (mid_lon, mid_lat - 8), fontsize=4, ha='center', color='white', transform=ccrs.PlateCarree(), zorder=13)
                 plt.setp(type_an, path_effects=[path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
@@ -439,22 +464,27 @@ def generate_formations_map(file, es_max, time, levels, lat_range, lon_range, fi
                 plt.setp(type_an, path_effects=[path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
 
         # Obtener los valores de Z para los contornos específicos
-        if formacion.type == 'OMEGA':
-            contour_min = min(p.var for p in formacion.min1 + formacion.min2)
-        else:
-            contour_min = min(p.var for p in formacion.min1)
-        contour_max = max(p.var for p in formacion.max)
-        cont_levels = np.arange(np.ceil(contour_min/10)*10, contour_max, levels)
+        # if formacion.type == 'OMEGA':
+        #     contour_min = min(p.var for p in formacion.min1 + formacion.min2)
+        # else:
+        #     contour_min = min(p.var for p in formacion.min1)
+        # contour_max = max(p.var for p in formacion.max)
+        # cont_levels = np.arange(np.ceil(contour_min/10)*10, contour_max, levels)
+        
+    #Valor entre los contornos
+    cont_levels = np.arange(np.ceil(np.min(z)/10)*10, np.max(z), levels)
+    # Agregar contornos al mapa
+    co = ax.contour(lon, lat, z, levels=cont_levels, cmap='jet', transform=ccrs.PlateCarree(), linewidths=0.5, vmax=variable.max(), vmin=variable.min(), zorder=7)
 
-        # Agregar contornos al mapa
-        co = ax.contour(lon, lat, z, levels=cont_levels, cmap='jet', transform=ccrs.PlateCarree(), linewidths=0.5, vmax=variable.max(), vmin=variable.min(), zorder=7)
-
-        # Valores de contorno
-        cont_txt = plt.clabel(co, inline=True, fontsize=4, zorder=8)
-        plt.setp(cont_txt, path_effects=[path_effects.Stroke(linewidth=0.5, foreground='white'), path_effects.Normal()])
+    # Valores de contorno
+    cont_txt = plt.clabel(co, inline=True, fontsize=4, zorder=8)
+    plt.setp(cont_txt, path_effects=[path_effects.Stroke(linewidth=0.5, foreground='white'), path_effects.Normal()])
 
     # Añade títulos, colorbar y etiquetas
     tipo = "formaciones"
+    if co == None:
+        print("No se encontraron formaciones en el tiempo seleccionado")
+        return
     visual_adds(fig, ax, co, fecha, lat_range, lon_range, levels, tipo)
 
     # Muestra la figura
@@ -468,3 +498,6 @@ def generate_formations_map(file, es_max, time, levels, lat_range, lon_range, fi
 
     # Guardar la figura en la ubicación especificada
     save_file(nombre_base, extension)
+    
+    #Close the plot
+    plt.close()

@@ -277,7 +277,7 @@ bool check_contour_dir_omega(points_cluster cluster, int contour, int dir_lat, i
 
 
 void search_formation(points_cluster *clusters, int size, short **z_in, float *lats, float *lons, double scale_factor, double offset, char* filename, int time) {
-    int i, j, index_lat, index_lon, contour_top, visited_conts_size;
+    int i, j, index_lat, index_lon, contour_top, visited_conts_size, lon_aux_max, lon_aux_min;
     double mean_dist, dist_score;
     int *visited_conts;
     bool exit, visited, contour_top_aux, contour_bot, contour_izq, contour_der;
@@ -338,9 +338,23 @@ void search_formation(points_cluster *clusters, int size, short **z_in, float *l
                     contour_izq = false;
 
                     for(j=0; j<size; j++) {
-                        if(point_distance(clusters[j].center, clusters[i].center) > 4000)
+                        if(point_distance(clusters[j].center, clusters[i].center) > 3000)
                                 continue;
-                        if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && clusters[j].center.lon < clusters[i].center.lon) {
+                        
+                        if(fabs(clusters[i].center.lon - clusters[j].center.lon) >= 180) {
+                            if(clusters[i].center.lon > clusters[j].center.lon) {
+                                lon_aux_max = clusters[i].center.lon - 360;
+                                lon_aux_min = clusters[j].center.lon;
+                            } else {
+                                lon_aux_min = clusters[j].center.lon - 360;
+                                lon_aux_max = clusters[i].center.lon;
+                            }
+                        } else {
+                            lon_aux_max = clusters[i].center.lon;
+                            lon_aux_min = clusters[j].center.lon;
+                        }
+
+                        if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && lon_aux_min < lon_aux_max) {
                             if(check_closed_contour(clusters[j], contour_top, z_in, lats, lons, scale_factor, offset))
                                 continue;
                             
@@ -361,7 +375,7 @@ void search_formation(points_cluster *clusters, int size, short **z_in, float *l
                                     selected_izq = clusters[j];
                                 }
                             }
-                        } else if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && clusters[j].center.lon > clusters[i].center.lon) {
+                        } else if(clusters[j].type == MIN && clusters[j].center.lat <= clusters[i].center.lat && lon_aux_min > lon_aux_max) {
                             if(check_closed_contour(clusters[j], contour_top, z_in, lats, lons, scale_factor, offset))
                                 continue;
 
@@ -397,7 +411,7 @@ void search_formation(points_cluster *clusters, int size, short **z_in, float *l
                         contour_top_aux = false;
 
                         for(j=0; j<size; j++) {
-                            if(point_distance(clusters[j].center, clusters[i].center) > 4000)
+                            if(point_distance(clusters[j].center, clusters[i].center) > 3000)
                                 continue;
 
                             if(check_closed_contour(clusters[j], contour_top, z_in, lats, lons, scale_factor, offset))

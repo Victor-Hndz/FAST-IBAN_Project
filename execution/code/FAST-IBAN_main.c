@@ -148,12 +148,12 @@ int main(int argc, char **argv) {
         points_cluster *clusters_aux = fill_clusters(filtered_points, size_x, size_y, id, offset, scale_factor);
         int clusters_cont=0;
         for(i=0;i<id;i++) 
-            if(clusters_aux[i].point_sup.point.lat >= 85.00 || clusters_aux[i].point_sup.point.lat <= 25.00 || clusters_aux[i].n_points == 1)
+            if(clusters_aux[i].point_sup.point.lat >= 85.00 || clusters_aux[i].point_sup.point.lat <= 30.00 || clusters_aux[i].n_points == 1)
                 clusters_cont++;
 
         points_cluster *clusters = malloc((id-clusters_cont)*sizeof(points_cluster));
         for(i=0, j=0;i<id;i++) {
-            if(clusters_aux[i].point_sup.point.lat < 85.00 && clusters_aux[i].point_sup.point.lat > 25.00 && clusters_aux[i].n_points != 1) {
+            if(clusters_aux[i].point_sup.point.lat < 85.00 && clusters_aux[i].point_sup.point.lat > 30.00 && clusters_aux[i].n_points != 1) {
                 clusters[j] = clusters_aux[i];
                 clusters[j].id = j;
                 
