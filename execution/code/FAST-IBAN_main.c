@@ -9,10 +9,10 @@ int main(int argc, char **argv) {
     int ncid, retval, i, j, k, time, lat, lon, size_x, size_y, step, bearing_count, bearing_count2, id;
     double scale_factor, offset, t_ini, t_fin, t_total;
     short z_aux_selected;
-    short ***z_in;
+    short ***z_in = NULL;
     char long_name[NC_MAX_NAME+1] = "";
-    FILE *fp;
-    selected_point **selected_points, **filtered_points;
+    FILE *fp = NULL;
+    selected_point **selected_points = NULL, **filtered_points = NULL;
     char *filename = malloc(sizeof(char)*(NC_MAX_NAME+1));
     char *filename2 = malloc(sizeof(char)*(NC_MAX_NAME+1));
     char *log_file = malloc(sizeof(char)*(NC_MAX_NAME+1));
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     
 
     t_fin = omp_get_wtime();
-    printf("\n#1. Datos leídos e inicializados con éxito: %.6f s.\n", t_fin-t_ini);
+    printf("\n#1. Data successfully read and initialized: %.6f s.\n", t_fin-t_ini);
     t_total += (t_fin-t_ini);
 
     fp = fopen(speed_file, "a");
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
         }
 
         t_fin = omp_get_wtime();
-        printf("\n#2-%d. Filtrado y selección de máximos y mínimos realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
+        printf("\n#2-%d. Successful filtering and selection of maxima and minima: %.6f s.\n", time, t_fin-t_ini);
         fp = fopen(speed_file, "a");
            fprintf(fp, "1,%d,%.3f\n", time, t_fin-t_ini);
         fclose(fp);
@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
         search_formation(clusters, j, z_in[time], lats, lons, scale_factor, offset, filename2, time);
     
         t_fin = omp_get_wtime();
-        printf("\n#4-%d. Búsqueda de formaciones realizada con éxito: %.6f s.\n", time, t_fin-t_ini);
+        printf("\n#4-%d. Successful search for formations: %.6f s.\n", time, t_fin-t_ini);
         fp = fopen(speed_file, "a");
            fprintf(fp, "2,%d,%.3f\n", time, t_fin-t_ini);
         fclose(fp);
@@ -187,10 +187,10 @@ int main(int argc, char **argv) {
         export_clusters_to_csv(clusters, j, filename, offset, scale_factor, time);
         
         t_fin = omp_get_wtime();
-        printf("\n#5-%d. Archivo escrito con éxito: %.6f s.\n", time, t_fin-t_ini);
+        printf("\n#5-%d. Successfully written file: %.6f s.\n", time, t_fin-t_ini);
         t_total += (t_fin-t_ini);
         
-        printf("Tiempo %d procesado.\n", time);
+        printf("Time %d processed.\n", time);
         free(clusters);
     }
 
@@ -211,6 +211,6 @@ int main(int argc, char **argv) {
     free(log_file);
 
     printf("\n\n*** SUCCESS reading the file %s and writing the data to %s! ***\n", FILE_NAME, OUT_DIR_NAME);
-    printf("\n## Tiempo total de la ejecución: %.6f s.\n\n", t_total);
+    printf("\n## Total execution time: %.6f s.\n\n", t_total);
     return 0;
 }
