@@ -83,6 +83,7 @@ parser.add_argument('-nm', '--no-maps', action='store_true', required=False, hel
 parser.add_argument('-a', '--animation', action='store_true', required=False, help="Generar animación de los mapas")
 parser.add_argument('-omp', '--omp', action='store_true', required=False, help="Ejecutar usando OpenMP")
 parser.add_argument('-mpi', '--mpi', action='store_true', required=False, help="Ejecutar usando MPI")
+parser.add_argument('-tr', '--tracking', action='store_true', required=False, help="Ejecutar el seguimiento de formaciones")
 parser.add_argument('-nt', '--n-threads', type=check_levels, required=False, help="Número de hilos para la ejecución paralela")
 parser.add_argument('-np', '--n-proces', type=check_levels, required=False, help="Número de procesos para la ejecución paralela")
 
@@ -155,6 +156,7 @@ configuration = {
     "animation": args.animation,
     "omp": args.omp,
     "mpi": args.mpi,
+    "tracking": args.tracking,
     "n_threads": args.n_threads if args.n_threads else None,
     "n_proces": args.n_proces if args.n_proces else None,
 }
@@ -167,21 +169,12 @@ configuration = {
 #         print("Carpeta de salida limpia exitosamente.")
 
 
-# Escribir el archivo de configuración según el sistema operativo
-if os.name == "nt":
-    configuration = {key: str(value) for key, value in configuration.items()}
-    # Escribir un archivo .conf
-    config = configparser.ConfigParser()
-    config["MAP"] = configuration
-    with open('config/config.conf', 'w') as configfile:
-        config.write(configfile)
-    print("Archivo de configuración .conf creado exitosamente.")
-else:
-    configuration = {'MAP': configuration}
-    # Escribir un archivo .yaml
-    with open('config/config.yaml', 'w') as yamlfile:
-        yaml.dump(configuration, yamlfile, default_flow_style=False, sort_keys=False)
-    print("Archivo de configuración .yaml creado exitosamente.")
+# Escribir el archivo de configuración
+configuration = {'MAP': configuration}
+# Escribir un archivo .yaml
+with open('config/config.yaml', 'w') as yamlfile:
+    yaml.dump(configuration, yamlfile, default_flow_style=False, sort_keys=False)
+print("Archivo de configuración .yaml creado exitosamente.")
 
 
 print("Configuración ejecutada exitosamente.")

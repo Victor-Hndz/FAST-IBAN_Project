@@ -1,6 +1,4 @@
 import subprocess
-import platform
-import configparser
 import yaml
 import os
 from utils.enums import *
@@ -11,16 +9,10 @@ execution_path = "execution/code/build/"
 exec_file = "execution/FAST-IBAN"
 
 def init():
-    # Read the configuration file (yaml or conf, depending on the OS)
-    current_os = platform.system()
-    if os.name == 'nt':
-        config = configparser.ConfigParser()
-        config.read('config/config.conf')
-        print("Archivo de configuración .conf leído exitosamente.")
-    elif os.name == 'posix':
-        with open('config/config.yaml', 'r') as yamlfile:
-            config = yaml.load(yamlfile, Loader=yaml.FullLoader)
-        print("Archivo de configuración .yaml leído exitosamente.")
+    # Read the configuration file (yaml)
+    with open('config/config.yaml', 'r') as yamlfile:
+        config = yaml.load(yamlfile, Loader=yaml.FullLoader)
+    print("Archivo de configuración .yaml leído exitosamente.")
         
     # Extract all
     files = config["MAP"]["files"]
@@ -39,6 +31,7 @@ def init():
     animation = config["MAP"]["animation"]
     omp = config["MAP"]["omp"]
     mpi = config["MAP"]["mpi"]
+    tracking = config["MAP"]["tracking"]
     n_threads = config["MAP"]["n_threads"]
     n_processes = config["MAP"]["n_proces"]
 
@@ -69,7 +62,7 @@ def init():
             print("Error al ejecutar el build:")
             exit(1)
 
-    return files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps, animation, omp, mpi, n_threads, n_processes
+    return files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps, animation, omp, mpi, tracking, n_threads, n_processes
 
 def process_file(file):
     return_code = None
@@ -116,7 +109,7 @@ def generate_map(file, es_max, max_times, levels, lat_range, lon_range, file_for
                     
 
 if __name__ == "__main__":
-    files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps, animation, omp, mpi, n_threads, n_processes = init()
+    files, maps, es_max, times, lat_range, lon_range, levels, file_format, output, debug, no_compile, no_execute, no_maps, animation, omp, mpi, tracking, n_threads, n_processes = init()
     
     for file in files:
         process_file(file)
@@ -127,3 +120,8 @@ if __name__ == "__main__":
         input_gif_folder = "out/"
         out_gif_folder = "out/gif/gif.gif"
         svg_to_gif_folder(input_gif_folder, out_gif_folder)
+        
+    if(tracking):
+        print("Generando seguimiento...")
+        # Generate the tracking
+        exec(open("tracking/event_tracking.py").read())

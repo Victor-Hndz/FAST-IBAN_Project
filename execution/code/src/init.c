@@ -116,7 +116,7 @@ void init_files(char* filename, char* filename2, char* log_file, char* speed_fil
 
     sprintf(filename, "%s%s_selected_%s_%sUTC.csv", file_path, long_name, temp, fecha);
     FILE *fp = fopen(filename, "w");
-    fprintf(fp, "time,latitude,longitude,z,type,cluster\n");
+    fprintf(fp, "time,latitude,longitude,z,type,cluster,centroid_lat,centroid_lon\n");
     fclose(fp);
 
     sprintf(filename2, "%s%s_formations_%s_%sUTC.csv", file_path, long_name, temp, fecha);
