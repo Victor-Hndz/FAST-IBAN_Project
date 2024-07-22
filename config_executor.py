@@ -124,4 +124,7 @@ if __name__ == "__main__":
     if(tracking):
         print("Generando seguimiento...")
         # Generate the tracking
-        exec(open("tracking/event_tracking.py").read())
+        args = [str(arg) for arg in [files, times, levels, lat_range, lon_range, file_format]]
+        command = ['python', 'tracking/event_tracking.py', *args]
+        
+        subprocess.run(command)
